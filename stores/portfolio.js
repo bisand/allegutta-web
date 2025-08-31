@@ -78,6 +78,7 @@ export const usePortfolioStore = defineStore('portfolio', {
 
     async fetchPortfolios() {
       try {
+        // Token will be added automatically by the plugin
         const { data } = await $fetch('/api/portfolios')
         this.portfolios = data || []
       } catch (error) {

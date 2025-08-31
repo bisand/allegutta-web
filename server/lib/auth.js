@@ -2,6 +2,19 @@ import jwt from 'jsonwebtoken'
 import prisma from './prisma.js'
 
 export async function requireAuth(event) {
+  const config = useRuntimeConfig()
+  
+  // Development mode - use test user
+  if (config.public.baseUrl?.includes('localhost')) {
+    const user = await prisma.user.findUnique({
+      where: { kindeId: 'test_user_1' }
+    })
+    
+    if (user) {
+      return user
+    }
+  }
+
   const authHeader = getHeader(event, 'authorization')
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
