@@ -26,6 +26,9 @@ export default defineNuxtConfig({
   // CSS framework
   css: ['~/assets/css/main.css'],
 
+  // App source directory (Nuxt 4)
+  srcDir: 'app/',
+
   // Runtime config
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,

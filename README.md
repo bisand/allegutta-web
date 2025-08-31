@@ -138,25 +138,35 @@ BASE_URL=http://localhost:3000
 
 ## 📱 Application Structure
 
+The application now follows the **Nuxt 4 directory structure** with all client-side code organized under the `app/` directory:
+
 ```
 allegutta-web/
-├── components/          # Vue components
-│   ├── Portfolio/       # Portfolio-specific components
-│   ├── AppHeader.vue    # Navigation header
-│   └── AppFooter.vue    # Footer
-├── pages/               # Nuxt pages (auto-routing)
-│   ├── index.vue        # Home page
-│   ├── portfolio.vue    # Portfolio dashboard
-│   ├── about.vue        # About page
-│   └── auth/            # Authentication pages
-├── server/              # Backend API
-│   ├── api/             # API endpoints
-│   └── lib/             # Server utilities
-├── stores/              # Pinia stores
-├── composables/         # Vue composables
-├── middleware/          # Route middleware
-├── prisma/              # Database schema
-└── assets/              # Static assets
+├── app/                     # Client-side application (Nuxt 4)
+│   ├── app.vue             # Main app component
+│   ├── components/         # Vue components
+│   │   ├── Portfolio/      # Portfolio-specific components
+│   │   ├── AppHeader.vue   # Navigation header
+│   │   └── AppFooter.vue   # Footer
+│   ├── pages/              # Auto-routed pages
+│   │   ├── index.vue       # Home page
+│   │   ├── portfolio.vue   # Portfolio dashboard
+│   │   ├── about.vue       # About page
+│   │   └── auth/           # Authentication pages
+│   ├── assets/             # Static assets (CSS, images)
+│   │   └── css/
+│   ├── composables/        # Vue composables
+│   ├── stores/             # Pinia stores
+│   ├── middleware/         # Route middleware
+│   ├── layouts/            # Layout components
+│   └── plugins/            # Vue plugins
+├── server/                 # Server-side API (stays at root)
+│   ├── api/                # API endpoints
+│   └── lib/                # Server utilities
+├── prisma/                 # Database schema
+├── public/                 # Static files
+├── nuxt.config.ts          # Nuxt configuration with srcDir: 'app/'
+└── package.json            # Project dependencies
 ```
 
 ## 🎨 Design Features
