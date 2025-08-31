@@ -3,6 +3,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
+  sourcemap: {
+    server: true,
+    client: true
+  },
+
   modules: [
     '@nuxt/content',
     '@nuxt/eslint',
