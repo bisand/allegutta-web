@@ -1,0 +1,50 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+{
+	"name": "Nuxt",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/devcontainers/typescript-node:22-bookworm",
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker": {},
+		"ghcr.io/itsmechlark/features/redis-server:1": {
+			"version": "latest"
+		}
+	},
+	"runArgs": [
+		"--name",
+		"${localEnv:USER}-allegutta-dev",
+		"--hostname",
+		"${localEnv:USER}-allegutta-dev"
+	],
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+	"mounts": [
+		"source=${localEnv:HOME}/.ssh,target=/home/node/.ssh,type=bind,consistency=cached",
+		"source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig-host,type=bind,consistency=cached"
+	],
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "sed -i 's/ZSH_THEME=.*/ZSH_THEME=\"bira\"/' ~/.zshrc && cp ~/.gitconfig-host ~/.gitconfig && sudo apt update && sudo apt install iputils-ping",
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"Nuxtr.nuxt-vscode-extentions",
+				"GitHub.remotehub",
+				"github.vscode-github-actions",
+				"GitHub.vscode-pull-request-github",
+				"ms-vscode.vscode-github-issue-notebooks",
+				"VisualStudioExptTeam.intellicode-api-usage-examples",
+				"bradlc.vscode-tailwindcss",
+				"antfu.iconify",
+				"ms-vscode.vs-keybindings",
+				"Gruntfuggly.todo-tree",
+				"esbenp.prettier-vscode",
+				"rvest.vs-code-prettier-eslint",
+				"eamodio.gitlens"
+			]
+		}
+	}
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}
