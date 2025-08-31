@@ -20,14 +20,68 @@
             >
               Home
             </NuxtLink>
-            <NuxtLink 
-              v-if="loggedIn"
-              to="/portfolio" 
-              class="text-gray-900 dark:text-white hover:text-primary-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              active-class="text-primary-500"
-            >
-              Portfolio
-            </NuxtLink>
+            
+            <!-- Portfolios dropdown -->
+            <Menu as="div" class="relative">
+              <MenuButton class="flex items-center text-gray-900 dark:text-white hover:text-primary-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Portfolios
+                <ChevronDownIcon class="ml-1 w-4 h-4" />
+              </MenuButton>
+              
+              <Transition
+                enter-active-class="transition duration-100 ease-out"
+                enter-from-class="transform scale-95 opacity-0"
+                enter-to-class="transform scale-100 opacity-100"
+                leave-active-class="transition duration-75 ease-in"
+                leave-from-class="transform scale-100 opacity-100"
+                leave-to-class="transform scale-95 opacity-0"
+              >
+                <MenuItems class="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100 dark:divide-gray-700 z-50">
+                  <div class="py-1">
+                    <!-- Portfolio list -->
+                    <MenuItem 
+                      v-for="portfolio in portfolioStore.allPortfolios" 
+                      :key="portfolio.id" 
+                      v-slot="{ active }"
+                    >
+                      <NuxtLink
+                        :to="`/portfolio/${portfolio.id}`"
+                        :class="[
+                          active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                          'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                        ]"
+                      >
+                        <ChartBarIcon class="w-4 h-4 mr-3" />
+                        {{ portfolio.name }}
+                        <span v-if="portfolio.isDefault" class="ml-auto text-xs text-primary-500">(Default)</span>
+                      </NuxtLink>
+                    </MenuItem>
+                    
+                    <!-- Empty state -->
+                    <div v-if="portfolioStore.allPortfolios.length === 0" class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                      No portfolios available
+                    </div>
+                  </div>
+                  
+                  <!-- Admin actions -->
+                  <div v-if="portfolioStore.canManagePortfolios" class="py-1">
+                    <MenuItem v-slot="{ active }">
+                      <NuxtLink
+                        to="/admin/portfolios"
+                        :class="[
+                          active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                          'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                        ]"
+                      >
+                        <PlusIcon class="w-4 h-4 mr-3" />
+                        Manage Portfolios
+                      </NuxtLink>
+                    </MenuItem>
+                  </div>
+                </MenuItems>
+              </Transition>
+            </Menu>
+            
             <NuxtLink 
               to="/about" 
               class="text-gray-900 dark:text-white hover:text-primary-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -174,14 +228,39 @@
             >
               Home
             </NuxtLink>
-            <NuxtLink 
-              v-if="loggedIn"
-              to="/portfolio" 
-              class="block text-gray-900 dark:text-white hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-md text-base font-medium transition-colors"
-              @click="mobileMenuOpen = false"
-            >
-              Portfolio
-            </NuxtLink>
+            
+            <!-- Portfolios section -->
+            <div class="space-y-1">
+              <div class="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                Portfolios
+              </div>
+              <NuxtLink 
+                v-for="portfolio in portfolioStore.allPortfolios"
+                :key="portfolio.id"
+                :to="`/portfolio/${portfolio.id}`"
+                class="block text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
+                @click="mobileMenuOpen = false"
+              >
+                {{ portfolio.name }}
+                <span v-if="portfolio.isDefault" class="ml-2 text-xs text-primary-500">(Default)</span>
+              </NuxtLink>
+              
+              <!-- Empty state -->
+              <div v-if="portfolioStore.allPortfolios.length === 0" class="px-6 py-2 text-sm text-gray-400 dark:text-gray-500">
+                No portfolios available
+              </div>
+              
+              <!-- Admin link -->
+              <NuxtLink 
+                v-if="portfolioStore.canManagePortfolios"
+                to="/admin/portfolios"
+                class="block text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
+                @click="mobileMenuOpen = false"
+              >
+                Manage Portfolios
+              </NuxtLink>
+            </div>
+            
             <NuxtLink 
               to="/about" 
               class="block text-gray-900 dark:text-white hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-md text-base font-medium transition-colors"
@@ -205,10 +284,13 @@ import {
   Bars3Icon,
   XMarkIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  ChevronDownIcon,
+  PlusIcon
 } from '@heroicons/vue/24/outline'
 
 const { loggedIn, user } = useAuth()
+const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
 const mobileMenuOpen = ref(false)
 const headerRef = ref()

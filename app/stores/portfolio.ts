@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-interface Portfolio {
+export interface Portfolio {
   id: string
   name: string
   description?: string
@@ -36,11 +36,13 @@ interface Holding {
 
 interface PortfolioState {
   portfolios: Portfolio[]
+  publicPortfolios: Portfolio[]
   currentPortfolio: Portfolio | null
   transactions: Transaction[]
   holdings: Holding[]
   loading: boolean
   error: string | null
+  userPermissions: string[]
 }
 
 interface CreatePortfolioData {
@@ -62,11 +64,13 @@ interface CreateTransactionData {
 export const usePortfolioStore = defineStore('portfolio', {
   state: (): PortfolioState => ({
     portfolios: [],
+    publicPortfolios: [],
     currentPortfolio: null,
     transactions: [],
     holdings: [],
     loading: false,
-    error: null
+    error: null,
+    userPermissions: []
   }),
 
   getters: {
@@ -113,14 +117,59 @@ export const usePortfolioStore = defineStore('portfolio', {
       if (!state.currentPortfolio) return []
       return state.holdings.filter(h => h.portfolioId === state.currentPortfolio!.id)
         .sort((a, b) => b.quantity * (b.currentPrice || b.avgPrice) - a.quantity * (a.currentPrice || a.avgPrice))
+    },
+
+    // Check if user can manage portfolios (admin or portfolio admin)
+    canManagePortfolios: (state): boolean => {
+      return state.userPermissions.includes('admin') || 
+             state.userPermissions.includes('portfolio_admin')
+    },
+
+    // Get all portfolios (public + user's private if authenticated)
+    allPortfolios: (state): Portfolio[] => {
+      // Combine public portfolios with user's private ones, removing duplicates
+      const allPortfolios = [...state.publicPortfolios]
+      state.portfolios.forEach(portfolio => {
+        if (!allPortfolios.find(p => p.id === portfolio.id)) {
+          allPortfolios.push(portfolio)
+        }
+      })
+      return allPortfolios.sort((a, b) => {
+        if (a.isDefault && !b.isDefault) return -1
+        if (!a.isDefault && b.isDefault) return 1
+        return a.name.localeCompare(b.name)
+      })
     }
   },
 
   actions: {
+    async initialize(): Promise<void> {
+      try {
+        this.loading = true
+        // Always fetch public portfolios
+        await this.fetchPublicPortfolios()
+        
+        // Try to initialize user data if authenticated (will fail silently if not authenticated)
+        try {
+          await this.initializeUser()
+        } catch {
+          // User not authenticated, that's fine
+        }
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : 'Unknown error occurred'
+        console.error('Failed to initialize:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
     async initializeUser(): Promise<void> {
       try {
         this.loading = true
-        await this.fetchPortfolios()
+        await Promise.all([
+          this.fetchPortfolios(),
+          this.fetchUserPermissions()
+        ])
         
         // Set default portfolio if available
         if (this.portfolios.length > 0) {
@@ -132,8 +181,39 @@ export const usePortfolioStore = defineStore('portfolio', {
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred'
         console.error('Failed to initialize user:', error)
+        throw error
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchPublicPortfolios(): Promise<void> {
+      try {
+        const response = await $fetch('/api/public/portfolios') as { data: Portfolio[] }
+        this.publicPortfolios = response.data || []
+      } catch (error) {
+        console.error('Failed to fetch public portfolios:', error)
+        // Don't throw error for public portfolios - it's not critical
+      }
+    },
+
+    async fetchUserPermissions(): Promise<void> {
+      try {
+        // This would use Kinde's permission system
+        // For now, we'll check if user has admin role or specific permissions
+        const { user } = useAuth()
+        if (user && user.email) {
+          // TODO: Implement proper Kinde permission checking
+          // For now, you can manually set permissions based on user email or roles
+          this.userPermissions = []
+          
+          // Example: Check if user email indicates admin
+          if (user.email.includes('admin')) {
+            this.userPermissions.push('admin')
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user permissions:', error)
       }
     },
 

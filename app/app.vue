@@ -16,16 +16,11 @@ useHead({
   titleTemplate: '%s - AlleGutta Portfolio'
 })
 
-// Check if user is logged in
-const { loggedIn } = useAuth()
-
 // Initialize Pinia store
 const portfolioStore = usePortfolioStore()
 
 onMounted(() => {
-  // Initialize user portfolio if authenticated
-  if (loggedIn.value) {
-    portfolioStore.initializeUser()
-  }
+  // Initialize portfolio store (will fetch public portfolios and user data if authenticated)
+  portfolioStore.initialize()
 })
 </script>
