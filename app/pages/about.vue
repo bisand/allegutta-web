@@ -36,7 +36,7 @@
           <div class="flex items-start space-x-4">
             <div class="flex-shrink-0">
               <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-                <UIcon name="i-heroicons-chart-bar" class="w-5 h-5 text-primary" />
+                <ChartBarIcon class="w-5 h-5 text-primary-500" />
               </div>
             </div>
             <div>
@@ -52,7 +52,7 @@
           <div class="flex items-start space-x-4">
             <div class="flex-shrink-0">
               <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                <UIcon name="i-heroicons-banknotes" class="w-5 h-5 text-green-600" />
+                <BanknotesIcon class="w-5 h-5 text-green-600" />
               </div>
             </div>
             <div>
@@ -68,7 +68,7 @@
           <div class="flex items-start space-x-4">
             <div class="flex-shrink-0">
               <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                <UIcon name="i-heroicons-shield-check" class="w-5 h-5 text-blue-600" />
+                <ShieldCheckIcon class="w-5 h-5 text-blue-600" />
               </div>
             </div>
             <div>
@@ -84,7 +84,7 @@
           <div class="flex items-start space-x-4">
             <div class="flex-shrink-0">
               <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                <UIcon name="i-heroicons-device-phone-mobile" class="w-5 h-5 text-purple-600" />
+                <DevicePhoneMobileIcon class="w-5 h-5 text-purple-600" />
               </div>
             </div>
             <div>
@@ -146,27 +146,27 @@
           Join us and start managing your portfolio like a pro.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <UButton 
+          <button 
             v-if="!isAuthenticated"
-            size="lg"
+            type="button"
+            class="px-6 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
             @click="register"
           >
             Create Account
-          </UButton>
-          <UButton 
+          </button>
+          <NuxtLink 
             v-else
-            size="lg"
             to="/portfolio"
+            class="px-6 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors text-center"
           >
             Go to Portfolio
-          </UButton>
-          <UButton 
-            variant="outline" 
-            size="lg"
+          </NuxtLink>
+          <NuxtLink 
             to="/"
+            class="px-6 py-3 text-lg font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-700 border border-primary-300 dark:border-primary-600 hover:bg-primary-50 dark:hover:bg-gray-600 rounded-lg transition-colors text-center"
           >
             Learn More
-          </UButton>
+          </NuxtLink>
         </div>
       </div>
     </div>
@@ -174,6 +174,13 @@
 </template>
 
 <script setup>
+import { 
+  ChartBarIcon, 
+  BanknotesIcon, 
+  ShieldCheckIcon, 
+  DevicePhoneMobileIcon 
+} from '@heroicons/vue/24/outline'
+
 const { isAuthenticated, register } = useKindeAuth()
 
 useHead({

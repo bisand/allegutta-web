@@ -5,7 +5,7 @@
         <!-- Logo and description -->
         <div class="col-span-1">
           <div class="flex items-center space-x-2 mb-4">
-            <UIcon name="i-heroicons-chart-bar" class="w-6 h-6 text-primary" />
+            <ChartBarIcon class="w-6 h-6 text-primary-500" />
             <span class="text-lg font-bold text-gray-900 dark:text-white">AlleGutta</span>
           </div>
           <p class="text-gray-600 dark:text-gray-400 text-sm">
@@ -23,7 +23,7 @@
             <li>
               <NuxtLink 
                 to="/" 
-                class="text-gray-600 dark:text-gray-400 hover:text-primary text-sm transition-colors"
+                class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors"
               >
                 Home
               </NuxtLink>
@@ -31,7 +31,7 @@
             <li v-if="isAuthenticated">
               <NuxtLink 
                 to="/portfolio" 
-                class="text-gray-600 dark:text-gray-400 hover:text-primary text-sm transition-colors"
+                class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors"
               >
                 Portfolio
               </NuxtLink>
@@ -39,7 +39,7 @@
             <li>
               <NuxtLink 
                 to="/about" 
-                class="text-gray-600 dark:text-gray-400 hover:text-primary text-sm transition-colors"
+                class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors"
               >
                 About
               </NuxtLink>
@@ -47,7 +47,7 @@
             <li>
               <NuxtLink 
                 to="/privacy" 
-                class="text-gray-600 dark:text-gray-400 hover:text-primary text-sm transition-colors"
+                class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors"
               >
                 Privacy Policy
               </NuxtLink>
@@ -61,12 +61,12 @@
             Contact
           </h3>
           <div class="space-y-2">
-            <p class="text-gray-600 dark:text-gray-400 text-sm">
-              <UIcon name="i-heroicons-envelope" class="w-4 h-4 inline mr-2" />
+            <p class="text-gray-600 dark:text-gray-400 text-sm flex items-center">
+              <EnvelopeIcon class="w-4 h-4 mr-2" />
               support@allegutta.net
             </p>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">
-              <UIcon name="i-heroicons-globe-alt" class="w-4 h-4 inline mr-2" />
+            <p class="text-gray-600 dark:text-gray-400 text-sm flex items-center">
+              <GlobeAltIcon class="w-4 h-4 mr-2" />
               allegutta.net
             </p>
           </div>
@@ -91,6 +91,8 @@
 </template>
 
 <script setup>
+import { ChartBarIcon, EnvelopeIcon, GlobeAltIcon } from '@heroicons/vue/24/outline'
+
 const { isAuthenticated } = useKindeAuth()
 
 const currentYear = new Date().getFullYear()

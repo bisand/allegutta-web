@@ -6,7 +6,7 @@
       <NuxtPage />
     </main>
     <AppFooter />
-    <UNotifications />
+    <!-- Toast notifications can be added later with a custom implementation -->
   </div>
 </template>
 

@@ -6,7 +6,7 @@
         <div class="text-center">
           <h1 class="text-4xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             Welcome to
-            <span class="text-primary">AlleGutta</span>
+            <span class="text-primary-500">AlleGutta</span>
           </h1>
           <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
             Your personal portfolio management platform. Track your investments, 
@@ -14,35 +14,33 @@
           </p>
           
           <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <UButton 
+            <button 
               v-if="!isAuthenticated"
-              size="lg" 
-              class="px-8 py-3"
+              type="button"
+              class="flex items-center px-8 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
               @click="register"
             >
               Get Started
-              <UIcon name="i-heroicons-arrow-right" class="ml-2" />
-            </UButton>
+              <ArrowRightIcon class="ml-2 w-5 h-5" />
+            </button>
             
-            <UButton 
+            <NuxtLink
               v-else
-              size="lg" 
               to="/portfolio"
-              class="px-8 py-3"
+              class="flex items-center px-8 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               View Portfolio
-              <UIcon name="i-heroicons-chart-bar" class="ml-2" />
-            </UButton>
+              <ChartBarIcon class="ml-2 w-5 h-5" />
+            </NuxtLink>
             
-            <UButton 
+            <button 
               v-if="!isAuthenticated"
-              variant="outline" 
-              size="lg"
-              class="px-8 py-3"
+              type="button"
+              class="flex items-center px-8 py-3 text-lg font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-800 border border-primary-300 dark:border-primary-600 hover:bg-primary-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
               @click="login"
             >
               Sign In
-            </UButton>
+            </button>
           </div>
         </div>
       </div>
@@ -70,7 +68,7 @@
           <!-- Feature 1 -->
           <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
             <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center mb-6">
-              <UIcon name="i-heroicons-chart-bar" class="w-6 h-6 text-primary" />
+              <ChartBarIcon class="w-6 h-6 text-primary-500" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Portfolio Tracking
@@ -83,7 +81,7 @@
           <!-- Feature 2 -->
           <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
             <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-6">
-              <UIcon name="i-heroicons-banknotes" class="w-6 h-6 text-green-600" />
+              <BanknotesIcon class="w-6 h-6 text-green-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Transaction Management
@@ -96,7 +94,7 @@
           <!-- Feature 3 -->
           <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
             <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-6">
-              <UIcon name="i-heroicons-shield-check" class="w-6 h-6 text-purple-600" />
+              <ShieldCheckIcon class="w-6 h-6 text-purple-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Secure Authentication
@@ -109,7 +107,7 @@
           <!-- Feature 4 -->
           <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
             <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-6">
-              <UIcon name="i-heroicons-device-phone-mobile" class="w-6 h-6 text-blue-600" />
+              <DevicePhoneMobileIcon class="w-6 h-6 text-blue-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Progressive Web App
@@ -122,7 +120,7 @@
           <!-- Feature 5 -->
           <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
             <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center mb-6">
-              <UIcon name="i-heroicons-moon" class="w-6 h-6 text-yellow-600" />
+              <MoonIcon class="w-6 h-6 text-yellow-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Dark Mode
@@ -135,7 +133,7 @@
           <!-- Feature 6 -->
           <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
             <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center mb-6">
-              <UIcon name="i-heroicons-presentation-chart-line" class="w-6 h-6 text-red-600" />
+              <PresentationChartLineIcon class="w-6 h-6 text-red-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Analytics & Reports
@@ -158,33 +156,40 @@
           Join thousands of investors who trust AlleGutta to manage their portfolios.
         </p>
         
-        <UButton 
+        <button 
           v-if="!isAuthenticated"
-          size="lg" 
-          variant="white"
-          class="px-8 py-3"
+          type="button"
+          class="flex items-center mx-auto px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
           @click="register"
         >
           Create Your Portfolio
-          <UIcon name="i-heroicons-arrow-right" class="ml-2" />
-        </UButton>
+          <ArrowRightIcon class="ml-2 w-5 h-5" />
+        </button>
         
-        <UButton 
+        <NuxtLink 
           v-else
-          size="lg" 
-          variant="white"
           to="/portfolio"
-          class="px-8 py-3"
+          class="flex items-center mx-auto px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
         >
           Go to Portfolio
-          <UIcon name="i-heroicons-chart-bar" class="ml-2" />
-        </UButton>
+          <ChartBarIcon class="ml-2 w-5 h-5" />
+        </NuxtLink>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
+import {
+  ArrowRightIcon,
+  ChartBarIcon,
+  BanknotesIcon,
+  ShieldCheckIcon,
+  DevicePhoneMobileIcon,
+  MoonIcon,
+  PresentationChartLineIcon
+} from '@heroicons/vue/24/outline'
+
 const { isAuthenticated, login, register } = useKindeAuth()
 
 useHead({

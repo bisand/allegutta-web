@@ -12,7 +12,7 @@ export default defineNuxtConfig({
     '@nuxt/content',
     '@nuxt/eslint',
     '@nuxt/image',
-    '@nuxt/ui',
+    '@nuxtjs/tailwindcss',
     '@vueuse/nuxt',
     '@pinia/nuxt'
   ],
