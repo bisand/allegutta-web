@@ -13,9 +13,23 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/image',
     '@nuxtjs/tailwindcss',
+    '@nuxtjs/color-mode',
+    'nuxt-auth-utils',
     '@vueuse/nuxt',
     '@pinia/nuxt'
   ],
+
+  // Color mode configuration
+  colorMode: {
+    preference: 'system', // default value
+    fallback: 'light', // fallback value if not system preference found
+    classSuffix: '', // Use .dark instead of .dark-mode
+  },
+
+  // VueUse configuration to prevent conflicts
+  vueuse: {
+    ssrHandlers: true
+  },
 
   // App configuration
   app: {
@@ -38,13 +52,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,
     databaseUrl: process.env.DATABASE_URL,
-    kindeSecret: process.env.KINDE_CLIENT_SECRET,
+    // OAuth Configuration for nuxt-auth-utils
+    oauthGithubClientId: process.env.OAUTH_GITHUB_CLIENT_ID,
+    oauthGithubClientSecret: process.env.OAUTH_GITHUB_CLIENT_SECRET,
     public: {
-      baseUrl: process.env.BASE_URL || 'http://localhost:3000',
-      kindeDomain: process.env.KINDE_DOMAIN,
-      kindeClientId: process.env.KINDE_CLIENT_ID,
-      kindeRedirectUrl: process.env.KINDE_REDIRECT_URL,
-      kindeLogoutRedirectUrl: process.env.KINDE_LOGOUT_REDIRECT_URL
+      baseUrl: process.env.BASE_URL || 'http://localhost:3000'
     }
   }
 })

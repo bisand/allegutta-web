@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
+  <header ref="headerRef" class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
     <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
         <!-- Logo -->
@@ -207,10 +207,12 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon
 } from '@heroicons/vue/24/outline'
+import { onClickOutside } from '@vueuse/core'
 
 const { isAuthenticated, user, login, logout, register } = useKindeAuth()
 const colorMode = useColorMode()
 const mobileMenuOpen = ref(false)
+const headerRef = ref()
 
 const isDark = computed(() => colorMode.value === 'dark')
 
@@ -224,7 +226,7 @@ function toggleDarkMode() {
 }
 
 // Close mobile menu when clicking outside
-onClickOutside(templateRef, () => {
+onClickOutside(headerRef, () => {
   mobileMenuOpen.value = false
 })
 </script>
