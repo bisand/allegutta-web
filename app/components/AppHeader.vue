@@ -21,7 +21,7 @@
               Home
             </NuxtLink>
             <NuxtLink 
-              v-if="isAuthenticated"
+              v-if="loggedIn"
               to="/portfolio" 
               class="text-gray-900 dark:text-white hover:text-primary-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               active-class="text-primary-500"
@@ -52,21 +52,21 @@
           </button>
 
           <!-- Authentication buttons -->
-          <div v-if="!isAuthenticated" class="flex items-center space-x-2">
-            <button 
-              type="button"
+          <div v-if="!loggedIn" class="flex items-center space-x-2">
+            <NuxtLink 
+              to="/api/login"
+              external
               class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              @click="login"
             >
               Sign In
-            </button>
-            <button 
-              type="button"
+            </NuxtLink>
+            <NuxtLink 
+              to="/api/register"
+              external
               class="px-3 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-              @click="register"
             >
               Sign Up
-            </button>
+            </NuxtLink>
           </div>
 
           <!-- User menu -->
@@ -126,17 +126,17 @@
                 
                 <div class="py-1">
                   <MenuItem v-slot="{ active }">
-                    <button
-                      type="button"
+                    <NuxtLink
+                      to="/api/logout"
+                      external
                       :class="[
                         active ? 'bg-gray-100 dark:bg-gray-700' : '',
                         'flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
                       ]"
-                      @click="logout"
                     >
                       <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
                       Sign out
-                    </button>
+                    </NuxtLink>
                   </MenuItem>
                 </div>
               </MenuItems>
@@ -175,7 +175,7 @@
               Home
             </NuxtLink>
             <NuxtLink 
-              v-if="isAuthenticated"
+              v-if="loggedIn"
               to="/portfolio" 
               class="block text-gray-900 dark:text-white hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-md text-base font-medium transition-colors"
               @click="mobileMenuOpen = false"
@@ -196,7 +196,7 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import {
   ChartBarIcon,
@@ -207,9 +207,8 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon
 } from '@heroicons/vue/24/outline'
-import { onClickOutside } from '@vueuse/core'
 
-const { isAuthenticated, user, login, logout, register } = useKindeAuth()
+const { loggedIn, user } = useAuth()
 const colorMode = useColorMode()
 const mobileMenuOpen = ref(false)
 const headerRef = ref()
@@ -221,12 +220,7 @@ const userDisplayName = computed(() => {
   return user.value.given_name || user.value.email || 'User'
 })
 
-function toggleDarkMode() {
+function toggleDarkMode(): void {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
-
-// Close mobile menu when clicking outside
-onClickOutside(headerRef, () => {
-  mobileMenuOpen.value = false
-})
 </script>

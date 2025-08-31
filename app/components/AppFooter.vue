@@ -28,7 +28,7 @@
                 Home
               </NuxtLink>
             </li>
-            <li v-if="isAuthenticated">
+            <li v-if="loggedIn">
               <NuxtLink 
                 to="/portfolio" 
                 class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors"
@@ -90,10 +90,10 @@
   </footer>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ChartBarIcon, EnvelopeIcon, GlobeAltIcon } from '@heroicons/vue/24/outline'
 
-const { isAuthenticated } = useKindeAuth()
+const { loggedIn } = useAuth()
 
 const currentYear = new Date().getFullYear()
 </script>

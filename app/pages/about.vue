@@ -147,7 +147,7 @@
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
-            v-if="!isAuthenticated"
+            v-if="!loggedIn"
             type="button"
             class="px-6 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
             @click="register"
@@ -173,7 +173,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { 
   ChartBarIcon, 
   BanknotesIcon, 
@@ -181,7 +181,7 @@ import {
   DevicePhoneMobileIcon 
 } from '@heroicons/vue/24/outline'
 
-const { isAuthenticated, register } = useKindeAuth()
+const { loggedIn, register } = useAuth()
 
 useHead({
   title: 'About',

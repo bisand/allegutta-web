@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Authentication check -->
-    <div v-if="!isAuthenticated" class="flex items-center justify-center min-h-screen">
+    <div v-if="!loggedIn" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <UIcon name="i-heroicons-lock-closed" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -10,9 +10,11 @@
         <p class="text-gray-600 dark:text-gray-400 mb-6">
           Please sign in to access your portfolio
         </p>
-        <UButton @click="login">
-          Sign In
-        </UButton>
+        <NuxtLink to="/api/login" external>
+          <UButton>
+            Sign In
+          </UButton>
+        </NuxtLink>
       </div>
     </div>
 
@@ -184,20 +186,34 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 definePageMeta({
   middleware: 'auth'
 })
 
-const { isAuthenticated, login } = useKindeAuth()
+// Define transaction type inline for now
+interface Transaction {
+  id: string
+  portfolioId: string
+  symbol: string
+  type: 'BUY' | 'SELL'
+  quantity: number
+  price: number
+  date: string
+  fee?: number
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+const { loggedIn } = useAuth()
 const portfolioStore = usePortfolioStore()
-const toast = useToast()
 
 // Reactive state
 const showAddTransaction = ref(false)
 const showCreatePortfolio = ref(false)
 const showEditTransaction = ref(false)
-const selectedTransaction = ref(null)
+const selectedTransaction = ref<Transaction | null>(null)
 const selectedPortfolioId = ref('')
 
 // Computed properties
@@ -222,97 +238,70 @@ const recentTransactions = computed(() =>
 )
 
 // Methods
-function formatCurrency(value) {
+function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(Math.abs(value))
 }
 
-function formatPercentage(value) {
+function formatPercentage(value: number): string {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value)
 }
 
-async function handlePortfolioChange(portfolioId) {
+async function handlePortfolioChange(portfolioId: string): Promise<void> {
   try {
     await portfolioStore.setCurrentPortfolio(portfolioId)
-  } catch {
-    toast.add({
-      title: 'Error',
-      description: 'Failed to load portfolio',
-      color: 'red'
-    })
+  } catch (error) {
+    console.error('Failed to load portfolio:', error)
   }
 }
 
-async function refreshPrices() {
+async function refreshPrices(): Promise<void> {
   try {
     await portfolioStore.updatePrices()
-    toast.add({
-      title: 'Success',
-      description: 'Prices updated successfully'
-    })
-  } catch {
-    toast.add({
-      title: 'Error',
-      description: 'Failed to update prices',
-      color: 'red'
-    })
+    console.log('Prices updated successfully')
+  } catch (error) {
+    console.error('Failed to update prices:', error)
   }
 }
 
-function handleTransactionAdded() {
+function handleTransactionAdded(): void {
   showAddTransaction.value = false
-  toast.add({
-    title: 'Success',
-    description: 'Transaction added successfully'
-  })
+  console.log('Transaction added successfully')
 }
 
-function handlePortfolioCreated() {
+function handlePortfolioCreated(): void {
   showCreatePortfolio.value = false
-  toast.add({
-    title: 'Success',
-    description: 'Portfolio created successfully'
-  })
+  console.log('Portfolio created successfully')
 }
 
-function handleEditTransaction(transaction) {
+function handleEditTransaction(transaction: Transaction): void {
   selectedTransaction.value = transaction
   showEditTransaction.value = true
 }
 
-function handleTransactionUpdated() {
+function handleTransactionUpdated(): void {
   showEditTransaction.value = false
   selectedTransaction.value = null
-  toast.add({
-    title: 'Success',
-    description: 'Transaction updated successfully'
-  })
+  console.log('Transaction updated successfully')
 }
 
-async function handleDeleteTransaction(transaction) {
+async function handleDeleteTransaction(transaction: Transaction): Promise<void> {
   try {
     await portfolioStore.deleteTransaction(transaction.id)
-    toast.add({
-      title: 'Success',
-      description: 'Transaction deleted successfully'
-    })
-  } catch {
-    toast.add({
-      title: 'Error',
-      description: 'Failed to delete transaction',
-      color: 'red'
-    })
+    console.log('Transaction deleted successfully')
+  } catch (error) {
+    console.error('Failed to delete transaction:', error)
   }
 }
 
 // Initialize
 onMounted(() => {
-  if (isAuthenticated.value && portfolioStore.currentPortfolio) {
+  if (loggedIn.value && portfolioStore.currentPortfolio) {
     selectedPortfolioId.value = portfolioStore.currentPortfolio.id
   }
 })

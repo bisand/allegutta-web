@@ -89,25 +89,24 @@
   </UModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { z } from 'zod'
 
-const isOpen = defineModel({ type: Boolean, default: false })
-const emit = defineEmits(['success'])
+const isOpen = defineModel<boolean>({ type: Boolean, default: false })
+const emit = defineEmits<{
+  success: []
+}>()
 
 const loading = ref(false)
 
 const transactionTypes = [
   { label: 'Buy', value: 'BUY' },
-  { label: 'Sell', value: 'SELL' },
-  { label: 'Dividend', value: 'DIVIDEND' },
-  { label: 'Stock Split', value: 'SPLIT' },
-  { label: 'Merger', value: 'MERGER' }
-]
+  { label: 'Sell', value: 'SELL' }
+] as const
 
 const schema = z.object({
   symbol: z.string().min(1, 'Symbol is required').max(10),
-  type: z.enum(['BUY', 'SELL', 'DIVIDEND', 'SPLIT', 'MERGER']),
+  type: z.enum(['BUY', 'SELL']),
   quantity: z.number().positive('Quantity must be positive'),
   price: z.number().positive('Price must be positive'),
   fees: z.number().min(0, 'Fees cannot be negative').optional(),
@@ -115,17 +114,27 @@ const schema = z.object({
   notes: z.string().optional()
 })
 
-const form = reactive({
+interface TransactionForm {
+  symbol: string
+  type: 'BUY' | 'SELL'
+  quantity: number | null
+  price: number | null
+  fees: number
+  date: string
+  notes: string
+}
+
+const form = reactive<TransactionForm>({
   symbol: '',
   type: 'BUY',
   quantity: null,
   price: null,
   fees: 0,
-  date: new Date().toISOString().split('T')[0],
+  date: new Date().toISOString().split('T')[0] || '',
   notes: ''
 })
 
-const resetForm = () => {
+const resetForm = (): void => {
   Object.assign(form, {
     symbol: '',
     type: 'BUY',
@@ -137,12 +146,12 @@ const resetForm = () => {
   })
 }
 
-const handleCancel = () => {
+const handleCancel = (): void => {
   resetForm()
   isOpen.value = false
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   try {
     loading.value = true
     
@@ -152,7 +161,7 @@ const handleSubmit = async () => {
       ...form,
       quantity: Number(form.quantity),
       price: Number(form.price),
-      fees: Number(form.fees) || 0
+      fee: Number(form.fees) || 0
     })
     
     resetForm()
@@ -166,7 +175,7 @@ const handleSubmit = async () => {
 }
 
 // Reset form when modal closes
-watch(isOpen, (newValue) => {
+watch(isOpen, (newValue: boolean) => {
   if (!newValue) {
     resetForm()
   }

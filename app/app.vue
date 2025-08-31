@@ -10,21 +10,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // Global app setup
 useHead({
   titleTemplate: '%s - AlleGutta Portfolio'
 })
 
 // Check if user is logged in
-const { isAuthenticated } = useKindeAuth()
+const { loggedIn } = useAuth()
 
 // Initialize Pinia store
 const portfolioStore = usePortfolioStore()
 
 onMounted(() => {
   // Initialize user portfolio if authenticated
-  if (isAuthenticated.value) {
+  if (loggedIn.value) {
     portfolioStore.initializeUser()
   }
 })

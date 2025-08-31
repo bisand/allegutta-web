@@ -28,7 +28,7 @@
   </UModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const isOpen = defineModel({ type: Boolean, default: false })
 
 defineProps({

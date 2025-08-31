@@ -41,7 +41,8 @@
 				"Gruntfuggly.todo-tree",
 				"esbenp.prettier-vscode",
 				"rvest.vs-code-prettier-eslint",
-				"eamodio.gitlens"
+				"eamodio.gitlens",
+				"qwtel.sqlite-viewer"
 			]
 		}
 	}

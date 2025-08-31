@@ -43,11 +43,13 @@
   </UModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { z } from 'zod'
 
-const isOpen = defineModel({ type: Boolean, default: false })
-const emit = defineEmits(['success'])
+const isOpen = defineModel<boolean>({ type: Boolean, default: false })
+const emit = defineEmits<{
+  success: []
+}>()
 
 const loading = ref(false)
 
@@ -57,13 +59,19 @@ const schema = z.object({
   isDefault: z.boolean().optional()
 })
 
-const form = reactive({
+interface PortfolioForm {
+  name: string
+  description: string
+  isDefault: boolean
+}
+
+const form = reactive<PortfolioForm>({
   name: '',
   description: '',
   isDefault: false
 })
 
-const resetForm = () => {
+const resetForm = (): void => {
   Object.assign(form, {
     name: '',
     description: '',
@@ -71,12 +79,12 @@ const resetForm = () => {
   })
 }
 
-const handleCancel = () => {
+const handleCancel = (): void => {
   resetForm()
   isOpen.value = false
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   try {
     loading.value = true
     
@@ -95,7 +103,7 @@ const handleSubmit = async () => {
 }
 
 // Reset form when modal closes
-watch(isOpen, (newValue) => {
+watch(isOpen, (newValue: boolean) => {
   if (!newValue) {
     resetForm()
   }

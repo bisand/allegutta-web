@@ -14,9 +14,9 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxtjs/tailwindcss',
     '@nuxtjs/color-mode',
-    'nuxt-auth-utils',
     '@vueuse/nuxt',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@nuxtjs/kinde'
   ],
 
   // Color mode configuration
@@ -52,9 +52,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,
     databaseUrl: process.env.DATABASE_URL,
-    // OAuth Configuration for nuxt-auth-utils
-    oauthGithubClientId: process.env.OAUTH_GITHUB_CLIENT_ID,
-    oauthGithubClientSecret: process.env.OAUTH_GITHUB_CLIENT_SECRET,
     public: {
       baseUrl: process.env.BASE_URL || 'http://localhost:3000'
     }
