@@ -391,7 +391,7 @@ interface HoldingData {
   updatedAt: string
 }
 
-const { canManagePortfolios } = useAppAuth()
+const { canManagePortfolios, initialize } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 
 // Modal states
@@ -406,6 +406,8 @@ const showAddTransactionForm = ref(false)
 const submittingTransaction = ref(false)
 const portfolioTransactions = ref<TransactionData[]>([])
 const portfolioHoldings = ref<HoldingData[]>([])
+
+initialize()
 
 // Form data
 const form = reactive({

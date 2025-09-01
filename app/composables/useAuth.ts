@@ -32,10 +32,10 @@ export const useAppAuth = () => {
       authState.value.loading = true
 
       // Try to get user from auth token cookie
-      const user = await $fetch<AuthUser>('/api/auth/me').catch(() => null)
+      const { data: user } = await useFetch<AuthUser | null>('/api/auth/me')
 
-      if (user) {
-        authState.value.user = user
+      if (user.value) {
+        authState.value.user = user.value
         authState.value.loggedIn = true
       } else {
         authState.value.user = null
