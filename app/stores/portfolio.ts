@@ -228,6 +228,18 @@ export const usePortfolioStore = defineStore('portfolio', {
       }
     },
 
+    async loadAllPortfolios(): Promise<void> {
+      try {
+        this.loading = true
+        await this.fetchPortfolios()
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : 'Failed to load portfolios'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
     async createPortfolio(portfolioData: CreatePortfolioData): Promise<Portfolio> {
       try {
         this.loading = true
@@ -372,9 +384,14 @@ export const usePortfolioStore = defineStore('portfolio', {
           throw new Error('No current portfolio selected')
         }
         
+        // TODO: Implement price update API endpoint
+        /*
         await $fetch(`/api/portfolios/${this.currentPortfolio.id}/update-prices`, {
-          method: 'POST'
+          method: 'POST' as const
         })
+        */
+        
+        console.log('Price update feature will be implemented later')
         
         // Refresh holdings after updating prices
         await this.fetchHoldings(this.currentPortfolio.id)
