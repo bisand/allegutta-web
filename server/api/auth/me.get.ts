@@ -10,12 +10,12 @@ export default defineEventHandler(async (event) => {
 
   try {
     const user = await getOptionalAuth(event)
-    
+
     // Return user data with roles and permissions, or null if not authenticated
     if (!user) {
       return null
     }
-    
+
     return {
       id: user.id,
       kindeId: user.kindeId,

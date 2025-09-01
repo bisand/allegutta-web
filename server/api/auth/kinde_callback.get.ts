@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
         // Get the post-login redirect URL from config
         const config = useRuntimeConfig()
-        const redirectUrl = config.kinde?.postLoginRedirectURL || '/portfolio'
+        const redirectUrl = config.public.baseUrl + '/portfolio'
 
         console.log('Redirecting to:', redirectUrl)
 
@@ -28,9 +28,15 @@ export default defineEventHandler(async (event) => {
         await sendRedirect(event, redirectUrl)
     } catch (error) {
         console.error('Callback error:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('Error details:', {
+            message: errorMessage,
+            stack: error instanceof Error ? error.stack : undefined,
+            name: error instanceof Error ? error.name : undefined
+        })
         throw createError({
             statusCode: 500,
-            statusMessage: 'Authentication callback failed'
+            statusMessage: `Authentication callback failed: ${errorMessage}`
         })
     }
 })

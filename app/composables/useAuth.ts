@@ -118,7 +118,7 @@ export const useAppAuth = () => {
   // Check if user can manage portfolios
   const canManagePortfolios = computed(() => 
     hasAnyRole(['admin', 'portfolio_admin']) || 
-    hasAnyPermission(['admin:manage', 'write:portfolios'])
+    hasAnyPermission(['admin', 'portfolio_admin', 'admin:manage', 'write:portfolios'])
   )
 
   return {

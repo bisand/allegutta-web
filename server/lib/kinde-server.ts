@@ -5,6 +5,14 @@ import type { H3Event } from 'h3'
 function createKindeClient() {
   const config = useRuntimeConfig()
   
+  console.log('Creating Kinde client with config:', {
+    authDomain: config.kindeDomain,
+    clientId: config.kindeClientId,
+    clientSecret: config.kindeClientSecret ? '[REDACTED]' : 'MISSING',
+    redirectURL: config.kindeRedirectUrl,
+    logoutRedirectURL: config.kindeLogoutRedirectUrl,
+  })
+  
   if (!config.kindeDomain || !config.kindeClientId || !config.kindeClientSecret) {
     throw new Error(`Missing required Kinde configuration: domain=${!!config.kindeDomain}, clientId=${!!config.kindeClientId}, secret=${!!config.kindeClientSecret}`)
   }
@@ -127,6 +135,19 @@ export async function getKindePermissions(event: H3Event) {
     return await kindeClient.getPermissions(sessionManager)
   } catch (error) {
     console.error('Error getting Kinde permissions:', error)
+    return null
+  }
+}
+
+export async function getKindeUserOrganizations(event: H3Event) {
+  const sessionManager = getKindeSessionManager(event)
+  try {
+    const isAuth = await kindeClient.isAuthenticated(sessionManager)
+    if (!isAuth) return null
+    
+    return await kindeClient.getUserOrganizations(sessionManager)
+  } catch (error) {
+    console.error('Error getting Kinde user organizations:', error)
     return null
   }
 }

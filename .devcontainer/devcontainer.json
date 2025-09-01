@@ -42,7 +42,8 @@
 				"esbenp.prettier-vscode",
 				"rvest.vs-code-prettier-eslint",
 				"eamodio.gitlens",
-				"qwtel.sqlite-viewer"
+				"qwtel.sqlite-viewer",
+				"cweijan.vscode-database-client2"
 			]
 		}
 	}

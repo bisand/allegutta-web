@@ -86,7 +86,7 @@ export async function getOptionalAuth(event: H3Event): Promise<AuthUser | null> 
           given_name: kindeUser.given_name,
           family_name: kindeUser.family_name,
           picture: kindeUser.picture || undefined
-        })
+        }, event)
         return user
       }
     }
@@ -110,11 +110,36 @@ export async function requireAuth(event: H3Event): Promise<AuthUser> {
   })
 }
 
-export async function getUserFromKinde(kindeUser: KindeUser): Promise<AuthUser> {
+export async function getUserFromKinde(kindeUser: KindeUser, event?: H3Event): Promise<AuthUser> {
   // Find or create user in our database
   let user = await prisma.user.findUnique({
     where: { kindeId: kindeUser.id }
   })
+
+  let permissions: string[] = []
+  let roles: string[] = []
+  
+  // Add admin role/permissions for specific emails (for testing)
+  const adminEmails = ['test@example.com', 'admin@allegutta.com']
+  if (adminEmails.includes(kindeUser.email)) {
+    roles = ['admin']
+    permissions = ['admin:manage', 'write:portfolios', 'read:portfolios']
+  }
+  
+  // Try to get permissions from Kinde if we have an event
+  if (event) {
+    try {
+      const kindePermissions = await getKindePermissions(event)
+      if (kindePermissions && kindePermissions.permissions) {
+        const kindePerms = kindePermissions.permissions.map((p: { key?: string; name?: string } | string) => 
+          typeof p === 'string' ? p : (p.key || p.name || '')
+        ).filter(Boolean)
+        permissions = [...new Set([...permissions, ...kindePerms])] // Merge and dedupe
+      }
+    } catch (error) {
+      console.error('Failed to get permissions from Kinde:', error)
+    }
+  }
 
   if (!user) {
     user = await prisma.user.create({
@@ -124,8 +149,8 @@ export async function getUserFromKinde(kindeUser: KindeUser): Promise<AuthUser> 
         firstName: kindeUser.given_name,
         lastName: kindeUser.family_name,
         picture: kindeUser.picture,
-        roles: JSON.stringify([]), // Default to empty roles
-        permissions: JSON.stringify([]) // Default to empty permissions
+        roles: JSON.stringify(roles),
+        permissions: JSON.stringify(permissions)
       }
     })
 
@@ -136,6 +161,15 @@ export async function getUserFromKinde(kindeUser: KindeUser): Promise<AuthUser> 
         description: 'Default portfolio',
         userId: user.id,
         isDefault: true
+      }
+    })
+  } else {
+    // Update existing user's permissions and roles on login
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        roles: JSON.stringify(roles),
+        permissions: JSON.stringify(permissions)
       }
     })
   }

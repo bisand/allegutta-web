@@ -364,7 +364,7 @@ import {
 import type { Portfolio } from '~/stores/portfolio'
 
 definePageMeta({
-  middleware: 'admin'
+  middleware: 'admin-client'
 })
 
 interface TransactionData {

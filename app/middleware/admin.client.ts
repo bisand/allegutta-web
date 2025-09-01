@@ -1,10 +1,17 @@
 export default defineNuxtRouteMiddleware(async (_to, _from) => {
-  const { loggedIn, canManagePortfolios, initialize } = useAppAuth()
+  const { loggedIn, canManagePortfolios, initialize, user } = useAppAuth()
   
-  // Ensure auth state is initialized on client-side
-  if (!import.meta.server) {
-    await initialize()
-  }
+  // Ensure auth state is initialized
+  await initialize()
+  
+  // Debug logging
+  console.log('Admin middleware - Auth state:', {
+    loggedIn: loggedIn.value,
+    canManagePortfolios: canManagePortfolios.value,
+    userRoles: user.value?.roles,
+    userPermissions: user.value?.permissions,
+    user: user.value
+  })
   
   // Check if user is logged in
   if (!loggedIn.value) {

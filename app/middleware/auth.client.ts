@@ -6,10 +6,8 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
   
   const { loggedIn, initialize } = useAppAuth()
   
-  // Ensure auth state is initialized on client-side
-  if (!import.meta.server) {
-    await initialize()
-  }
+  // Ensure auth state is initialized
+  await initialize()
   
   // Check if user is logged in
   if (!loggedIn.value) {
