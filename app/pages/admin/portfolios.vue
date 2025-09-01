@@ -459,6 +459,10 @@ import {
 } from '@heroicons/vue/24/outline'
 import type { Portfolio } from '~/stores/portfolio'
 
+definePageMeta({
+  middleware: 'admin'
+})
+
 interface TransactionData {
   id: string
   portfolioId: string
@@ -483,17 +487,8 @@ interface HoldingData {
   updatedAt: string
 }
 
-// Auth check - redirect if not authenticated or not admin
-const { loggedIn, canManagePortfolios } = useAppAuth()
+const { canManagePortfolios } = useAppAuth()
 const portfolioStore = usePortfolioStore()
-
-// Redirect if not logged in
-if (!loggedIn) {
-  throw createError({
-    statusCode: 401,
-    statusMessage: 'Unauthorized'
-  })
-}
 
 // Modal states
 const showCreateModal = ref(false)

@@ -107,6 +107,15 @@
 
           <!-- Authentication buttons -->
           <div v-if="!loggedIn" class="flex items-center space-x-2">
+            <!-- Development test login -->
+            <button
+              v-if="isDevelopment"
+              class="px-3 py-2 text-sm font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded-lg transition-colors"
+              @click="testLogin"
+            >
+              Test Admin
+            </button>
+            
             <NuxtLink 
               to="/api/auth/login"
               external
@@ -288,13 +297,15 @@ import {
   PlusIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, user, logout } = useAppAuth()
+const { loggedIn, user, logout, initialize } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
 const mobileMenuOpen = ref(false)
 const headerRef = ref()
+const config = useRuntimeConfig()
 
 const isDark = computed(() => colorMode.value === 'dark')
+const isDevelopment = computed(() => config.public.baseUrl?.includes('localhost'))
 
 const userDisplayName = computed(() => {
   if (!user.value) return 'User'
@@ -303,5 +314,15 @@ const userDisplayName = computed(() => {
 
 function toggleDarkMode(): void {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+}
+
+async function testLogin(): Promise<void> {
+  try {
+    await $fetch('/api/auth/test-login', { method: 'POST' })
+    await initialize()
+    await navigateTo('/portfolio')
+  } catch (error) {
+    console.error('Test login failed:', error)
+  }
 }
 </script>

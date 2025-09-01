@@ -30,7 +30,8 @@ interface AuthUser extends User {
   permissionsList: string[]
 }
 
-export async function requireAuth(event: H3Event): Promise<AuthUser> {
+// Optional auth - returns user if authenticated, null if not
+export async function getOptionalAuth(event: H3Event): Promise<AuthUser | null> {
   const config = useRuntimeConfig()
   
   // Check for JWT token in cookie first
@@ -71,21 +72,14 @@ export async function requireAuth(event: H3Event): Promise<AuthUser> {
     }
   }
   
-  // Development mode fallback - use test user only if no token was provided
-  if (config.public.baseUrl?.includes('localhost') && !token) {
-    const user = await prisma.user.findUnique({
-      where: { kindeId: 'test_user_1' }
-    })
-    
-    if (user) {
-      return {
-        ...user,
-        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
-        avatar: user.picture || undefined,
-        rolesList: JSON.parse(user.roles || '[]'),
-        permissionsList: JSON.parse(user.permissions || '[]')
-      }
-    }
+  return null
+}
+
+export async function requireAuth(event: H3Event): Promise<AuthUser> {
+  const user = await getOptionalAuth(event)
+  
+  if (user) {
+    return user
   }
 
   throw createError({
