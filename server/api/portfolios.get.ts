@@ -1,7 +1,7 @@
 import prisma from '../lib/prisma'
 import { getOptionalAuth } from '../lib/auth'
 
-// GET /api/portfolios - Get user's portfolios (authenticated) or public portfolios (unauthenticated)
+// GET /api/portfolios - Get all portfolios (public for all users)
 export default defineEventHandler(async (event) => {
   if (getMethod(event) !== 'GET') {
     throw createError({
@@ -13,45 +13,26 @@ export default defineEventHandler(async (event) => {
   const user = await getOptionalAuth(event)
 
   try {
-    if (user) {
-      // Authenticated user - return their portfolios
-      const portfolios = await prisma.portfolio.findMany({
-        where: {
-          userId: user.id
-        },
-        orderBy: {
-          isDefault: 'desc'
-        }
-      })
-
-      return {
-        success: true,
-        data: portfolios
+    // Return all portfolios for everyone (read-only for unauthenticated users)
+    const portfolios = await prisma.portfolio.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        isDefault: true,
+        createdAt: true,
+        updatedAt: true,
+        // Don't include userId for privacy
+      },
+      orderBy: {
+        isDefault: 'desc'
       }
-    } else {
-      // Unauthenticated user - return only default portfolios (sample data)
-      const portfolios = await prisma.portfolio.findMany({
-        where: {
-          isDefault: true
-        },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          isDefault: true,
-          createdAt: true,
-          updatedAt: true,
-          // Don't include user information for privacy
-        },
-        orderBy: {
-          isDefault: 'desc'
-        }
-      })
+    })
 
-      return {
-        success: true,
-        data: portfolios
-      }
+    return {
+      success: true,
+      data: portfolios,
+      isAuthenticated: !!user
     }
   } catch (error) {
     console.error('Failed to fetch portfolios:', error)

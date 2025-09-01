@@ -1,4 +1,4 @@
-import { kindeClient, getKindeSessionManager } from '../../lib/kinde-server'
+import { getKindeSessionManager } from '../../lib/kinde-server'
 
 export default defineEventHandler(async (event) => {
   if (getMethod(event) !== 'POST') {
@@ -10,16 +10,14 @@ export default defineEventHandler(async (event) => {
 
   try {
     const sessionManager = getKindeSessionManager(event)
-    const logoutUrl = await kindeClient.logout(sessionManager)
+    await sessionManager.destroySession()
     
-    return {
-      logoutUrl: logoutUrl.toString()
-    }
+    return { success: true, message: 'Session cleared' }
   } catch (error) {
-    console.error('Logout error:', error)
+    console.error('Clear session error:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Logout failed'
+      statusMessage: 'Failed to clear session'
     })
   }
 })

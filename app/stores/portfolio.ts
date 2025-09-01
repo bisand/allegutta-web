@@ -93,13 +93,13 @@ export const usePortfolioStore = defineStore('portfolio', {
       const costBasis = state.holdings.reduce((total, holding) => {
         return total + (holding.quantity * holding.avgPrice)
       }, 0)
-      
+
       if (costBasis === 0) return 0
-      
+
       const currentValue = state.holdings.reduce((total, holding) => {
         return total + (holding.quantity * (holding.currentPrice || holding.avgPrice))
       }, 0)
-      
+
       return ((currentValue - costBasis) / costBasis) * 100
     },
 
@@ -147,7 +147,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         this.loading = true
         // Always fetch public portfolios
         await this.fetchPublicPortfolios()
-        
+
         // Try to initialize user data if authenticated (will fail silently if not authenticated)
         try {
           await this.initializeUser()
@@ -166,7 +166,7 @@ export const usePortfolioStore = defineStore('portfolio', {
       try {
         this.loading = true
         await this.fetchPortfolios()
-        
+
         // Set default portfolio if available
         if (this.portfolios.length > 0) {
           const defaultPortfolio = this.portfolios.find(p => p.isDefault) || this.portfolios[0]
@@ -223,14 +223,14 @@ export const usePortfolioStore = defineStore('portfolio', {
           method: 'POST',
           body: portfolioData
         }) as { data: Portfolio }
-        
+
         this.portfolios.push(response.data)
-        
+
         // Set as current if it's the first portfolio
         if (this.portfolios.length === 1) {
           await this.setCurrentPortfolio(response.data.id)
         }
-        
+
         return response.data
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to create portfolio'
@@ -244,7 +244,7 @@ export const usePortfolioStore = defineStore('portfolio', {
       try {
         this.loading = true
         this.currentPortfolio = this.portfolios.find(p => p.id === portfolioId) || null
-        
+
         if (this.currentPortfolio) {
           await Promise.all([
             this.fetchTransactions(portfolioId),
@@ -285,17 +285,17 @@ export const usePortfolioStore = defineStore('portfolio', {
         if (!this.currentPortfolio) {
           throw new Error('No current portfolio selected')
         }
-        
+
         const response = await $fetch(`/api/portfolios/${this.currentPortfolio.id}/transactions`, {
           method: 'POST',
           body: transactionData
         }) as { data: Transaction }
-        
+
         this.transactions.unshift(response.data)
-        
+
         // Refresh holdings after adding transaction
         await this.fetchHoldings(this.currentPortfolio.id)
-        
+
         return response.data
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to add transaction'
@@ -312,17 +312,17 @@ export const usePortfolioStore = defineStore('portfolio', {
           method: 'PUT',
           body: transactionData
         }) as { data: Transaction }
-        
+
         const index = this.transactions.findIndex(t => t.id === transactionId)
         if (index !== -1) {
           this.transactions[index] = response.data
         }
-        
+
         // Refresh holdings after updating transaction
         if (this.currentPortfolio) {
           await this.fetchHoldings(this.currentPortfolio.id)
         }
-        
+
         return response.data
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to update transaction'
@@ -338,9 +338,9 @@ export const usePortfolioStore = defineStore('portfolio', {
         await $fetch(`/api/transactions/${transactionId}`, {
           method: 'DELETE'
         })
-        
+
         this.transactions = this.transactions.filter(t => t.id !== transactionId)
-        
+
         // Refresh holdings after deleting transaction
         if (this.currentPortfolio) {
           await this.fetchHoldings(this.currentPortfolio.id)
@@ -359,16 +359,16 @@ export const usePortfolioStore = defineStore('portfolio', {
         if (!this.currentPortfolio) {
           throw new Error('No current portfolio selected')
         }
-        
+
         // TODO: Implement price update API endpoint
         /*
         await $fetch(`/api/portfolios/${this.currentPortfolio.id}/update-prices`, {
           method: 'POST' as const
         })
         */
-        
+
         console.log('Price update feature will be implemented later')
-        
+
         // Refresh holdings after updating prices
         await this.fetchHoldings(this.currentPortfolio.id)
       } catch (error) {

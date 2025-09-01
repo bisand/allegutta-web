@@ -37,47 +37,88 @@
                 leave-to-class="transform scale-95 opacity-0"
               >
                 <MenuItems class="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100 dark:divide-gray-700 z-[60]">
-                  <div class="py-1">
-                    <!-- Portfolio list -->
-                    <MenuItem 
-                      v-for="portfolio in portfolioStore.allPortfolios" 
-                      :key="portfolio.id" 
-                      v-slot="{ active }"
-                    >
-                      <NuxtLink
-                        :to="`/portfolio/${portfolio.id}`"
-                        :class="[
-                          active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                          'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
-                        ]"
+                  <!-- When logged in: show portfolios -->
+                  <template v-if="loggedIn">
+                    <div class="py-1">
+                      <!-- Portfolio list -->
+                      <MenuItem 
+                        v-for="portfolio in portfolioStore.allPortfolios" 
+                        :key="portfolio.id" 
+                        v-slot="{ active }"
                       >
-                        <ChartBarIcon class="w-4 h-4 mr-3" />
-                        {{ portfolio.name }}
-                        <span v-if="portfolio.isDefault" class="ml-auto text-xs text-primary-500">(Default)</span>
-                      </NuxtLink>
-                    </MenuItem>
-                    
-                    <!-- Empty state -->
-                    <div v-if="portfolioStore.allPortfolios.length === 0" class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
-                      No portfolios available
+                        <NuxtLink
+                          :to="`/portfolio/${portfolio.id}`"
+                          :class="[
+                            active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                            'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                          ]"
+                        >
+                          <ChartBarIcon class="w-4 h-4 mr-3" />
+                          {{ portfolio.name }}
+                          <span v-if="portfolio.isDefault" class="ml-auto text-xs text-primary-500">(Default)</span>
+                        </NuxtLink>
+                      </MenuItem>
+                      
+                      <!-- Empty state -->
+                      <div v-if="portfolioStore.allPortfolios.length === 0" class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                        No portfolios available
+                      </div>
                     </div>
-                  </div>
+                    
+                    <!-- Admin actions -->
+                    <div v-if="portfolioStore.canManagePortfolios" class="py-1">
+                      <MenuItem v-slot="{ active }">
+                        <NuxtLink
+                          to="/admin/portfolios"
+                          :class="[
+                            active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                            'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                          ]"
+                        >
+                          <PlusIcon class="w-4 h-4 mr-3" />
+                          Manage Portfolios
+                        </NuxtLink>
+                      </MenuItem>
+                    </div>
+                  </template>
                   
-                  <!-- Admin actions -->
-                  <div v-if="portfolioStore.canManagePortfolios" class="py-1">
-                    <MenuItem v-slot="{ active }">
-                      <NuxtLink
-                        to="/admin/portfolios"
-                        :class="[
-                          active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                          'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
-                        ]"
-                      >
-                        <PlusIcon class="w-4 h-4 mr-3" />
-                        Manage Portfolios
-                      </NuxtLink>
-                    </MenuItem>
-                  </div>
+                  <!-- When not logged in: show login options -->
+                  <template v-else>
+                    <div class="py-1">
+                      <div class="px-4 py-3">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">Sign in to access your portfolios</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage your investments and track performance</p>
+                      </div>
+                    </div>
+                    
+                    <div class="py-1">
+                      <MenuItem v-slot="{ active }">
+                        <button
+                          :class="[
+                            active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                            'flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 text-left'
+                          ]"
+                          @click="login"
+                        >
+                          <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
+                          Sign In
+                        </button>
+                      </MenuItem>
+                      
+                      <MenuItem v-slot="{ active }">
+                        <button
+                          :class="[
+                            active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                            'flex items-center w-full px-4 py-2 text-sm text-primary-600 dark:text-primary-400 text-left font-medium'
+                          ]"
+                          @click="register"
+                        >
+                          <PlusIcon class="w-4 h-4 mr-3" />
+                          Create Account
+                        </button>
+                      </MenuItem>
+                    </div>
+                  </template>
                 </MenuItems>
               </Transition>
             </Menu>
@@ -107,15 +148,6 @@
 
           <!-- Authentication buttons -->
           <div v-if="!loggedIn" class="flex items-center space-x-2">
-            <!-- Development test login -->
-            <button
-              v-if="isDevelopment"
-              class="px-3 py-2 text-sm font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded-lg transition-colors"
-              @click="testLogin"
-            >
-              Test Admin
-            </button>
-            
             <NuxtLink 
               to="/api/auth/login"
               external
@@ -124,7 +156,7 @@
               Sign In
             </NuxtLink>
             <NuxtLink 
-              to="/api/auth/login"
+              to="/api/auth/register"
               external
               class="px-3 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
             >
@@ -238,7 +270,7 @@
             </NuxtLink>
             
             <!-- Portfolios section -->
-            <div class="space-y-1">
+            <div v-if="loggedIn" class="space-y-1">
               <div class="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400">
                 Portfolios
               </div>
@@ -269,6 +301,25 @@
               </NuxtLink>
             </div>
             
+            <!-- Authentication section for logged out users -->
+            <div v-else class="space-y-1">
+              <div class="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                Account
+              </div>
+              <button 
+                class="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
+                @click="login(); mobileMenuOpen = false"
+              >
+                Sign In
+              </button>
+              <button 
+                class="block w-full text-left text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
+                @click="register(); mobileMenuOpen = false"
+              >
+                Create Account
+              </button>
+            </div>
+            
             <NuxtLink 
               to="/about" 
               class="block text-gray-900 dark:text-white hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-md text-base font-medium transition-colors"
@@ -297,15 +348,13 @@ import {
   PlusIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, user, logout, initialize } = useAppAuth()
+const { loggedIn, user, login, register, logout } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
 const mobileMenuOpen = ref(false)
 const headerRef = ref()
-const config = useRuntimeConfig()
 
 const isDark = computed(() => colorMode.value === 'dark')
-const isDevelopment = computed(() => config.public.baseUrl?.includes('localhost'))
 
 const userDisplayName = computed(() => {
   if (!user.value) return 'User'
@@ -314,15 +363,5 @@ const userDisplayName = computed(() => {
 
 function toggleDarkMode(): void {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-}
-
-async function testLogin(): Promise<void> {
-  try {
-    await $fetch('/api/auth/test-login', { method: 'POST' })
-    await initialize()
-    await navigateTo('/portfolio')
-  } catch (error) {
-    console.error('Test login failed:', error)
-  }
 }
 </script>

@@ -5,110 +5,110 @@ const prisma = new PrismaClient()
 async function seed() {
   console.log('Seeding database...')
 
-  // Delete existing test user if exists
+  // Clean up any existing test data first - more comprehensive cleanup
+  console.log('Cleaning up existing test data...')
+  
+  // Delete all transactions for test users
+  await prisma.transaction.deleteMany({
+    where: {
+      portfolio: {
+        user: {
+          kindeId: 'test_user_1'
+        }
+      }
+    }
+  })
+  
+  // Delete all holdings for test users  
+  await prisma.holding.deleteMany({
+    where: {
+      portfolio: {
+        user: {
+          kindeId: 'test_user_1'
+        }
+      }
+    }
+  })
+  
+  // Delete all portfolios for test users
+  await prisma.portfolio.deleteMany({
+    where: {
+      user: {
+        kindeId: 'test_user_1'
+      }
+    }
+  })
+  
+  // Delete test users
   await prisma.user.deleteMany({
     where: { kindeId: 'test_user_1' }
   })
 
-  // Create a test user with admin permissions
-  const user = await prisma.user.create({
+  console.log('Cleanup completed, creating fresh test data...')
+
+  // Create test user for development
+  const testUser = await prisma.user.create({
     data: {
       kindeId: 'test_user_1',
-      email: 'admin@example.com',
+      email: 'test@example.com',
       firstName: 'Test',
-      lastName: 'Admin',
-      roles: JSON.stringify(['admin', 'portfolio_admin']),
-      permissions: JSON.stringify(['admin:manage', 'read:portfolios', 'write:portfolios'])
+      lastName: 'User',
+      picture: null,
+      roles: JSON.stringify(['user']),
+      permissions: JSON.stringify(['read:portfolios', 'write:portfolios'])
     }
   })
 
-  // Create a portfolio
-  const portfolio = await prisma.portfolio.create({
+  console.log('Created test user:', testUser.email)
+
+  // Create a default portfolio for the test user
+  const defaultPortfolio = await prisma.portfolio.create({
     data: {
       name: 'My Portfolio',
-      description: 'Test portfolio for development',
-      userId: user.id,
+      description: 'Default portfolio for testing',
+      userId: testUser.id,
       isDefault: true
     }
   })
 
-  // Create some sample transactions
+  console.log('Created default portfolio:', defaultPortfolio.name)
+
+  // Add some sample transactions
   const transactions = [
     {
-      symbol: 'AAPL',
       type: 'BUY',
+      symbol: 'AAPL',
       quantity: 10,
       price: 150.00,
-      fees: 9.99,
-      date: new Date('2024-01-15')
+      date: new Date('2024-01-15'),
+      portfolioId: defaultPortfolio.id
     },
     {
+      type: 'BUY', 
+      symbol: 'MSFT',
+      quantity: 5,
+      price: 300.00,
+      date: new Date('2024-02-01'),
+      portfolioId: defaultPortfolio.id
+    },
+    {
+      type: 'DIVIDEND',
       symbol: 'AAPL',
-      type: 'BUY',
-      quantity: 5,
-      price: 145.00,
-      fees: 9.99,
-      date: new Date('2024-02-15')
-    },
-    {
-      symbol: 'TSLA',
-      type: 'BUY',
-      quantity: 20,
-      price: 200.00,
-      fees: 9.99,
-      date: new Date('2024-01-20')
-    },
-    {
-      symbol: 'GOOGL',
-      type: 'BUY',
-      quantity: 5,
-      price: 2500.00,
-      fees: 9.99,
-      date: new Date('2024-03-01')
+      quantity: 0,
+      price: 2.50,
+      date: new Date('2024-03-15'),
+      portfolioId: defaultPortfolio.id
     }
   ]
 
   for (const transaction of transactions) {
-    await prisma.transaction.create({
-      data: {
-        ...transaction,
-        portfolioId: portfolio.id
-      }
-    })
+    await prisma.transaction.create({ data: transaction })
   }
 
-  // Create holdings based on transactions
-  const holdings = [
-    {
-      symbol: 'AAPL',
-      quantity: 15,
-      avgPrice: 148.33,
-      currentPrice: 175.00
-    },
-    {
-      symbol: 'TSLA',
-      quantity: 20,
-      avgPrice: 200.50,
-      currentPrice: 180.00
-    },
-    {
-      symbol: 'GOOGL',
-      quantity: 5,
-      avgPrice: 2502.00,
-      currentPrice: 2650.00
-    }
-  ]
-
-  for (const holding of holdings) {
-    await prisma.holding.create({
-      data: {
-        ...holding,
-        portfolioId: portfolio.id
-      }
-    })
-  }
+  console.log(`Created ${transactions.length} sample transactions`)
 
   console.log('Database seeded successfully!')
+  console.log('Test user: test@example.com (kindeId: test_user_1)')
 }
 
 seed()

@@ -10,15 +10,15 @@ export default defineEventHandler(async (event) => {
 
   try {
     const sessionManager = getKindeSessionManager(event)
-    const loginUrl = await kindeClient.login(sessionManager)
+    const registerUrl = await kindeClient.register(sessionManager)
     
-    // Redirect to Kinde login
-    await sendRedirect(event, loginUrl.toString())
+    // Redirect to Kinde registration
+    await sendRedirect(event, registerUrl.toString())
   } catch (error) {
-    console.error('Login error:', error)
+    console.error('Register error:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Login failed'
+      statusMessage: 'Registration failed'
     })
   }
 })

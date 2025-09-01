@@ -10,9 +10,20 @@
         <p class="text-gray-600 dark:text-gray-400 mb-6">
           Please sign in to access your portfolio
         </p>
-        <NuxtLink to="/api/login" external class="text-primary-500 hover:text-primary-600">
-          Sign In
-        </NuxtLink>
+        <div class="space-x-4">
+          <button
+            class="px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
+            @click="() => login()"
+          >
+            Sign In
+          </button>
+          <button
+            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            @click="() => register()"
+          >
+            Create Account
+          </button>
+        </div>
       </div>
     </div>
 
@@ -124,12 +135,12 @@ import {
   PlusIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn } = useAuth()
+const { loggedIn, login, register } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 
 // Redirect to default portfolio if user has one and only one portfolio
 watch(() => portfolioStore.portfolios, (portfolios) => {
-  if (portfolios.length === 1) {
+  if (portfolios.length === 1 && portfolios[0]) {
     // Auto-redirect to the single portfolio
     navigateTo(`/portfolio/${portfolios[0].id}`)
   } else if (portfolios.length > 1) {

@@ -60,15 +60,35 @@ export const useAppAuth = () => {
     }
   }
 
+  // Register with Kinde
+  const register = async (redirectTo?: string) => {
+    if (redirectTo) {
+      // Store redirect URL for after registration
+      await navigateTo(`/api/auth/register?redirect=${encodeURIComponent(redirectTo)}`)
+    } else {
+      await navigateTo('/api/auth/register')
+    }
+  }
+
   // Logout
   const logout = async () => {
     try {
-      await $fetch('/api/auth/logout', { method: 'POST' })
+      const response = await $fetch<{ logoutUrl: string }>('/api/auth/logout', { method: 'POST' })
+      authState.value.user = null
+      authState.value.loggedIn = false
+      
+      // Redirect to Kinde logout URL
+      if (response.logoutUrl) {
+        await navigateTo(response.logoutUrl, { external: true })
+      } else {
+        await navigateTo('/')
+      }
+    } catch (error) {
+      console.error('Logout failed:', error)
+      // Fallback: clear state and redirect anyway
       authState.value.user = null
       authState.value.loggedIn = false
       await navigateTo('/')
-    } catch (error) {
-      console.error('Logout failed:', error)
     }
   }
 
@@ -110,6 +130,7 @@ export const useAppAuth = () => {
     // Actions
     initialize,
     login,
+    register,
     logout,
     
     // Role & Permission checks

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import type { H3Event } from 'h3'
 import prisma from './prisma'
+import { getKindeUser, isKindeAuthenticated, getKindePermissions } from './kinde-server'
 
 interface KindeUser {
   id: string
@@ -71,7 +72,28 @@ export async function getOptionalAuth(event: H3Event): Promise<AuthUser | null> 
       deleteCookie(event, 'auth-token')
     }
   }
-  
+
+  // Fallback: Try Kinde TypeScript SDK authentication
+  try {
+    const isAuthenticated = await isKindeAuthenticated(event)
+    if (isAuthenticated) {
+      const kindeUser = await getKindeUser(event)
+      if (kindeUser) {
+        // Find or create user in database
+        const user = await getUserFromKinde({
+          id: kindeUser.id,
+          email: kindeUser.email,
+          given_name: kindeUser.given_name,
+          family_name: kindeUser.family_name,
+          picture: kindeUser.picture || undefined
+        })
+        return user
+      }
+    }
+  } catch (error) {
+    console.error('Kinde authentication check failed:', error)
+  }
+
   return null
 }
 

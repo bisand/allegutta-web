@@ -29,12 +29,9 @@
               Create and manage portfolios for the application
             </p>
           </div>
-          
-          <button 
-            type="button"
-            class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors mt-4 sm:mt-0"
-            @click="showCreateModal = true"
-          >
+
+          <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors mt-4 sm:mt-0"
+            @click="showCreateModal = true">
             <PlusIcon class="w-4 h-4 mr-2" />
             Create Portfolio
           </button>
@@ -76,16 +73,10 @@
                   {{ portfolio.description || 'No description' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span 
-                    v-if="portfolio.isDefault"
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                  >
+                  <span v-if="portfolio.isDefault" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     Default
                   </span>
-                  <span 
-                    v-else
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                  >
+                  <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                     Active
                   </span>
                 </td>
@@ -94,32 +85,16 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div class="flex items-center space-x-2">
-                    <NuxtLink 
-                      :to="`/portfolio/${portfolio.id}`"
-                      class="text-primary-600 hover:text-primary-500"
-                    >
+                    <NuxtLink :to="`/portfolio/${portfolio.id}`" class="text-primary-600 hover:text-primary-500">
                       View
                     </NuxtLink>
-                    <button 
-                      type="button"
-                      class="text-indigo-600 hover:text-indigo-500"
-                      @click="editPortfolio(portfolio)"
-                    >
+                    <button type="button" class="text-indigo-600 hover:text-indigo-500" @click="editPortfolio(portfolio)">
                       Edit
                     </button>
-                    <button 
-                      type="button"
-                      class="text-blue-600 hover:text-blue-500"
-                      @click="manageTransactions(portfolio)"
-                    >
+                    <button type="button" class="text-blue-600 hover:text-blue-500" @click="manageTransactions(portfolio)">
                       Transactions
                     </button>
-                    <button 
-                      v-if="!portfolio.isDefault"
-                      type="button"
-                      class="text-red-600 hover:text-red-500"
-                      @click="deletePortfolio(portfolio)"
-                    >
+                    <button v-if="!portfolio.isDefault" type="button" class="text-red-600 hover:text-red-500" @click="deletePortfolio(portfolio)">
                       Delete
                     </button>
                   </div>
@@ -142,8 +117,9 @@
     <div v-if="showCreateModal || editingPortfolio" class="fixed inset-0 z-50 overflow-y-auto">
       <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeModal" />
-        
-        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+
+        <div
+          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <form @submit.prevent="submitForm">
             <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
               <div class="sm:flex sm:items-start">
@@ -151,42 +127,28 @@
                   <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
                     {{ editingPortfolio ? 'Edit Portfolio' : 'Create New Portfolio' }}
                   </h3>
-                  
+
                   <div class="space-y-4">
                     <div>
                       <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Portfolio Name
                       </label>
-                      <input
-                        id="name"
-                        v-model="form.name"
-                        type="text"
-                        required
+                      <input id="name" v-model="form.name" type="text" required
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        placeholder="Enter portfolio name"
-                      >
+                        placeholder="Enter portfolio name">
                     </div>
-                    
+
                     <div>
                       <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Description (Optional)
                       </label>
-                      <textarea
-                        id="description"
-                        v-model="form.description"
-                        rows="3"
+                      <textarea id="description" v-model="form.description" rows="3"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        placeholder="Enter portfolio description"
-                      />
+                        placeholder="Enter portfolio description" />
                     </div>
-                    
+
                     <div class="flex items-center">
-                      <input
-                        id="isDefault"
-                        v-model="form.isDefault"
-                        type="checkbox"
-                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                      >
+                      <input id="isDefault" v-model="form.isDefault" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
                       <label for="isDefault" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                         Set as default portfolio
                       </label>
@@ -195,21 +157,16 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-              <button
-                type="submit"
-                :disabled="submitting"
-                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
-              >
+              <button type="submit" :disabled="submitting"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">
                 <span v-if="submitting">Saving...</span>
                 <span v-else>{{ editingPortfolio ? 'Update' : 'Create' }}</span>
               </button>
-              <button
-                type="button"
+              <button type="button"
                 class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-700"
-                @click="closeModal"
-              >
+                @click="closeModal">
                 Cancel
               </button>
             </div>
@@ -222,8 +179,9 @@
     <div v-if="showTransactionModal" class="fixed inset-0 z-50 overflow-y-auto">
       <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeTransactionModal" />
-        
-        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+
+        <div
+          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
           <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
@@ -235,11 +193,8 @@
                   Portfolio: {{ selectedPortfolio?.name }}
                 </p>
               </div>
-              <button
-                type="button"
-                class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-                @click="showAddTransactionForm = true"
-              >
+              <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
+                @click="showAddTransactionForm = true">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Add Transaction
               </button>
@@ -263,32 +218,21 @@
             <div v-if="showAddTransactionForm" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
               <div class="flex items-center justify-between mb-4">
                 <h4 class="text-sm font-medium text-gray-900 dark:text-white">Add New Transaction</h4>
-                <button
-                  type="button"
-                  class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  @click="cancelAddTransaction"
-                >
+                <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="cancelAddTransaction">
                   ✕
                 </button>
               </div>
               <form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" @submit.prevent="submitTransaction">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Symbol</label>
-                  <input
-                    v-model="transactionForm.symbol"
-                    type="text"
-                    required
+                  <input v-model="transactionForm.symbol" type="text" required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="AAPL"
-                  >
+                    placeholder="AAPL">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
-                  <select
-                    v-model="transactionForm.type"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  >
+                  <select v-model="transactionForm.type" required
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="BUY">Buy</option>
                     <option value="SELL">Sell</option>
                     <option value="DIVIDEND">Dividend</option>
@@ -298,68 +242,41 @@
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
-                  <input
-                    v-model.number="transactionForm.quantity"
-                    type="number"
-                    step="0.0001"
-                    required
+                  <input v-model.number="transactionForm.quantity" type="number" step="0.0001" required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="10"
-                  >
+                    placeholder="10">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ($)</label>
-                  <input
-                    v-model.number="transactionForm.price"
-                    type="number"
-                    step="0.01"
-                    required
+                  <input v-model.number="transactionForm.price" type="number" step="0.01" required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="150.00"
-                  >
+                    placeholder="150.00">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fees ($)</label>
-                  <input
-                    v-model.number="transactionForm.fees"
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <input v-model.number="transactionForm.fees" type="number" step="0.01" min="0"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="9.99"
-                  >
+                    placeholder="9.99">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-                  <input
-                    v-model="transactionForm.date"
-                    type="date"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  >
+                  <input v-model="transactionForm.date" type="date" required
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
                 <div class="md:col-span-2 lg:col-span-3">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes (Optional)</label>
-                  <input
-                    v-model="transactionForm.notes"
-                    type="text"
+                  <input v-model="transactionForm.notes" type="text"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Transaction notes"
-                  >
+                    placeholder="Transaction notes">
                 </div>
                 <div class="md:col-span-2 lg:col-span-3 flex justify-end space-x-3">
-                  <button
-                    type="button"
+                  <button type="button"
                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-700"
-                    @click="cancelAddTransaction"
-                  >
+                    @click="cancelAddTransaction">
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    :disabled="submittingTransaction"
-                    class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50"
-                  >
+                  <button type="submit" :disabled="submittingTransaction"
+                    class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50">
                     {{ submittingTransaction ? 'Adding...' : 'Add Transaction' }}
                   </button>
                 </div>
@@ -389,10 +306,7 @@
                       {{ transaction.symbol }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                      <span 
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                        :class="getTransactionTypeClass(transaction.type)"
-                      >
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" :class="getTransactionTypeClass(transaction.type)">
                         {{ transaction.type }}
                       </span>
                     </td>
@@ -407,18 +321,10 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div class="flex items-center space-x-2">
-                        <button 
-                          type="button"
-                          class="text-indigo-600 hover:text-indigo-500"
-                          @click="editTransaction(transaction)"
-                        >
+                        <button type="button" class="text-indigo-600 hover:text-indigo-500" @click="editTransaction(transaction)">
                           Edit
                         </button>
-                        <button 
-                          type="button"
-                          class="text-red-600 hover:text-red-500"
-                          @click="deleteTransaction(transaction)"
-                        >
+                        <button type="button" class="text-red-600 hover:text-red-500" @click="deleteTransaction(transaction)">
                           Delete
                         </button>
                       </div>
@@ -435,13 +341,11 @@
               </div>
             </div>
           </div>
-          
+
           <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 flex justify-end">
-            <button
-              type="button"
+            <button type="button"
               class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm dark:bg-gray-600 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-700"
-              @click="closeTransactionModal"
-            >
+              @click="closeTransactionModal">
               Close
             </button>
           </div>
@@ -573,7 +477,7 @@ async function loadPortfolioData(portfolioId: string): Promise<void> {
     // Load transactions
     const transactionsResponse = await $fetch(`/api/portfolios/${portfolioId}/transactions`)
     portfolioTransactions.value = transactionsResponse || []
-    
+
     // Load holdings
     const holdingsResponse = await $fetch(`/api/portfolios/${portfolioId}/holdings`)
     portfolioHoldings.value = holdingsResponse || []
@@ -585,10 +489,10 @@ async function loadPortfolioData(portfolioId: string): Promise<void> {
 // Submit new transaction
 async function submitTransaction(): Promise<void> {
   if (!selectedPortfolio.value) return
-  
+
   try {
     submittingTransaction.value = true
-    
+
     await $fetch(`/api/portfolios/${selectedPortfolio.value.id}/transactions`, {
       method: 'POST',
       body: {
@@ -601,10 +505,10 @@ async function submitTransaction(): Promise<void> {
         notes: transactionForm.notes || undefined
       }
     })
-    
+
     // Reload portfolio data
     await loadPortfolioData(selectedPortfolio.value.id)
-    
+
     // Reset form
     cancelAddTransaction()
   } catch (error) {
@@ -625,13 +529,13 @@ function editTransaction(transaction: TransactionData): void {
 // Delete transaction
 async function deleteTransaction(transaction: TransactionData): Promise<void> {
   if (!selectedPortfolio.value) return
-  
+
   if (confirm(`Are you sure you want to delete this ${transaction.type} transaction for ${transaction.symbol}?`)) {
     try {
       await $fetch(`/api/portfolios/${selectedPortfolio.value.id}/transactions/${transaction.id}`, {
         method: 'DELETE'
       })
-      
+
       // Reload portfolio data
       await loadPortfolioData(selectedPortfolio.value.id)
     } catch (error) {
@@ -674,7 +578,7 @@ async function deletePortfolio(portfolio: Portfolio): Promise<void> {
       await $fetch(`/api/portfolios/${portfolio.id}`, {
         method: 'DELETE'
       })
-      
+
       // Reload portfolios
       await portfolioStore.loadAllPortfolios()
     } catch (error) {
@@ -696,7 +600,7 @@ function formatCurrency(value: number): string {
 async function submitForm(): Promise<void> {
   try {
     submitting.value = true
-    
+
     if (editingPortfolio.value) {
       // Update existing portfolio
       await $fetch(`/api/portfolios/${editingPortfolio.value.id}`, {
@@ -715,7 +619,7 @@ async function submitForm(): Promise<void> {
         isDefault: form.isDefault
       })
     }
-    
+
     // Reload portfolios
     await portfolioStore.loadAllPortfolios()
     closeModal()

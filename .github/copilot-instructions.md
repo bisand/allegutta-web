@@ -20,7 +20,7 @@ pnpm run db:seed  # Seeds test user + sample portfolio data
 
 ### Development Server
 ```bash
-pnpm run dev  # Auto-login as test@example.com in development
+pnpm run dev & # Auto-login as test@example.com in development
 ```
 
 ### Docker Deployment
