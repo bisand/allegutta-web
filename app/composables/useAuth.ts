@@ -30,10 +30,10 @@ export const useAppAuth = () => {
   const initialize = async () => {
     try {
       authState.value.loading = true
-      
+
       // Try to get user from auth token cookie
       const user = await $fetch<AuthUser>('/api/auth/me').catch(() => null)
-      
+
       if (user) {
         authState.value.user = user
         authState.value.loggedIn = true
@@ -76,7 +76,7 @@ export const useAppAuth = () => {
       const response = await $fetch<{ logoutUrl: string }>('/api/auth/logout', { method: 'POST' })
       authState.value.user = null
       authState.value.loggedIn = false
-      
+
       // Redirect to Kinde logout URL
       if (response.logoutUrl) {
         await navigateTo(response.logoutUrl, { external: true })
@@ -116,8 +116,8 @@ export const useAppAuth = () => {
   const isAdmin = computed(() => hasRole('admin'))
 
   // Check if user can manage portfolios
-  const canManagePortfolios = computed(() => 
-    hasAnyRole(['admin', 'portfolio_admin']) || 
+  const canManagePortfolios = computed(() =>
+    hasAnyRole(['admin', 'portfolio_admin']) ||
     hasAnyPermission(['admin', 'portfolio_admin', 'admin:manage', 'write:portfolios'])
   )
 
@@ -126,19 +126,19 @@ export const useAppAuth = () => {
     user: readonly(computed(() => authState.value.user)),
     loggedIn: readonly(computed(() => authState.value.loggedIn)),
     loading: readonly(computed(() => authState.value.loading)),
-    
+
     // Actions
     initialize,
     login,
     register,
     logout,
-    
+
     // Role & Permission checks
     hasRole,
     hasAnyRole,
     hasPermission,
     hasAnyPermission,
-    
+
     // Computed helpers
     isAdmin,
     canManagePortfolios

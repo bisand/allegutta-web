@@ -348,9 +348,14 @@ import {
 
 const route = useRoute()
 const portfolioStore = usePortfolioStore()
-const { loggedIn, user } = useAuth()
+const { loggedIn, user } = useAppAuth()
 
 const showAddTransaction = ref(false)
+
+// Initialize store data
+onMounted(async () => {
+  await portfolioStore.initialize()
+})
 
 // Get portfolio ID from route
 const portfolioId = computed(() => route.params.id as string)
@@ -362,10 +367,10 @@ const currentPortfolio = computed(() => {
 
 // Check if user can edit this portfolio
 const canEdit = computed(() => {
-  if (!loggedIn || !user) return false
+  if (!loggedIn.value || !user.value) return false
   // Only portfolio owners or admins can edit
   return portfolioStore.canManagePortfolios || 
-         (currentPortfolio.value && currentPortfolio.value.userId === user.id)
+         (currentPortfolio.value && currentPortfolio.value.userId === user.value.id)
 })
 
 // Load portfolio data when route changes

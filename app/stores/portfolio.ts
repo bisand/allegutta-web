@@ -243,7 +243,7 @@ export const usePortfolioStore = defineStore('portfolio', {
     async setCurrentPortfolio(portfolioId: string): Promise<void> {
       try {
         this.loading = true
-        this.currentPortfolio = this.portfolios.find(p => p.id === portfolioId) || null
+        this.currentPortfolio = this.allPortfolios.find(p => p.id === portfolioId) || null
 
         if (this.currentPortfolio) {
           await Promise.all([
@@ -261,7 +261,14 @@ export const usePortfolioStore = defineStore('portfolio', {
 
     async fetchTransactions(portfolioId: string): Promise<void> {
       try {
-        const response = await $fetch(`/api/portfolios/${portfolioId}/transactions`) as { data: Transaction[] }
+        // Try authenticated endpoint first, fall back to public endpoint
+        let response
+        try {
+          response = await $fetch(`/api/portfolios/${portfolioId}/transactions`) as { data: Transaction[] }
+        } catch {
+          // If authenticated endpoint fails, try public endpoint
+          response = await $fetch(`/api/public/portfolios/${portfolioId}/transactions`) as { data: Transaction[] }
+        }
         this.transactions = response.data || []
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch transactions'
@@ -271,7 +278,14 @@ export const usePortfolioStore = defineStore('portfolio', {
 
     async fetchHoldings(portfolioId: string): Promise<void> {
       try {
-        const response = await $fetch(`/api/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
+        // Try authenticated endpoint first, fall back to public endpoint
+        let response
+        try {
+          response = await $fetch(`/api/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
+        } catch {
+          // If authenticated endpoint fails, try public endpoint
+          response = await $fetch(`/api/public/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
+        }
         this.holdings = response.data || []
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch holdings'
