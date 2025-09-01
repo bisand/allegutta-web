@@ -108,14 +108,14 @@
           <!-- Authentication buttons -->
           <div v-if="!loggedIn" class="flex items-center space-x-2">
             <NuxtLink 
-              to="/api/login"
+              to="/api/auth/login"
               external
               class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
               Sign In
             </NuxtLink>
             <NuxtLink 
-              to="/api/register"
+              to="/api/auth/login"
               external
               class="px-3 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
             >
@@ -180,17 +180,16 @@
                 
                 <div class="py-1">
                   <MenuItem v-slot="{ active }">
-                    <NuxtLink
-                      to="/api/logout"
-                      external
+                    <button
                       :class="[
                         active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                        'flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                        'flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 text-left'
                       ]"
+                      @click="logout"
                     >
                       <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
                       Sign out
-                    </NuxtLink>
+                    </button>
                   </MenuItem>
                 </div>
               </MenuItems>
@@ -289,7 +288,7 @@ import {
   PlusIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, user } = useAuth()
+const { loggedIn, user, logout } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
 const mobileMenuOpen = ref(false)
@@ -299,7 +298,7 @@ const isDark = computed(() => colorMode.value === 'dark')
 
 const userDisplayName = computed(() => {
   if (!user.value) return 'User'
-  return user.value.given_name || user.value.email || 'User'
+  return user.value.name || user.value.firstName || user.value.email || 'User'
 })
 
 function toggleDarkMode(): void {

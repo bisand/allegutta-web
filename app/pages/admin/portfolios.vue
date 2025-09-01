@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Access denied -->
-    <div v-if="!portfolioStore.canManagePortfolios" class="flex items-center justify-center min-h-screen">
+    <div v-if="!canManagePortfolios" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <LockClosedIcon class="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -484,7 +484,7 @@ interface HoldingData {
 }
 
 // Auth check - redirect if not authenticated or not admin
-const { loggedIn } = useAuth()
+const { loggedIn, canManagePortfolios } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 
 // Redirect if not logged in

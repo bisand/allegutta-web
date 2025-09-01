@@ -52,8 +52,24 @@ export default defineNuxtConfig({
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,
     databaseUrl: process.env.DATABASE_URL,
+    // Kinde configuration
+    kindeClientId: process.env.KINDE_CLIENT_ID,
+    kindeClientSecret: process.env.KINDE_CLIENT_SECRET,
+    kindeDomain: process.env.KINDE_DOMAIN,
+    kindeRedirectUrl: process.env.KINDE_REDIRECT_URL,
+    kindeLogoutRedirectUrl: process.env.KINDE_LOGOUT_REDIRECT_URL,
     public: {
-      baseUrl: process.env.BASE_URL || 'http://localhost:3000'
+      baseUrl: process.env.BASE_URL || 'http://localhost:3000',
+      kindeDomain: process.env.KINDE_DOMAIN
     }
+  },
+
+  // Kinde module configuration
+  kinde: {
+    // authDomain will be set from environment variables
+    // clientId will be set from environment variables  
+    // clientSecret will be set from environment variables
+    redirectURL: process.env.KINDE_REDIRECT_URL || 'http://localhost:3000/api/auth/kinde_callback',
+    logoutRedirectURL: process.env.KINDE_LOGOUT_REDIRECT_URL || 'http://localhost:3000'
   }
 })

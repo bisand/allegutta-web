@@ -17,6 +17,8 @@ model User {
   firstName   String?
   lastName    String?
   picture     String?
+  roles       String   @default("[]") // JSON array of roles from Kinde
+  permissions String   @default("[]") // JSON array of permissions from Kinde
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

@@ -42,7 +42,6 @@ interface PortfolioState {
   holdings: Holding[]
   loading: boolean
   error: string | null
-  userPermissions: string[]
 }
 
 interface CreatePortfolioData {
@@ -69,8 +68,7 @@ export const usePortfolioStore = defineStore('portfolio', {
     transactions: [],
     holdings: [],
     loading: false,
-    error: null,
-    userPermissions: []
+    error: null
   }),
 
   getters: {
@@ -120,9 +118,10 @@ export const usePortfolioStore = defineStore('portfolio', {
     },
 
     // Check if user can manage portfolios (admin or portfolio admin)
-    canManagePortfolios: (state): boolean => {
-      return state.userPermissions.includes('admin') || 
-             state.userPermissions.includes('portfolio_admin')
+    canManagePortfolios: (): boolean => {
+      // This will be used by components via the auth composable
+      // For now, return false as the auth composable will handle this
+      return false
     },
 
     // Get all portfolios (public + user's private if authenticated)
@@ -166,10 +165,7 @@ export const usePortfolioStore = defineStore('portfolio', {
     async initializeUser(): Promise<void> {
       try {
         this.loading = true
-        await Promise.all([
-          this.fetchPortfolios(),
-          this.fetchUserPermissions()
-        ])
+        await this.fetchPortfolios()
         
         // Set default portfolio if available
         if (this.portfolios.length > 0) {
@@ -194,26 +190,6 @@ export const usePortfolioStore = defineStore('portfolio', {
       } catch (error) {
         console.error('Failed to fetch public portfolios:', error)
         // Don't throw error for public portfolios - it's not critical
-      }
-    },
-
-    async fetchUserPermissions(): Promise<void> {
-      try {
-        // This would use Kinde's permission system
-        // For now, we'll check if user has admin role or specific permissions
-        const { user } = useAuth()
-        if (user && user.email) {
-          // TODO: Implement proper Kinde permission checking
-          // For now, you can manually set permissions based on user email or roles
-          this.userPermissions = []
-          
-          // Example: Check if user email indicates admin
-          if (user.email.includes('admin')) {
-            this.userPermissions.push('admin')
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch user permissions:', error)
       }
     },
 

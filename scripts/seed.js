@@ -1,15 +1,24 @@
-import prisma from '../server/lib/prisma.js'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 async function seed() {
   console.log('Seeding database...')
 
-  // Create a test user
+  // Delete existing test user if exists
+  await prisma.user.deleteMany({
+    where: { kindeId: 'test_user_1' }
+  })
+
+  // Create a test user with admin permissions
   const user = await prisma.user.create({
     data: {
       kindeId: 'test_user_1',
-      email: 'test@example.com',
+      email: 'admin@example.com',
       firstName: 'Test',
-      lastName: 'User'
+      lastName: 'Admin',
+      roles: JSON.stringify(['admin', 'portfolio_admin']),
+      permissions: JSON.stringify(['admin:manage', 'read:portfolios', 'write:portfolios'])
     }
   })
 

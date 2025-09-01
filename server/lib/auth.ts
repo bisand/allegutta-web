@@ -14,60 +14,87 @@ interface User {
   id: string
   kindeId: string
   email: string
-  name: string
-  avatar?: string
+  firstName: string | null
+  lastName: string | null
+  picture: string | null
+  roles: string // JSON array
+  permissions: string // JSON array
   createdAt: Date
   updatedAt: Date
 }
 
-export async function requireAuth(event: H3Event): Promise<User> {
+interface AuthUser extends User {
+  name: string
+  avatar?: string
+  rolesList: string[]
+  permissionsList: string[]
+}
+
+export async function requireAuth(event: H3Event): Promise<AuthUser> {
   const config = useRuntimeConfig()
   
-  // Development mode - use test user
-  if (config.public.baseUrl?.includes('localhost')) {
+  // Check for JWT token in cookie first
+  const tokenFromCookie = getCookie(event, 'auth-token')
+  
+  // Then check Authorization header
+  const authHeader = getHeader(event, 'authorization')
+  
+  const token = tokenFromCookie || (authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null)
+  
+  // If we have a token, try to authenticate with it
+  if (token) {
+    try {
+      const payload = jwt.verify(token, config.jwtSecret) as { 
+        sub: string
+        email: string
+        roles?: string[]
+        permissions?: string[]
+      }
+      
+      const user = await prisma.user.findUnique({
+        where: { kindeId: payload.sub }
+      })
+
+      if (user) {
+        return {
+          ...user,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+          avatar: user.picture || undefined,
+          rolesList: JSON.parse(user.roles || '[]'),
+          permissionsList: JSON.parse(user.permissions || '[]')
+        }
+      }
+    } catch (error) {
+      console.error('Invalid JWT token:', error)
+      // Clear invalid token
+      deleteCookie(event, 'auth-token')
+    }
+  }
+  
+  // Development mode fallback - use test user only if no token was provided
+  if (config.public.baseUrl?.includes('localhost') && !token) {
     const user = await prisma.user.findUnique({
       where: { kindeId: 'test_user_1' }
     })
     
     if (user) {
-      return user
+      return {
+        ...user,
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+        avatar: user.picture || undefined,
+        rolesList: JSON.parse(user.roles || '[]'),
+        permissionsList: JSON.parse(user.permissions || '[]')
+      }
     }
   }
 
-  const authHeader = getHeader(event, 'authorization')
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Authentication required'
-    })
-  }
-
-  const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-  
-  try {
-    const payload = jwt.verify(token, useRuntimeConfig().jwtSecret) as { sub: string }
-    const user = await prisma.user.findUnique({
-      where: { kindeId: payload.sub }
-    })
-
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'User not found'
-      })
-    }
-
-    return user
-  } catch {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Invalid or expired token'
-    })
-  }
+  throw createError({
+    statusCode: 401,
+    statusMessage: 'Authentication required'
+  })
 }
 
-export async function getUserFromKinde(kindeUser: KindeUser): Promise<User> {
+export async function getUserFromKinde(kindeUser: KindeUser): Promise<AuthUser> {
   // Find or create user in our database
   let user = await prisma.user.findUnique({
     where: { kindeId: kindeUser.id }
@@ -80,7 +107,9 @@ export async function getUserFromKinde(kindeUser: KindeUser): Promise<User> {
         email: kindeUser.email,
         firstName: kindeUser.given_name,
         lastName: kindeUser.family_name,
-        picture: kindeUser.picture
+        picture: kindeUser.picture,
+        roles: JSON.stringify([]), // Default to empty roles
+        permissions: JSON.stringify([]) // Default to empty permissions
       }
     })
 
@@ -95,5 +124,11 @@ export async function getUserFromKinde(kindeUser: KindeUser): Promise<User> {
     })
   }
 
-  return user
+  return {
+    ...user,
+    name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+    avatar: user.picture || undefined,
+    rolesList: JSON.parse(user.roles || '[]'),
+    permissionsList: JSON.parse(user.permissions || '[]')
+  }
 }
