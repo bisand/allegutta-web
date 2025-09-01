@@ -8,7 +8,17 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "db:seed": "node scripts/seed.js"
+    "start": "node .output/server/index.mjs",
+    "db:seed": "node scripts/seed.js",
+    "db:init": "./scripts/init-db.sh",
+    "db:init:docker": "./scripts/init-db.sh docker",
+    "db:init:production": "./scripts/init-db.sh production",
+    "backup": "./scripts/backup.sh local",
+    "backup:s3": "./scripts/backup.sh s3",
+    "backup:docker": "./scripts/backup.sh docker",
+    "docker:build": "docker build -t allegutta-web:latest .",
+    "docker:run": "docker run -p 3000:3000 -v allegutta_data:/app/data allegutta-web:latest",
+    "deploy:swarm": "docker stack deploy -c docker-compose.swarm.yml allegutta"
   },
   "devDependencies": {
     "@headlessui/vue": "^1.7.23",

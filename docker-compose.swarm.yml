@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  allegutta-web:
+    image: allegutta-web:latest
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/production.db
+      - NUXT_KINDE_AUTH_DOMAIN=${NUXT_KINDE_AUTH_DOMAIN}
+      - NUXT_KINDE_CLIENT_ID=${NUXT_KINDE_CLIENT_ID}
+      - NUXT_KINDE_CLIENT_SECRET=${NUXT_KINDE_CLIENT_SECRET}
+      - NUXT_KINDE_REDIRECT_URL=${NUXT_KINDE_REDIRECT_URL}
+      - NUXT_KINDE_LOGOUT_REDIRECT_URL=${NUXT_KINDE_LOGOUT_REDIRECT_URL}
+      - NUXT_KINDE_POST_LOGIN_REDIRECT_URL=${NUXT_KINDE_POST_LOGIN_REDIRECT_URL}
+      - NUXT_KINDE_PASSWORD=${NUXT_KINDE_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
+    volumes:
+      # Persistent volume for SQLite database
+      - sqlite_data:/app/data
+    deploy:
+      replicas: 1  # Important: SQLite doesn't support multiple writers
+      placement:
+        constraints:
+          - node.role == manager  # Ensure consistent placement
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  sqlite_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/allegutta/data  # Host path for persistence
+
+networks:
+  default:
+    driver: overlay
+    attachable: true

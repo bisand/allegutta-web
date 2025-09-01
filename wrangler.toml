@@ -1,0 +1,27 @@
+name = "allegutta-web"
+main = "./server/index.js"
+compatibility_date = "2023-08-07"
+
+[env.production]
+# D1 Database binding
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "allegutta-production"
+database_id = "your-d1-database-id"
+
+# Environment variables
+[env.production.vars]
+NUXT_KINDE_AUTH_DOMAIN = "https://allegutta.kinde.com"
+NUXT_KINDE_REDIRECT_URL = "https://your-domain.pages.dev/api/callback"
+NUXT_KINDE_LOGOUT_REDIRECT_URL = "https://your-domain.pages.dev"
+NUXT_KINDE_POST_LOGIN_REDIRECT_URL = "https://your-domain.pages.dev/portfolio"
+
+# Secrets (set via wrangler secret put)
+# NUXT_KINDE_CLIENT_ID
+# NUXT_KINDE_CLIENT_SECRET
+# NUXT_KINDE_PASSWORD
+# JWT_SECRET
+# NUXT_SESSION_PASSWORD
+
+[build]
+command = "pnpm run build"
