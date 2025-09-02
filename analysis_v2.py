@@ -61,7 +61,7 @@ def analyze_cash_discrepancy(transactions):
         date = tx.get('date', '')
         symbol = tx.get('symbol', '')
         
-        # Calculate cash impact
+        # Calculate cash impact based on transaction type
         cash_impact = 0
         if tx_type == 'BUY':
             cash_impact = -(amount + fees)  # Buy reduces cash, include fees
@@ -69,10 +69,16 @@ def analyze_cash_discrepancy(transactions):
             cash_impact = amount - fees     # Sell increases cash, minus fees
         elif tx_type in ['DEPOSIT', 'REFUND', 'LIQUIDATION', 'REDEMPTION']:
             cash_impact = amount           # These increase cash
+        elif tx_type == 'DIVIDEND':
+            cash_impact = amount           # Dividends increase cash (preserved as DIVIDEND)
         elif tx_type in ['WITHDRAWAL', 'DECIMAL_WITHDRAWAL']:
             cash_impact = -amount          # These decrease cash
         elif tx_type in ['DECIMAL_LIQUIDATION', 'SPIN_OFF_IN']:
             cash_impact = amount           # These typically increase cash
+        elif tx_type in ['EXCHANGE_IN']:
+            cash_impact = -(amount + fees) # Exchange in reduces cash (like buy)
+        elif tx_type in ['EXCHANGE_OUT']:
+            cash_impact = amount - fees    # Exchange out increases cash (like sell)
         
         running_balance += cash_impact
         cash_flows.append({
@@ -104,10 +110,16 @@ def analyze_cash_discrepancy(transactions):
                 type_impact += (amount - fees)
             elif tx_type in ['DEPOSIT', 'REFUND', 'LIQUIDATION', 'REDEMPTION']:
                 type_impact += amount
+            elif tx_type == 'DIVIDEND':
+                type_impact += amount           # Dividends preserved as DIVIDEND type
             elif tx_type in ['WITHDRAWAL', 'DECIMAL_WITHDRAWAL']:
                 type_impact -= amount
             elif tx_type in ['DECIMAL_LIQUIDATION', 'SPIN_OFF_IN']:
                 type_impact += amount
+            elif tx_type == 'EXCHANGE_IN':
+                type_impact -= (amount + fees)  # Exchange in like buy
+            elif tx_type == 'EXCHANGE_OUT':
+                type_impact += (amount - fees)  # Exchange out like sell
         
         total_impact += type_impact
         print(f"  {tx_type}: {count:3d} transactions, {type_impact:12,.2f} NOK")
@@ -119,7 +131,10 @@ def analyze_dividend_timing(transactions):
     """Analyze dividend transactions for timing discrepancies"""
     print("\n=== DIVIDEND ANALYSIS ===")
     
-    # Look for transactions that might be dividends (DEPOSIT with specific patterns)
+    # Look for actual DIVIDEND transactions (now preserved)
+    dividend_transactions = [tx for tx in transactions if tx.get('type') == 'DIVIDEND']
+    
+    # Also look for DEPOSIT transactions that might be dividends (fallback)
     potential_dividends = []
     
     for tx in transactions:
@@ -127,58 +142,79 @@ def analyze_dividend_timing(transactions):
         notes = tx.get('notes', '').lower() if tx.get('notes') else ''
         symbol = tx.get('symbol', '')
         
-        # Check for dividend-like patterns
+        # Check for dividend-like patterns in DEPOSIT transactions
         if (tx_type == 'DEPOSIT' and 
             (('utbytte' in notes) or ('dividend' in notes) or 
-             ('utb' in notes) or symbol != 'CASH_NOK')):
+             ('utb' in notes)) and symbol == 'CASH_NOK'):
             potential_dividends.append(tx)
     
-    print(f"Potential dividend transactions: {len(potential_dividends)}")
+    print(f"Actual DIVIDEND transactions: {len(dividend_transactions)}")
+    print(f"Potential dividend DEPOSITs: {len(potential_dividends)}")
     
-    if potential_dividends:
-        # Group by symbol
-        by_symbol = defaultdict(list)
+    # Combine both types for analysis
+    all_dividends = dividend_transactions + potential_dividends
+    
+    if all_dividends:
+        # Group by symbol or notes pattern
+        by_source = defaultdict(list)
         total_dividends = 0
         
-        for div in potential_dividends:
-            symbol = div.get('symbol', 'Unknown')
+        for div in all_dividends:
+            # For DIVIDEND transactions, use symbol; for DEPOSIT, extract from notes
+            if div.get('type') == 'DIVIDEND':
+                source = div.get('symbol', 'Unknown')
+            else:
+                notes = div.get('notes', '')
+                # Try to extract company from notes like "UTBYTTE DNB 2.7 NOK/AKSJE"
+                if 'utbytte' in notes.lower():
+                    parts = notes.upper().split()
+                    if len(parts) >= 2:
+                        source = parts[1]  # Company name after "UTBYTTE"
+                    else:
+                        source = 'Unknown'
+                else:
+                    source = 'Other'
+            
             quantity = float(div.get('quantity', 0))
             price = float(div.get('price', 0))
             amount = quantity * price
             date = div.get('date', '')
             notes = div.get('notes', '')
+            tx_type = div.get('type', '')
             
-            by_symbol[symbol].append({
+            by_source[source].append({
                 'date': date,
                 'amount': amount,
-                'notes': notes
+                'notes': notes,
+                'type': tx_type
             })
             total_dividends += amount
         
-        print(f"Total potential dividend amount: {total_dividends:,.2f} NOK")
-        print(f"Dividend-paying symbols: {len(by_symbol)}")
+        print(f"Total dividend amount: {total_dividends:,.2f} NOK")
+        print(f"Dividend sources: {len(by_source)}")
         
         # Show top dividend payers
-        symbol_totals = {}
-        for symbol, divs in by_symbol.items():
-            symbol_totals[symbol] = sum(d['amount'] for d in divs)
+        source_totals = {}
+        for source, divs in by_source.items():
+            source_totals[source] = sum(d['amount'] for d in divs)
         
-        print("\nTop potential dividend payers:")
-        for symbol, total in sorted(symbol_totals.items(), key=lambda x: x[1], reverse=True)[:10]:
-            count = len(by_symbol[symbol])
-            print(f"  {symbol:15s}: {count:2d} payments, {total:10,.2f} NOK")
+        print("\nTop dividend sources:")
+        for source, total in sorted(source_totals.items(), key=lambda x: x[1], reverse=True)[:10]:
+            count = len(by_source[source])
+            div_types = set(d['type'] for d in by_source[source])
+            print(f"  {source:15s}: {count:2d} payments, {total:10,.2f} NOK ({', '.join(div_types)})")
             
         # Show sample dividend transactions
         print("\nSample dividend transactions:")
-        for i, div in enumerate(potential_dividends[:5]):
-            symbol = div.get('symbol', 'Unknown')
+        for i, div in enumerate(all_dividends[:5]):
             amount = float(div.get('quantity', 0)) * float(div.get('price', 0))
             notes = div.get('notes', '')
-            print(f"  {symbol}: {amount:,.2f} NOK - {notes}")
+            tx_type = div.get('type', '')
+            print(f"  {tx_type}: {amount:,.2f} NOK - {notes}")
     
     else:
-        print("No obvious dividend transactions found.")
-        print("Note: Dividends might be recorded as DEPOSIT transactions or included in other transaction types.")
+        print("No dividend transactions found.")
+        print("Note: Check if dividends are recorded under different transaction types.")
 
 def create_sample_data():
     """Create sample data for testing if no real data is available"""
@@ -311,7 +347,7 @@ def analyze_transactions():
         fees = float(tx.get('fees', 0))
         amount = quantity * price  # Calculate amount from quantity * price
         
-        if tx_type in ['BUY', 'SELL']:
+        if tx_type in ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT']:
             if identifier not in calculated_holdings:
                 calculated_holdings[identifier] = {
                     'quantity': 0.0, 
@@ -320,8 +356,8 @@ def analyze_transactions():
                     'isin': isin
                 }
             
-            if tx_type == 'BUY':
-                # Update average price
+            if tx_type in ['BUY', 'EXCHANGE_IN']:
+                # These increase holdings
                 old_value = calculated_holdings[identifier]['quantity'] * calculated_holdings[identifier]['avg_price']
                 new_value = quantity * price
                 total_quantity = calculated_holdings[identifier]['quantity'] + quantity
@@ -330,11 +366,16 @@ def analyze_transactions():
                     calculated_holdings[identifier]['avg_price'] = (old_value + new_value) / total_quantity
                 
                 calculated_holdings[identifier]['quantity'] += quantity
-                cash_balance -= (amount + fees)  # Buy reduces cash (include fees)
+                cash_balance -= (amount + fees)  # These reduce cash (include fees)
             
-            elif tx_type == 'SELL':
+            elif tx_type in ['SELL', 'EXCHANGE_OUT']:
+                # These decrease holdings
                 calculated_holdings[identifier]['quantity'] -= quantity
-                cash_balance += (amount - fees)  # Sell increases cash (minus fees)
+                cash_balance += (amount - fees)  # These increase cash (minus fees)
+        
+        elif tx_type == 'DIVIDEND':
+            # Dividends increase cash (preserved as DIVIDEND type)
+            cash_balance += amount
         
         elif tx_type in ['DEPOSIT', 'REFUND', 'LIQUIDATION', 'REDEMPTION']:
             # These increase cash
@@ -345,7 +386,7 @@ def analyze_transactions():
             cash_balance -= amount
         
         elif tx_type in ['DECIMAL_LIQUIDATION', 'SPIN_OFF_IN']:
-            # These are typically cash-neutral or increase holdings
+            # These are typically cash-neutral or increase holdings/cash
             cash_balance += amount
     
     print("\n=== TRANSACTION TYPE SUMMARY ===")

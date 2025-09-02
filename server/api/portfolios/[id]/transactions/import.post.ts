@@ -63,7 +63,9 @@ function mapTransactionType(norwegianType: string): string | null {
     'BYTTE UTTAK VP': 'EXCHANGE_OUT',
     'UTSKILLING FISJON IN': 'SPIN_OFF_IN',
     'SLETTING DESIM. LIKV': 'DECIMAL_LIQUIDATION',
-    'SLETTING DESIM. UTTA': 'DECIMAL_WITHDRAWAL'
+    'SLETTING DESIM. UTTA': 'DECIMAL_WITHDRAWAL',
+    'SPLITT UTTAK VP': 'LIQUIDATION',        // Split withdrawal - liquidates old position
+    'SPLITT INNLEGG VP': 'SPIN_OFF_IN'       // Split deposit - creates new position
   }
   
   return typeMap[norwegianType] || null
@@ -163,9 +165,9 @@ export default defineEventHandler(async (event) => {
           continue // Skip unsupported transaction types
         }
 
-        // Handle cash transactions (deposits, withdrawals, etc.)
+                // Handle cash transactions (deposits, withdrawals, dividends, etc.)
         let symbol = csvRow.Verdipapir ? csvRow.Verdipapir.toUpperCase() : null
-        let transactionType = mappedTransactionType
+        const transactionType = mappedTransactionType
         
         // For cash transactions without a security symbol, use CASH with currency
         if (!symbol || symbol.trim() === '') {
@@ -179,18 +181,14 @@ export default defineEventHandler(async (event) => {
           }
         }
         
-        // Special handling: Dividends should always be treated as cash deposits
+        // Special handling: Dividends should always use CASH_NOK symbol but keep DIVIDEND type
         if (transactionType === 'DIVIDEND') {
           symbol = 'CASH_NOK'
-          transactionType = 'DEPOSIT' // Convert dividend to cash deposit
+          // Keep transactionType as 'DIVIDEND' - don't change it to 'DEPOSIT'
         }
         
-        // Special handling: Convert exchange transactions to buy/sell
-        if (transactionType === 'EXCHANGE_IN') {
-          transactionType = 'BUY'
-        } else if (transactionType === 'EXCHANGE_OUT') {
-          transactionType = 'SELL'
-        }
+        // Keep exchange transactions as their original types - don't convert to BUY/SELL
+        // The holdings calculation will handle the cash flow appropriately
 
         // Check if transaction already exists
         // For cash transactions, we need to check the actual values we'll store
@@ -336,13 +334,40 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
   const isin = latestTransaction?.isin || null
 
   if (symbol.startsWith('CASH_')) {
-    // Handle cash holdings - sum all cash transactions
-    const cashTransactions = await prisma.transaction.findMany({
+    // Handle cash holdings - sum all transactions that affect cash balance
+    // This includes direct cash transactions AND the impact of stock transactions
+    
+    // 1. Get direct cash transactions for this specific cash symbol
+    const directCashTransactions = await prisma.transaction.findMany({
       where: {
         portfolioId: portfolioId,
         symbol: symbol,
         type: {
-          in: ['DEPOSIT', 'WITHDRAWAL', 'REFUND'] // Cash transaction types (including converted dividends)
+          in: [
+            'DEPOSIT', 'WITHDRAWAL', 'REFUND',           // Direct cash transactions
+            'DIVIDEND',                                  // Dividends increase cash
+            'LIQUIDATION', 'REDEMPTION',                 // Liquidations increase cash
+            'DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL', // Decimal adjustments
+            'SPIN_OFF_IN'                               // Spin-offs can create cash
+          ]
+        }
+      },
+      orderBy: {
+        date: 'asc'
+      }
+    })
+
+    // 2. Get all stock transactions that affect cash (since there are no automatic cash transactions)
+    const stockTransactions = await prisma.transaction.findMany({
+      where: {
+        portfolioId: portfolioId,
+        NOT: {
+          symbol: {
+            startsWith: 'CASH_'
+          }
+        },
+        type: {
+          in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT']
         }
       },
       orderBy: {
@@ -351,8 +376,28 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
     })
 
     let totalCash = 0
-    for (const transaction of cashTransactions) {
-      totalCash += transaction.quantity * transaction.price
+    
+    // Process direct cash transactions
+    for (const transaction of directCashTransactions) {
+      const amount = transaction.quantity * transaction.price
+      
+      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN'].includes(transaction.type)) {
+        totalCash += amount  // These increase cash
+      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
+        totalCash -= amount  // These decrease cash
+      }
+    }
+    
+    // Process stock transactions that affect cash (no automatic cash transactions exist)
+    for (const transaction of stockTransactions) {
+      const amount = transaction.quantity * transaction.price
+      const fees = transaction.fees || 0
+      
+      if (['BUY', 'EXCHANGE_IN'].includes(transaction.type)) {
+        totalCash -= (amount + fees)  // Buying stocks decreases cash (including fees)
+      } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
+        totalCash += (amount - fees)  // Selling stocks increases cash (minus fees)
+      }
     }
 
     if (totalCash !== 0) {
@@ -387,13 +432,20 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
       })
     }
   } else {
-    // Handle security holdings - existing logic
+    // Handle security holdings - include all security-affecting transactions
     const transactions = await prisma.transaction.findMany({
       where: {
         portfolioId: portfolioId,
         symbol: symbol,
         type: {
-          in: ['BUY', 'SELL'] // Only consider buy/sell for holdings calculation
+          in: [
+            'BUY', 'SELL',                    // Standard buy/sell transactions
+            'EXCHANGE_IN', 'EXCHANGE_OUT',    // Exchange transactions (treat as buy/sell)
+            'SPIN_OFF_IN',                    // Spin-offs that create new holdings
+            'DECIMAL_LIQUIDATION',            // Decimal adjustments
+            'DECIMAL_WITHDRAWAL',             // Decimal withdrawals
+            'REFUND', 'LIQUIDATION', 'REDEMPTION'  // Corporate actions that liquidate positions
+          ]
         }
       },
       orderBy: {
@@ -405,16 +457,35 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
     let totalCost = 0
 
     for (const transaction of transactions) {
-      if (transaction.type === 'BUY') {
-        totalQuantity += transaction.quantity
-        totalCost += transaction.quantity * transaction.price + transaction.fees
-      } else if (transaction.type === 'SELL') {
-        const sellQuantity = Math.min(transaction.quantity, totalQuantity)
+      const quantity = transaction.quantity
+      const price = transaction.price
+      const fees = transaction.fees
+      
+      if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(transaction.type)) {
+        // These increase holdings
+        totalQuantity += quantity
+        totalCost += quantity * price + fees
+      } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
+        // These decrease holdings
+        const sellQuantity = Math.min(quantity, totalQuantity)
         const avgPrice = totalQuantity > 0 ? totalCost / totalQuantity : 0
         
         totalQuantity -= sellQuantity
         totalCost -= sellQuantity * avgPrice
         totalCost = Math.max(0, totalCost) // Ensure non-negative
+      } else if (['REFUND', 'LIQUIDATION', 'REDEMPTION'].includes(transaction.type)) {
+        // Corporate actions that liquidate entire position (like capital repayment)
+        // These should zero out the holding regardless of quantity
+        console.log(`💰 Corporate action ${transaction.type} for ${symbol}: liquidating ${totalQuantity} shares`)
+        totalQuantity = 0
+        totalCost = 0
+      } else if (['DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
+        // Handle decimal adjustments - these typically adjust small quantities
+        if (transaction.type === 'DECIMAL_LIQUIDATION') {
+          totalQuantity += quantity  // Add fractional shares
+        } else {
+          totalQuantity -= quantity  // Remove fractional shares
+        }
       }
     }
 
