@@ -55,6 +55,8 @@ export default defineNuxtConfig({
     databaseUrl: process.env.DATABASE_URL,
     // Registration configuration
     registrationEnabled: process.env.REGISTRATION_ENABLED === 'true',
+    // Market data configuration
+    alphaVantageApiKey: process.env.NUXT_ALPHA_VANTAGE_API_KEY,
     // Kinde configuration
     kindeClientId: process.env.NUXT_KINDE_CLIENT_ID,
     kindeClientSecret: process.env.NUXT_KINDE_CLIENT_SECRET,
