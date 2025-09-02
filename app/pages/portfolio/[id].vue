@@ -162,58 +162,6 @@
         </div>
       </div>
 
-      <!-- Portfolio Overview Cards -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Top Performers -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.topPerformers') }}</h3>
-          <div v-if="topPerformers.length > 0" class="space-y-3">
-            <div v-for="holding in topPerformers" :key="holding.id" class="flex items-center justify-between">
-              <div class="flex items-center">
-                <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-3">
-                  <ArrowTrendingUpIcon class="w-4 h-4 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">${{ formatCurrency(holding.currentPrice || holding.avgPrice) }}</p>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-green-600 dark:text-green-400 font-medium">
-                  +${{ formatCurrency(Math.abs(getHoldingGainLoss(holding))) }}
-                </p>
-                <p class="text-sm text-green-600 dark:text-green-400">
-                  +{{ getHoldingGainLossPercentage(holding).toFixed(2) }}%
-                </p>
-              </div>
-            </div>
-          </div>
-          <div v-else class="text-center py-4">
-            <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noPositivePerformers') }}</p>
-          </div>
-        </div>
-
-        <!-- Portfolio Allocation -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioAllocation') }}</h3>
-          <div v-if="portfolioStore.portfolioHoldings.length > 0" class="space-y-3">
-            <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id" class="flex items-center justify-between">
-              <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full mr-3" :style="{ backgroundColor: getColorForSymbol(holding.symbol) }" />
-                <span class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</span>
-              </div>
-              <div class="text-right">
-                <p class="font-medium text-gray-900 dark:text-white">{{ getAllocationPercentage(holding).toFixed(1) }}%</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">${{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice)) }}</p>
-              </div>
-            </div>
-          </div>
-          <div v-else class="text-center py-4">
-            <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noHoldingsToDisplay') }}</p>
-          </div>
-        </div>
-      </div>
-
       <!-- Quick Insights -->
       <div v-if="portfolioStore.portfolioHoldings.length > 0" class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg p-6 mb-8">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioInsights') }}</h3>
@@ -282,6 +230,58 @@
             <p v-if="canEdit" class="text-sm text-gray-400 dark:text-gray-500 mt-2">
               {{ $t('portfolioPage.startByAdding') }}
             </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Portfolio Overview Cards -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Top Performers -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.topPerformers') }}</h3>
+          <div v-if="topPerformers.length > 0" class="space-y-3">
+            <div v-for="holding in topPerformers" :key="holding.id" class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-3">
+                  <ArrowTrendingUpIcon class="w-4 h-4 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">${{ formatCurrency(holding.currentPrice || holding.avgPrice) }}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-green-600 dark:text-green-400 font-medium">
+                  +${{ formatCurrency(Math.abs(getHoldingGainLoss(holding))) }}
+                </p>
+                <p class="text-sm text-green-600 dark:text-green-400">
+                  +{{ getHoldingGainLossPercentage(holding).toFixed(2) }}%
+                </p>
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-center py-4">
+            <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noPositivePerformers') }}</p>
+          </div>
+        </div>
+
+        <!-- Portfolio Allocation -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioAllocation') }}</h3>
+          <div v-if="portfolioStore.portfolioHoldings.length > 0" class="space-y-3">
+            <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id" class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full mr-3" :style="{ backgroundColor: getColorForSymbol(holding.symbol) }" />
+                <span class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</span>
+              </div>
+              <div class="text-right">
+                <p class="font-medium text-gray-900 dark:text-white">{{ getAllocationPercentage(holding).toFixed(1) }}%</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">${{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice)) }}</p>
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-center py-4">
+            <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noHoldingsToDisplay') }}</p>
           </div>
         </div>
       </div>
