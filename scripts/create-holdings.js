@@ -36,6 +36,22 @@ async function createHoldings() {
       avgPrice: 300.00,
       currentPrice: null, // Will be updated by market data worker
       currency: 'USD'
+    },
+    {
+      portfolioId: portfolio.id,
+      symbol: 'EQNR', // Equinor (correct ticker)
+      quantity: 50,
+      avgPrice: 280.00,
+      currentPrice: null, // Will be updated by market data worker (Yahoo will use EQNR.OL)
+      currency: 'NOK'
+    },
+    {
+      portfolioId: portfolio.id,
+      symbol: 'NHY', // Norsk Hydro (Norwegian stock)
+      quantity: 100,
+      avgPrice: 45.00,
+      currentPrice: null, // Will be updated by market data worker (Yahoo will use NHY.OL)
+      currency: 'NOK'
     }
   ]
 

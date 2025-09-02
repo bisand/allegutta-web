@@ -6,13 +6,13 @@ export default defineNitroPlugin(async (nitroApp) => {
                            process.env.ENABLE_MARKET_DATA_WORKER === 'true'
 
   if (shouldStartWorker) {
-    console.log('Starting market data background worker...')
+    console.log('Starting Yahoo Finance market data background worker...')
     
-    // Start the worker with updates every 4 hours (to stay within rate limits)
-    // Alpha Vantage free tier: 25 requests/day = one update every ~4 hours for 6 symbols
-    startGlobalMarketDataWorker(240) // 240 minutes = 4 hours
+    // Start the worker with updates every 2 hours (very conservative with Yahoo Finance)
+    // With 15-second delays between requests, updating 2 holdings takes 30 seconds
+    startGlobalMarketDataWorker(120) // 120 minutes = 2 hours
     
-    console.log('Market data worker started - will update holdings every 4 hours')
+    console.log('Market data worker started - will update holdings every 2 hours using Yahoo Finance (15s between requests)')
   } else {
     console.log('Market data worker disabled - set ENABLE_MARKET_DATA_WORKER=true to enable')
   }

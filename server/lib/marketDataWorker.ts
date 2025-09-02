@@ -1,21 +1,22 @@
 import type { PrismaClient } from '@prisma/client'
-import { MarketDataService } from './marketData'
+import { YahooMarketDataService } from './yahooMarketData'
 
 export class MarketDataWorker {
   private prisma: PrismaClient
-  private marketDataService: MarketDataService
+  private marketDataService: YahooMarketDataService
   private isRunning = false
   private intervalId?: NodeJS.Timeout
 
-  constructor(prisma: PrismaClient, apiKey: string) {
+  constructor(prisma: PrismaClient) {
     this.prisma = prisma
-    this.marketDataService = new MarketDataService(apiKey)
+    this.marketDataService = new YahooMarketDataService()
   }
 
   async updateAllHoldings(): Promise<void> {
     console.log('Starting market data update for all holdings...')
     
     try {
+      console.log('Fetching holdings from database...')
       // Get all unique symbols from holdings
       const holdings = await this.prisma.holding.findMany({
         select: {
@@ -26,6 +27,8 @@ export class MarketDataWorker {
         distinct: ['symbol']
       })
 
+      console.log(`Database query completed. Found ${holdings.length} holdings`)
+
       if (holdings.length === 0) {
         console.log('No holdings found to update')
         return
@@ -34,8 +37,10 @@ export class MarketDataWorker {
       const symbols = holdings.map(h => h.symbol)
       console.log(`Found ${symbols.length} unique symbols to update: ${symbols.join(', ')}`)
 
-      // Fetch market data for all symbols
+      console.log('Starting market data fetch...')
+      // Fetch market data for all symbols (using individual requests for reliability)
       const marketData = await this.marketDataService.getMultipleQuotes(symbols)
+      console.log(`Market data fetch completed. Received ${marketData.length} quotes`)
       
       if (marketData.length === 0) {
         console.log('No market data received')
@@ -43,9 +48,11 @@ export class MarketDataWorker {
       }
 
       // Update holdings with new prices
+      console.log('Starting database updates...')
       let updatedCount = 0
       for (const quote of marketData) {
         try {
+          console.log(`Updating holdings for ${quote.symbol} with price $${quote.price}`)
           const result = await this.prisma.holding.updateMany({
             where: {
               symbol: quote.symbol
@@ -66,6 +73,7 @@ export class MarketDataWorker {
       console.log(`Market data update completed. Updated ${updatedCount} holdings total.`)
     } catch (error) {
       console.error('Error during market data update:', error)
+      throw error // Re-throw to let the caller handle it
     }
   }
 
@@ -92,7 +100,7 @@ export class MarketDataWorker {
       const symbols = [...new Set(holdings.map(h => h.symbol))] // Remove duplicates
       console.log(`Found ${symbols.length} unique symbols for portfolio ${portfolioId}: ${symbols.join(', ')}`)
 
-      // Fetch market data
+      // Fetch market data (using individual requests for reliability)
       const marketData = await this.marketDataService.getMultipleQuotes(symbols)
       
       // Update holdings with new prices
@@ -123,14 +131,14 @@ export class MarketDataWorker {
     }
   }
 
-  startPeriodicUpdates(intervalMinutes: number = 60): void {
+  startPeriodicUpdates(intervalMinutes: number = 120): void {
     if (this.isRunning) {
       console.log('Market data worker is already running')
       return
     }
 
     this.isRunning = true
-    console.log(`Starting periodic market data updates every ${intervalMinutes} minutes`)
+    console.log(`Starting periodic market data updates every ${intervalMinutes} minutes (15s delay between Yahoo Finance requests)`)
 
     // Run immediately
     this.updateAllHoldings()
