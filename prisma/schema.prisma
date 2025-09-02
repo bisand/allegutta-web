@@ -53,6 +53,7 @@ model Transaction {
   quantity    Float
   price       Float
   fees        Float       @default(0)
+  amount      Float?      // Original beløp amount from CSV for accurate calculations
   currency    String      @default("NOK") // Currency for this transaction
   date        DateTime
   saldo       Float?      // Broker's authoritative cash balance after this transaction

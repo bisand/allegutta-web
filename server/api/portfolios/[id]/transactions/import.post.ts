@@ -13,6 +13,7 @@ interface TransactionData {
     quantity: number
     price: number
     fees: number
+    amount?: number | null
     date: Date
     notes: string | null
     saldo?: number | null
@@ -160,7 +161,8 @@ export default defineEventHandler(async (event) => {
         const parsedTransactions: Array<{
             csvRow: CSVRow,
             date: Date,
-            lineNumber: number
+            lineNumber: number,
+            id: number
         }> = []
 
         for (let i = 1; i < lines.length; i++) {
@@ -177,20 +179,23 @@ export default defineEventHandler(async (event) => {
                     csvRow[header] = values[index]
                 })
 
-                // Parse date and add to array for sorting
+                // Parse date and ID for proper sorting
                 const date = parseNorwegianDate(csvRow.Bokføringsdag)
+                const id = parseInt(csvRow.Id) || 0  // Use Id field for correct chronological order
                 parsedTransactions.push({
                     csvRow,
                     date,
-                    lineNumber: i + 1
+                    lineNumber: i + 1,
+                    id
                 })
             } catch (error) {
                 errors.push(`Line ${i + 1}: Error parsing line - ${error}`)
             }
         }
 
-        // Sort transactions by date (oldest first) for proper saldo progression
-        parsedTransactions.sort((a, b) => a.date.getTime() - b.date.getTime())
+        // Sort transactions by ID (chronological order) to maintain correct saldo progression
+        // ID provides the exact sequence that matches the saldo field progression
+        parsedTransactions.sort((a, b) => a.id - b.id)
 
         // Now process transactions in chronological order
         for (const { csvRow, lineNumber } of parsedTransactions) {
@@ -319,7 +324,8 @@ export default defineEventHandler(async (event) => {
                     currency: portfolioCurrency,
                     date: parseNorwegianDate(csvRow.Bokføringsdag),
                     notes: csvRow.Transaksjonstekst || null,
-                    saldo: csvRow.Saldo ? parseFloat(csvRow.Saldo) : null  // Store broker's saldo if available
+                    saldo: csvRow.Saldo ? parseNorwegianNumber(csvRow.Saldo) : null,  // Store broker's saldo if available
+                    amount: amount  // Store the original beløp amount for accurate saldo calculations
                 }
 
                 transactions.push(transactionData)
@@ -348,42 +354,9 @@ export default defineEventHandler(async (event) => {
 
                 // If this transaction has a saldo value, check for discrepancy using simple calculation
                 if (createdTransaction.saldo !== null && createdTransaction.saldo !== undefined) {
-                    // Calculate expected saldo: previous saldo + transaction beløp
-                    const transactionBeløp = createdTransaction.quantity * createdTransaction.price
-
-                    // For cash transactions, beløp is positive for inflows, negative for outflows
-                    // For stock transactions, they affect cash negatively (purchases) or positively (sales)
-                    let cashImpact = 0
-
-                    if (createdTransaction.symbol.startsWith('CASH_')) {
-                        // Direct cash transaction - use beløp as-is
-                        switch (createdTransaction.type) {
-                            case 'DEPOSIT':
-                            case 'DIVIDEND':
-                            case 'DIVIDEND_REINVEST':
-                            case 'REFUND':
-                            case 'LIQUIDATION':
-                            case 'REDEMPTION':
-                                cashImpact = transactionBeløp - (createdTransaction.fees || 0)
-                                break
-                            case 'WITHDRAWAL':
-                                cashImpact = -(Math.abs(transactionBeløp) + (createdTransaction.fees || 0))
-                                break
-                        }
-                    } else {
-                        // Stock transaction affects cash
-                        switch (createdTransaction.type) {
-                            case 'BUY':
-                                cashImpact = -(transactionBeløp + (createdTransaction.fees || 0))
-                                break
-                            case 'SELL':
-                                cashImpact = transactionBeløp - (createdTransaction.fees || 0)
-                                break
-                            case 'DIVIDEND':
-                                cashImpact = transactionBeløp - (createdTransaction.fees || 0)
-                                break
-                        }
-                    }
+                    // Use the original beløp amount for accurate cash flow calculation
+                    // The amount already has the correct sign: positive = cash inflow, negative = cash outflow
+                    const cashImpact = createdTransaction.amount
 
                     expectedSaldo += cashImpact
                     const brokerSaldo = createdTransaction.saldo
