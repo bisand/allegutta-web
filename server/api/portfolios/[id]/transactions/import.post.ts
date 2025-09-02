@@ -156,26 +156,62 @@ export default defineEventHandler(async (event) => {
         })
 
         // Map transaction type
-        const transactionType = mapTransactionType(csvRow.Transaksjonstype)
-        if (!transactionType) {
+        const mappedTransactionType = mapTransactionType(csvRow.Transaksjonstype)
+        if (!mappedTransactionType) {
           skippedCount++
           continue // Skip unsupported transaction types
         }
 
-        // Only process transactions with securities (ignore cash transactions)
-        if (!csvRow.Verdipapir || csvRow.Verdipapir.trim() === '') {
-          skippedCount++
-          continue
+        // Handle cash transactions (deposits, withdrawals, etc.)
+        let symbol = csvRow.Verdipapir ? csvRow.Verdipapir.toUpperCase() : null
+        let transactionType = mappedTransactionType
+        
+        // For cash transactions without a security symbol, use CASH with currency
+        if (!symbol || symbol.trim() === '') {
+          if (['DEPOSIT', 'WITHDRAWAL', 'REFUND', 'DIVIDEND'].includes(transactionType)) {
+            // Default to NOK for Norwegian brokerage, but could be enhanced to detect currency
+            symbol = 'CASH_NOK'
+          } else {
+            // Skip other transactions without securities
+            skippedCount++
+            continue
+          }
+        }
+        
+        // Special handling: Dividends should always be treated as cash deposits
+        if (transactionType === 'DIVIDEND') {
+          symbol = 'CASH_NOK'
+          transactionType = 'DEPOSIT' // Convert dividend to cash deposit
+        }
+        
+        // Special handling: Convert exchange transactions to buy/sell
+        if (transactionType === 'EXCHANGE_IN') {
+          transactionType = 'BUY'
+        } else if (transactionType === 'EXCHANGE_OUT') {
+          transactionType = 'SELL'
         }
 
         // Check if transaction already exists
+        // For cash transactions, we need to check the actual values we'll store
+        let checkQuantity, checkPrice
+        if (symbol.startsWith('CASH_')) {
+          checkQuantity = Math.abs(parseNorwegianNumber(csvRow.Beløp) || 0)
+          checkPrice = 1.0
+          if (['WITHDRAWAL'].includes(transactionType)) {
+            checkQuantity = -checkQuantity
+          }
+        } else {
+          checkQuantity = parseNorwegianNumber(csvRow.Antall)
+          checkPrice = parseNorwegianNumber(csvRow.Kurs)
+        }
+
         const existingTransaction = await prisma.transaction.findFirst({
           where: {
             portfolioId: portfolioId,
-            symbol: csvRow.Verdipapir.toUpperCase(),
+            symbol: symbol,
             date: parseNorwegianDate(csvRow.Bokføringsdag),
-            quantity: parseNorwegianNumber(csvRow.Antall),
-            price: parseNorwegianNumber(csvRow.Kurs),
+            quantity: checkQuantity,
+            price: checkPrice,
             notes: csvRow.Transaksjonstekst
           }
         })
@@ -187,20 +223,36 @@ export default defineEventHandler(async (event) => {
 
         const quantity = parseNorwegianNumber(csvRow.Antall)
         const price = parseNorwegianNumber(csvRow.Kurs)
+        const amount = parseNorwegianNumber(csvRow.Beløp) // Cash amount from Beløp column
         const fees = parseNorwegianNumber(csvRow['Totale Avgifter']) || parseNorwegianNumber(csvRow.Kurtasje) || 0
 
-        // Only process transactions with valid quantity and price for BUY/SELL
-        if ((transactionType === 'BUY' || transactionType === 'SELL') && (quantity <= 0 || price <= 0)) {
-          errors.push(`Line ${i + 1}: Invalid quantity or price for ${transactionType} transaction`)
-          continue
+        // Handle different transaction types
+        let finalQuantity = Math.abs(quantity || 0)
+        let finalPrice = price || 1.0
+
+        if (symbol.startsWith('CASH_')) {
+          // For cash transactions, use the Beløp (amount) column
+          finalQuantity = Math.abs(amount || 0)
+          finalPrice = 1.0
+          
+          // For withdrawals, make quantity negative to represent cash going out
+          if (transactionType === 'WITHDRAWAL') {
+            finalQuantity = -finalQuantity
+          }
+        } else {
+          // For security transactions, validate quantity and price
+          if ((transactionType === 'BUY' || transactionType === 'SELL') && (finalQuantity <= 0 || finalPrice <= 0)) {
+            errors.push(`Line ${i + 1}: Invalid quantity or price for ${transactionType} transaction`)
+            continue
+          }
         }
 
         const transactionData = {
           portfolioId: portfolioId,
-          symbol: csvRow.Verdipapir.toUpperCase(),
+          symbol: symbol,
           type: transactionType,
-          quantity: Math.abs(quantity), // Ensure positive quantity
-          price: price,
+          quantity: finalQuantity,
+          price: finalPrice,
           fees: fees,
           date: parseNorwegianDate(csvRow.Bokføringsdag),
           notes: csvRow.Transaksjonstekst || null
@@ -246,65 +298,117 @@ export default defineEventHandler(async (event) => {
 
 // Helper function to update holdings based on transactions
 async function updateHoldings(portfolioId: string, symbol: string): Promise<void> {
-  const transactions = await prisma.transaction.findMany({
-    where: {
-      portfolioId: portfolioId,
-      symbol: symbol,
-      type: {
-        in: ['BUY', 'SELL'] // Only consider buy/sell for holdings calculation
-      }
-    },
-    orderBy: {
-      date: 'asc'
-    }
-  })
-
-  let totalQuantity = 0
-  let totalCost = 0
-
-  for (const transaction of transactions) {
-    if (transaction.type === 'BUY') {
-      totalQuantity += transaction.quantity
-      totalCost += transaction.quantity * transaction.price + transaction.fees
-    } else if (transaction.type === 'SELL') {
-      const sellQuantity = Math.min(transaction.quantity, totalQuantity)
-      const avgPrice = totalQuantity > 0 ? totalCost / totalQuantity : 0
-      
-      totalQuantity -= sellQuantity
-      totalCost -= sellQuantity * avgPrice
-      totalCost = Math.max(0, totalCost) // Ensure non-negative
-    }
-  }
-
-  if (totalQuantity > 0) {
-    const avgPrice = totalCost / totalQuantity
-
-    await prisma.holding.upsert({
+  if (symbol.startsWith('CASH_')) {
+    // Handle cash holdings - sum all cash transactions
+    const cashTransactions = await prisma.transaction.findMany({
       where: {
-        portfolioId_symbol: {
+        portfolioId: portfolioId,
+        symbol: symbol,
+        type: {
+          in: ['DEPOSIT', 'WITHDRAWAL', 'REFUND'] // Cash transaction types (including converted dividends)
+        }
+      },
+      orderBy: {
+        date: 'asc'
+      }
+    })
+
+    let totalCash = 0
+    for (const transaction of cashTransactions) {
+      totalCash += transaction.quantity * transaction.price
+    }
+
+    if (totalCash !== 0) {
+      await prisma.holding.upsert({
+        where: {
+          portfolioId_symbol: {
+            portfolioId: portfolioId,
+            symbol: symbol
+          }
+        },
+        update: {
+          quantity: totalCash,
+          avgPrice: 1.0,
+          lastUpdated: new Date()
+        },
+        create: {
+          portfolioId: portfolioId,
+          symbol: symbol,
+          quantity: totalCash,
+          avgPrice: 1.0
+        }
+      })
+    } else {
+      // Remove cash holding if balance is 0
+      await prisma.holding.deleteMany({
+        where: {
           portfolioId: portfolioId,
           symbol: symbol
         }
-      },
-      update: {
-        quantity: totalQuantity,
-        avgPrice: avgPrice,
-        lastUpdated: new Date()
-      },
-      create: {
-        portfolioId: portfolioId,
-        symbol: symbol,
-        quantity: totalQuantity,
-        avgPrice: avgPrice
-      }
-    })
+      })
+    }
   } else {
-    // Remove holding if quantity is 0
-    await prisma.holding.deleteMany({
+    // Handle security holdings - existing logic
+    const transactions = await prisma.transaction.findMany({
       where: {
         portfolioId: portfolioId,
-        symbol: symbol
+        symbol: symbol,
+        type: {
+          in: ['BUY', 'SELL'] // Only consider buy/sell for holdings calculation
+        }
+      },
+      orderBy: {
+        date: 'asc'
       }
     })
+
+    let totalQuantity = 0
+    let totalCost = 0
+
+    for (const transaction of transactions) {
+      if (transaction.type === 'BUY') {
+        totalQuantity += transaction.quantity
+        totalCost += transaction.quantity * transaction.price + transaction.fees
+      } else if (transaction.type === 'SELL') {
+        const sellQuantity = Math.min(transaction.quantity, totalQuantity)
+        const avgPrice = totalQuantity > 0 ? totalCost / totalQuantity : 0
+        
+        totalQuantity -= sellQuantity
+        totalCost -= sellQuantity * avgPrice
+        totalCost = Math.max(0, totalCost) // Ensure non-negative
+      }
+    }
+
+    if (totalQuantity > 0) {
+      const avgPrice = totalCost / totalQuantity
+
+      await prisma.holding.upsert({
+        where: {
+          portfolioId_symbol: {
+            portfolioId: portfolioId,
+            symbol: symbol
+          }
+        },
+        update: {
+          quantity: totalQuantity,
+          avgPrice: avgPrice,
+          lastUpdated: new Date()
+        },
+        create: {
+          portfolioId: portfolioId,
+          symbol: symbol,
+          quantity: totalQuantity,
+          avgPrice: avgPrice
+        }
+      })
+    } else {
+      // Remove holding if quantity is 0
+      await prisma.holding.deleteMany({
+        where: {
+          portfolioId: portfolioId,
+          symbol: symbol
+        }
+      })
+    }
   }
 }

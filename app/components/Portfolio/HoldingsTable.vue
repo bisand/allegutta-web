@@ -41,26 +41,29 @@
         >
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="font-medium text-gray-900 dark:text-white">
-              {{ holding.symbol }}
+              {{ displaySymbol(holding.symbol) }}
+            </div>
+            <div v-if="isCashHolding(holding.symbol)" class="text-xs text-gray-500 dark:text-gray-400">
+              {{ getCurrency(holding.symbol) }}
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-            {{ formatQuantity(holding.quantity) }}
+            {{ isCashHolding(holding.symbol) ? formatCurrency(holding.quantity) : formatQuantity(holding.quantity) }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-            ${{ formatCurrency(holding.avgPrice) }}
+            {{ isCashHolding(holding.symbol) ? '-' : '$' + formatCurrency(holding.avgPrice) }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-            ${{ formatCurrency(holding.currentPrice || holding.avgPrice) }}
+            {{ isCashHolding(holding.symbol) ? '-' : '$' + formatCurrency(holding.currentPrice || holding.avgPrice) }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-            ${{ formatCurrency(marketValue(holding)) }}
+            {{ formatCurrency(marketValue(holding)) }}{{ isCashHolding(holding.symbol) ? ' ' + getCurrency(holding.symbol) : '' }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap" :class="gainLossColor(holding)">
-            ${{ formatCurrency(Math.abs(gainLoss(holding))) }}
+            {{ isCashHolding(holding.symbol) ? '-' : '$' + formatCurrency(Math.abs(gainLoss(holding))) }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap" :class="gainLossColor(holding)">
-            {{ formatPercentage(gainLossPercentage(holding)) }}%
+            {{ isCashHolding(holding.symbol) ? '-' : formatPercentage(gainLossPercentage(holding)) + '%' }}
           </td>
         </tr>
       </tbody>
@@ -69,52 +72,90 @@
 </template>
 
 <script setup lang="ts">
+interface Holding {
+  id: string
+  symbol: string
+  quantity: number
+  avgPrice: number
+  currentPrice?: number
+}
+
 defineProps({
   holdings: {
-    type: Array,
+    type: Array as () => Holding[],
     default: () => []
   }
 })
 
-function formatCurrency(value) {
+function isCashHolding(symbol: string): boolean {
+  return symbol.startsWith('CASH_')
+}
+
+function displaySymbol(symbol: string): string {
+  if (isCashHolding(symbol)) {
+    return 'Cash'
+  }
+  return symbol
+}
+
+function getCurrency(symbol: string): string {
+  if (isCashHolding(symbol)) {
+    return symbol.replace('CASH_', '')
+  }
+  return ''
+}
+
+function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value)
 }
 
-function formatQuantity(value) {
+function formatQuantity(value: number): string {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 4
   }).format(value)
 }
 
-function formatPercentage(value) {
+function formatPercentage(value: number): string {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value)
 }
 
-function marketValue(holding) {
+function marketValue(holding: Holding): number {
+  if (isCashHolding(holding.symbol)) {
+    return holding.quantity // For cash, quantity is the value
+  }
   return holding.quantity * (holding.currentPrice || holding.avgPrice)
 }
 
-function gainLoss(holding) {
+function gainLoss(holding: Holding): number {
+  if (isCashHolding(holding.symbol)) {
+    return 0 // Cash has no gain/loss
+  }
   const current = holding.quantity * (holding.currentPrice || holding.avgPrice)
   const cost = holding.quantity * holding.avgPrice
   return current - cost
 }
 
-function gainLossPercentage(holding) {
+function gainLossPercentage(holding: Holding): number {
+  if (isCashHolding(holding.symbol)) {
+    return 0 // Cash has no gain/loss percentage
+  }
   const gl = gainLoss(holding)
   const cost = holding.quantity * holding.avgPrice
   if (cost === 0) return 0
   return (gl / cost) * 100
 }
 
-function gainLossColor(holding) {
+function gainLossColor(holding: Holding) {
+  if (isCashHolding(holding.symbol)) {
+    return 'text-gray-600 dark:text-gray-400'
+  }
   const gl = gainLoss(holding)
   return {
     'text-green-600 dark:text-green-400': gl >= 0,
