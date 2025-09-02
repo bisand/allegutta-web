@@ -63,17 +63,9 @@ export default defineEventHandler(async (event) => {
     // Update holdings for the transaction symbol
     await updateHoldings(portfolioId, body.symbol.toUpperCase())
     
-    // For ALL transactions (except direct cash transactions), update cash holdings
-    // Cash impact should mirror how the Norwegian broker calculates saldo changes
+    // Recalculate cash holdings properly after transaction change
     if (!body.symbol.toUpperCase().startsWith('CASH_')) {
-      await updateCashAfterTransaction(portfolioId, {
-        type: body.type,
-        symbol: body.symbol.toUpperCase(),
-        quantity: parseFloat(body.quantity),
-        price: parseFloat(body.price),
-        fees: parseFloat(body.fees) || 0,
-        currency: body.currency || portfolio.currency || 'NOK'
-      }, portfolio.currency || 'NOK')
+      await recalculateCashHoldings(portfolioId, portfolio.currency || 'NOK')
     }
 
     return {
@@ -88,101 +80,98 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-// Function to update cash holdings after a transaction (mimicking Norwegian broker logic)
-async function updateCashAfterTransaction(
-  portfolioId: string, 
-  transaction: {
-    type: string,
-    symbol: string,
-    quantity: number,
-    price: number,
-    fees: number,
-    currency: string
-  },
-  portfolioCurrency: string
-): Promise<void> {
+// Function to recalculate cash holdings like the Norwegian broker saldo system
+async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: string): Promise<void> {
   const cashSymbol = `CASH_${portfolioCurrency}`
   
-  // Get current cash balance
-  const currentCashHolding = await prisma.holding.findUnique({
+  // Get ALL transactions for this portfolio in chronological order (like saldo progression)
+  const allTransactions = await prisma.transaction.findMany({
     where: {
-      portfolioId_symbol: {
-        portfolioId,
-        symbol: cashSymbol
-      }
+      portfolioId: portfolioId
+    },
+    orderBy: {
+      date: 'asc'  // Oldest first, like saldo progression in reverse
     }
   })
   
-  const currentCash = currentCashHolding?.quantity || 0
-  let cashImpact = 0
+  let runningCashBalance = 0
   
-  // Calculate cash impact based on transaction type (following Norwegian broker logic)
-  const amount = transaction.quantity * transaction.price
-  const fees = transaction.fees
-  
-  switch (transaction.type) {
-    case 'BUY':
-    case 'RIGHTS_ALLOCATION':
-    case 'RIGHTS_ISSUE':
-      // Buying securities decreases cash (amount + fees)
-      cashImpact = -(amount + fees)
-      break
-      
-    case 'SELL':
-      // Selling securities increases cash (amount) but fees are always subtracted
-      cashImpact = amount - fees
-      break
-      
-    case 'DIVIDEND':
-    case 'DIVIDEND_REINVEST':
-      // Dividends increase cash, fees (if any) are subtracted
-      cashImpact = amount - fees
-      break
-      
-    case 'DEPOSIT':
-    case 'REFUND':
-    case 'LIQUIDATION':
-    case 'REDEMPTION':
-    case 'DECIMAL_LIQUIDATION':
-    case 'SPIN_OFF_IN':
-    case 'TRANSFER_IN':
-      // These increase cash, fees (if any) are subtracted
-      cashImpact = amount - fees
-      break
-      
-    case 'WITHDRAWAL':
-    case 'DECIMAL_WITHDRAWAL':
-    case 'INTEREST_CHARGE':
-      // These decrease cash, fees make it worse
-      cashImpact = -(amount + fees)
-      break
-      
-    case 'EXCHANGE_IN':
-      // Exchange in increases cash, fees are subtracted
-      cashImpact = amount - fees
-      break
-      
-    case 'EXCHANGE_OUT':
-      // Exchange out decreases cash, fees make it worse
-      cashImpact = -(amount + fees)
-      break
-      
-    case 'SPLIT':
-    case 'MERGER':
-      // These typically don't affect cash directly, but fees (if any) are subtracted
-      cashImpact = -fees
-      break
-      
-    default:
-      // Unknown transaction types: only subtract fees if any
-      cashImpact = -fees
-      break
+  // Process each transaction chronologically to build running cash balance
+  for (const transaction of allTransactions) {
+    const amount = transaction.quantity * transaction.price
+    const fees = transaction.fees || 0
+    
+    // Calculate cash impact exactly like Norwegian broker saldo changes
+    let cashImpact = 0
+    
+    if (transaction.symbol.startsWith('CASH_')) {
+      // Direct cash transactions
+      switch (transaction.type) {
+        case 'DEPOSIT':
+        case 'REFUND':
+        case 'DIVIDEND':
+        case 'DIVIDEND_REINVEST':
+        case 'LIQUIDATION':
+        case 'REDEMPTION':
+        case 'DECIMAL_LIQUIDATION':
+        case 'SPIN_OFF_IN':
+        case 'TRANSFER_IN':
+          cashImpact = amount - fees  // Money coming in minus fees
+          break
+          
+        case 'WITHDRAWAL':
+        case 'DECIMAL_WITHDRAWAL':
+        case 'INTEREST_CHARGE':
+          cashImpact = -(amount + fees)  // Money going out plus fees
+          break
+      }
+    } else {
+      // Stock/security transactions affect cash
+      switch (transaction.type) {
+        case 'BUY':
+        case 'RIGHTS_ALLOCATION':
+        case 'RIGHTS_ISSUE':
+          cashImpact = -(amount + fees)  // Purchase: cash decreases by amount + fees
+          break
+          
+        case 'SELL':
+          cashImpact = amount - fees  // Sale: cash increases by amount - fees
+          break
+          
+        case 'DIVIDEND':
+        case 'DIVIDEND_REINVEST':
+          cashImpact = amount - fees  // Dividend: cash increases by amount - fees
+          break
+          
+        case 'LIQUIDATION':
+        case 'REDEMPTION':
+        case 'DECIMAL_LIQUIDATION':
+        case 'SPIN_OFF_IN':
+          cashImpact = amount - fees  // Corporate actions that bring cash
+          break
+          
+        case 'EXCHANGE_IN':
+          cashImpact = amount - fees  // Exchange in brings cash
+          break
+          
+        case 'EXCHANGE_OUT':
+          cashImpact = -(amount + fees)  // Exchange out removes cash
+          break
+          
+        case 'SPLIT':
+        case 'MERGER':
+          cashImpact = -fees  // Only fees affect cash for stock splits/mergers
+          break
+      }
+    }
+    
+    runningCashBalance += cashImpact
   }
   
-  // Update cash holdings with new balance
-  const newCashBalance = currentCash + cashImpact
-  
-  if (newCashBalance !== 0 || currentCashHolding) {
+  // Set the final cash balance (like final saldo)
+  if (runningCashBalance !== 0 || await prisma.holding.findUnique({
+    where: { portfolioId_symbol: { portfolioId, symbol: cashSymbol } }
+  })) {
     await prisma.holding.upsert({
       where: {
         portfolioId_symbol: {
@@ -191,7 +180,7 @@ async function updateCashAfterTransaction(
         }
       },
       update: {
-        quantity: newCashBalance,
+        quantity: runningCashBalance,
         avgPrice: 1.0,
         currency: portfolioCurrency,
         lastUpdated: new Date()
@@ -199,13 +188,13 @@ async function updateCashAfterTransaction(
       create: {
         portfolioId,
         symbol: cashSymbol,
-        quantity: newCashBalance,
+        quantity: runningCashBalance,
         avgPrice: 1.0,
         currency: portfolioCurrency
       }
     })
     
-    console.log(`💰 Cash impact for ${transaction.type}: ${cashImpact} ${portfolioCurrency} (new balance: ${newCashBalance})`)
+    console.log(`💰 Recalculated cash balance: ${runningCashBalance} ${portfolioCurrency} (like saldo: ${runningCashBalance})`)
   }
 }
 

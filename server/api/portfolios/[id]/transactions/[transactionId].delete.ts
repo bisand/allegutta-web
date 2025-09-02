@@ -62,15 +62,8 @@ export default defineEventHandler(async (event) => {
     // Recalculate holdings for the affected symbol
     await recalculateHoldings(portfolioId, transaction.symbol)
 
-    // If this was a stock transaction, also recalculate cash holdings
-    const stockTransactionTypes = [
-      'BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN',
-      'SPLIT', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'
-    ]
-    if (stockTransactionTypes.includes(transaction.type)) {
-      const portfolioCashSymbol = `CASH_${portfolio.currency || 'NOK'}`
-      await recalculateHoldings(portfolioId, portfolioCashSymbol)
-    }
+    // Recalculate cash holdings using saldo-inspired logic
+    await recalculateCashHoldings(portfolioId, portfolio.currency || 'NOK')
 
     return { success: true }
   } catch (error) {
@@ -250,5 +243,123 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
         symbol
       }
     })
+  }
+}
+
+// Function to recalculate cash holdings like the Norwegian broker saldo system
+async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: string): Promise<void> {
+  const cashSymbol = `CASH_${portfolioCurrency}`
+  
+  // Get ALL transactions for this portfolio in chronological order (like saldo progression)
+  const allTransactions = await prisma.transaction.findMany({
+    where: {
+      portfolioId: portfolioId
+    },
+    orderBy: {
+      date: 'asc'  // Oldest first, like saldo progression in reverse
+    }
+  })
+  
+  let runningCashBalance = 0
+  
+  // Process each transaction chronologically to build running cash balance
+  for (const transaction of allTransactions) {
+    const amount = transaction.quantity * transaction.price
+    const fees = transaction.fees || 0
+    
+    // Calculate cash impact exactly like Norwegian broker saldo changes
+    let cashImpact = 0
+    
+    if (transaction.symbol.startsWith('CASH_')) {
+      // Direct cash transactions
+      switch (transaction.type) {
+        case 'DEPOSIT':
+        case 'REFUND':
+        case 'DIVIDEND':
+        case 'DIVIDEND_REINVEST':
+        case 'LIQUIDATION':
+        case 'REDEMPTION':
+        case 'DECIMAL_LIQUIDATION':
+        case 'SPIN_OFF_IN':
+        case 'TRANSFER_IN':
+          cashImpact = amount - fees  // Money coming in minus fees
+          break
+          
+        case 'WITHDRAWAL':
+        case 'DECIMAL_WITHDRAWAL':
+        case 'INTEREST_CHARGE':
+          cashImpact = -(amount + fees)  // Money going out plus fees
+          break
+      }
+    } else {
+      // Stock/security transactions affect cash
+      switch (transaction.type) {
+        case 'BUY':
+        case 'RIGHTS_ALLOCATION':
+        case 'RIGHTS_ISSUE':
+          cashImpact = -(amount + fees)  // Purchase: cash decreases by amount + fees
+          break
+          
+        case 'SELL':
+          cashImpact = amount - fees  // Sale: cash increases by amount - fees
+          break
+          
+        case 'DIVIDEND':
+        case 'DIVIDEND_REINVEST':
+          cashImpact = amount - fees  // Dividend: cash increases by amount - fees
+          break
+          
+        case 'LIQUIDATION':
+        case 'REDEMPTION':
+        case 'DECIMAL_LIQUIDATION':
+        case 'SPIN_OFF_IN':
+          cashImpact = amount - fees  // Corporate actions that bring cash
+          break
+          
+        case 'EXCHANGE_IN':
+          cashImpact = amount - fees  // Exchange in brings cash
+          break
+          
+        case 'EXCHANGE_OUT':
+          cashImpact = -(amount + fees)  // Exchange out removes cash
+          break
+          
+        case 'SPLIT':
+        case 'MERGER':
+          cashImpact = -fees  // Only fees affect cash for stock splits/mergers
+          break
+      }
+    }
+    
+    runningCashBalance += cashImpact
+  }
+  
+  // Set the final cash balance (like final saldo)
+  if (runningCashBalance !== 0 || await prisma.holding.findUnique({
+    where: { portfolioId_symbol: { portfolioId, symbol: cashSymbol } }
+  })) {
+    await prisma.holding.upsert({
+      where: {
+        portfolioId_symbol: {
+          portfolioId,
+          symbol: cashSymbol
+        }
+      },
+      update: {
+        quantity: runningCashBalance,
+        avgPrice: 1.0,
+        currency: portfolioCurrency,
+        lastUpdated: new Date()
+      },
+      create: {
+        portfolioId,
+        symbol: cashSymbol,
+        quantity: runningCashBalance,
+        avgPrice: 1.0,
+        currency: portfolioCurrency
+      }
+    })
+    
+    console.log(`💰 Recalculated cash balance: ${runningCashBalance} ${portfolioCurrency} (like saldo: ${runningCashBalance})`)
   }
 }
