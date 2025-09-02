@@ -609,16 +609,7 @@ async function deleteTransaction(transaction: TransactionData): Promise<void> {
 async function deletePortfolio(portfolio: Portfolio): Promise<void> {
   if (confirm(`Are you sure you want to delete "${portfolio.name}"? This action cannot be undone.`)) {
     try {
-      // Get request headers for SSR authentication
-      const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-
-      await $fetch(`/api/portfolios/${portfolio.id}`, {
-        method: 'DELETE' as const,
-        headers: headers as HeadersInit
-      })
-
-      // Reload portfolios
-      await portfolioStore.loadAllPortfolios()
+      await portfolioStore.deletePortfolio(portfolio.id)
     } catch (error) {
       console.error('Failed to delete portfolio:', error)
       alert('Failed to delete portfolio. Please try again.')
@@ -646,35 +637,48 @@ function formatCurrency(value: number): string {
 async function submitForm(): Promise<void> {
   try {
     submitting.value = true
-
-    // Get request headers for SSR authentication
-    const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+    console.log('Submitting form for portfolio:', editingPortfolio.value ? 'update' : 'create')
 
     if (editingPortfolio.value) {
-      // Update existing portfolio
-      await $fetch(`/api/portfolios/${editingPortfolio.value.id}`, {
-        method: 'PUT' as const,
-        headers: headers as HeadersInit,
-        body: {
-          name: form.name,
-          description: form.description || undefined,
-          isDefault: form.isDefault
-        }
-      })
-    } else {
-      // Create new portfolio - this should use the store method which might already handle auth
-      await portfolioStore.createPortfolio({
+      // Update existing portfolio using the store method
+      console.log('Updating portfolio with data:', {
         name: form.name,
         description: form.description || undefined,
         isDefault: form.isDefault
       })
+      
+      const result = await portfolioStore.updatePortfolio(editingPortfolio.value.id, {
+        name: form.name,
+        description: form.description || undefined,
+        isDefault: form.isDefault
+      })
+      
+      console.log('Portfolio updated successfully:', result)
+    } else {
+      // Create new portfolio
+      console.log('Creating portfolio with data:', {
+        name: form.name,
+        description: form.description || undefined,
+        isDefault: form.isDefault
+      })
+      
+      const result = await portfolioStore.createPortfolio({
+        name: form.name,
+        description: form.description || undefined,
+        isDefault: form.isDefault
+      })
+      
+      console.log('Portfolio created successfully:', result)
     }
 
-    // Reload portfolios
-    await portfolioStore.loadAllPortfolios()
+    console.log('Form submission successful, closing modal')
     closeModal()
   } catch (error) {
     console.error('Failed to save portfolio:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    })
     alert('Failed to save portfolio. Please try again.')
   } finally {
     submitting.value = false

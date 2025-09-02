@@ -248,6 +248,91 @@ export const usePortfolioStore = defineStore('portfolio', {
       }
     },
 
+    async updatePortfolio(portfolioId: string, portfolioData: Partial<CreatePortfolioData>): Promise<Portfolio> {
+      try {
+        this.loading = true
+        // Get request headers for SSR authentication
+        const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+        
+        const response = await $fetch(`/api/portfolios/${portfolioId}`, {
+          method: 'PUT' as const,
+          headers: headers as HeadersInit,
+          body: portfolioData
+        }) as { data: Portfolio }
+
+        console.log('Update portfolio response:', response)
+
+        // Update the portfolio in both portfolios and publicPortfolios arrays
+        const updatedPortfolio = response.data
+        
+        // If this portfolio is being set as default, update other portfolios
+        if (updatedPortfolio.isDefault) {
+          // Set all other portfolios to not default
+          this.portfolios = this.portfolios.map(p => 
+            p.id === portfolioId ? updatedPortfolio : { ...p, isDefault: false }
+          )
+          this.publicPortfolios = this.publicPortfolios.map(p => 
+            p.id === portfolioId ? updatedPortfolio : { ...p, isDefault: false }
+          )
+        } else {
+          // Update in portfolios array
+          const portfolioIndex = this.portfolios.findIndex(p => p.id === portfolioId)
+          if (portfolioIndex !== -1) {
+            this.portfolios[portfolioIndex] = updatedPortfolio
+          }
+
+          // Update in publicPortfolios array
+          const publicPortfolioIndex = this.publicPortfolios.findIndex(p => p.id === portfolioId)
+          if (publicPortfolioIndex !== -1) {
+            this.publicPortfolios[publicPortfolioIndex] = updatedPortfolio
+          }
+        }
+
+        // Update currentPortfolio if it's the one being updated
+        if (this.currentPortfolio && this.currentPortfolio.id === portfolioId) {
+          this.currentPortfolio = updatedPortfolio
+        }
+
+        console.log('Portfolio updated successfully in store')
+        return updatedPortfolio
+      } catch (error) {
+        console.error('Store updatePortfolio error:', error)
+        this.error = error instanceof Error ? error.message : 'Failed to update portfolio'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async deletePortfolio(portfolioId: string): Promise<void> {
+      try {
+        this.loading = true
+        // Get request headers for SSR authentication
+        const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+        
+        await $fetch(`/api/portfolios/${portfolioId}`, {
+          method: 'DELETE' as const,
+          headers: headers as HeadersInit
+        })
+
+        // Remove the portfolio from both arrays
+        this.portfolios = this.portfolios.filter(p => p.id !== portfolioId)
+        this.publicPortfolios = this.publicPortfolios.filter(p => p.id !== portfolioId)
+
+        // Clear currentPortfolio if it's the one being deleted
+        if (this.currentPortfolio && this.currentPortfolio.id === portfolioId) {
+          this.currentPortfolio = null
+          this.transactions = []
+          this.holdings = []
+        }
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : 'Failed to delete portfolio'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
     async setCurrentPortfolio(portfolioId: string): Promise<void> {
       try {
         this.loading = true

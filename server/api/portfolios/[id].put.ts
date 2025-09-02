@@ -71,7 +71,10 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    return updatedPortfolio
+    return {
+      success: true,
+      data: updatedPortfolio
+    }
   } catch (error) {
     console.error('Error updating portfolio:', error)
     throw createError({
