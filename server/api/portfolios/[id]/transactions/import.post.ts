@@ -140,7 +140,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Parse CSV data
+        // Parse CSV data
     const lines = body.csvData.split('\n').filter((line: string) => line.trim())
     if (lines.length < 2) {
       throw createError({
@@ -154,6 +154,16 @@ export default defineEventHandler(async (event) => {
     const errors: string[] = []
     let successCount = 0
     let skippedCount = 0
+
+    // Check if CSV has Saldo column for enhanced cash tracking
+    const hasSaldoColumn = headers.includes('Saldo')
+    
+    // Parse all transactions first to sort them chronologically
+    const parsedTransactions: Array<{
+      csvRow: CSVRow,
+      date: Date,
+      lineNumber: number
+    }> = []
 
     for (let i = 1; i < lines.length; i++) {
       try {
@@ -169,6 +179,24 @@ export default defineEventHandler(async (event) => {
           csvRow[header] = values[index]
         })
 
+        // Parse date and add to array for sorting
+        const date = parseNorwegianDate(csvRow.Bokføringsdag)
+        parsedTransactions.push({
+          csvRow,
+          date,
+          lineNumber: i + 1
+        })
+      } catch (error) {
+        errors.push(`Line ${i + 1}: Error parsing line - ${error}`)
+      }
+    }
+
+    // Sort transactions by date (oldest first) for proper saldo progression
+    parsedTransactions.sort((a, b) => a.date.getTime() - b.date.getTime())
+
+    // Now process transactions in chronological order
+    for (const { csvRow, lineNumber } of parsedTransactions) {
+      try {
         // Map transaction type
         const mappedTransactionType = mapTransactionType(csvRow.Transaksjonstype)
         if (!mappedTransactionType) {
@@ -259,7 +287,7 @@ export default defineEventHandler(async (event) => {
         } else {
           // For security transactions, validate quantity and price
           if ((transactionType === 'BUY' || transactionType === 'SELL') && (finalQuantity <= 0 || finalPrice <= 0)) {
-            errors.push(`Line ${i + 1}: Invalid quantity or price for ${transactionType} transaction`)
+            errors.push(`Line ${lineNumber}: Invalid quantity or price for ${transactionType} transaction`)
             continue
           }
         }
@@ -297,7 +325,7 @@ export default defineEventHandler(async (event) => {
 
         transactions.push(transactionData)
       } catch (error) {
-        errors.push(`Line ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        errors.push(`Line ${lineNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     }
 
@@ -314,15 +342,55 @@ export default defineEventHandler(async (event) => {
         await updateHoldings(portfolioId, symbol)
       }
 
-      // If any stock transactions were imported, also recalculate cash holdings
-      const stockTransactionTypes = [
-        'BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN',
-        'SPLIT', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'
-      ]
-      const hasStockTransactions = transactions.some(t => stockTransactionTypes.includes(t.type))
-      const portfolioCashSymbol = `CASH_${portfolio.currency || 'NOK'}`
-      if (hasStockTransactions && !uniqueSymbols.includes(portfolioCashSymbol)) {
-        await updateHoldings(portfolioId, portfolioCashSymbol)
+      // If CSV has Saldo column, use the final balance to set accurate cash holdings
+      if (hasSaldoColumn && parsedTransactions.length > 0) {
+        // Get the most recent transaction's saldo value
+        const lastTransaction = parsedTransactions[parsedTransactions.length - 1]
+        const finalSaldo = parseFloat(lastTransaction.csvRow.Saldo || '0')
+        
+        if (finalSaldo > 0) {
+          // Get portfolio currency for cash symbol
+          const portfolioCurrency = portfolio.currency || 'NOK'
+          const cashSymbol = `CASH_${portfolioCurrency}`
+          
+          // Update or create cash holding with the exact saldo amount
+          await prisma.holding.upsert({
+            where: {
+              portfolioId_symbol: {
+                portfolioId,
+                symbol: cashSymbol
+              }
+            },
+            update: {
+              quantity: finalSaldo,
+              avgPrice: 1.0,
+              currency: portfolioCurrency,
+              updatedAt: new Date()
+            },
+            create: {
+              portfolioId,
+              symbol: cashSymbol,
+              quantity: finalSaldo,
+              avgPrice: 1.0,
+              currency: portfolioCurrency
+            }
+          })
+          
+          console.log(`Updated cash holdings to ${finalSaldo} ${portfolioCurrency} based on CSV saldo`)
+        }
+      } else {
+        // Fallback to traditional cash calculation for CSVs without saldo
+        const stockTransactionTypes = [
+          'BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN',
+          'SPLIT', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'
+        ]
+        const hasStockTransactions = transactions.some(t => stockTransactionTypes.includes(t.type))
+
+        if (hasStockTransactions) {
+          // Recalculate cash holdings using traditional method
+          const portfolioCurrency = portfolio.currency || 'NOK'
+          await updateHoldings(portfolioId, `CASH_${portfolioCurrency}`)
+        }
       }
     }
 
