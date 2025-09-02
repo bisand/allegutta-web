@@ -65,7 +65,18 @@ function mapTransactionType(norwegianType: string): string | null {
     'SLETTING DESIM. LIKV': 'DECIMAL_LIQUIDATION',
     'SLETTING DESIM. UTTA': 'DECIMAL_WITHDRAWAL',
     'SPLITT UTTAK VP': 'LIQUIDATION',        // Split withdrawal - liquidates old position
-    'SPLITT INNLEGG VP': 'SPIN_OFF_IN'       // Split deposit - creates new position
+    'SPLITT INNLEGG VP': 'SPIN_OFF_IN',      // Split deposit - creates new position
+    
+    // Additional Norwegian transaction types
+    'INNSKUDD KONTANTER': 'DEPOSIT',         // Cash deposit
+    'TILDELING INNLEGG RE': 'RIGHTS_ALLOCATION', // Rights allocation
+    'INNLEGG OVERFØRING': 'TRANSFER_IN',     // Transfer deposit  
+    'SLETTING UTTAK VP': 'LIQUIDATION',      // Deletion withdrawal
+    'UTBYTTE INNLEGG VP': 'DIVIDEND',        // Dividend deposit
+    'REINVESTERT UTBYTTE': 'DIVIDEND_REINVEST', // Reinvested dividend
+    'OVERBELÅNINGSRENTE': 'INTEREST_CHARGE', // Overdraft interest (negative)
+    'EMISJON INNLEGG VP': 'RIGHTS_ISSUE',    // Rights issue/emission
+    'DEBETRENTE': 'INTEREST_CHARGE'          // Debit interest (negative)
   }
   
   return typeMap[norwegianType] || null
@@ -171,7 +182,7 @@ export default defineEventHandler(async (event) => {
         
         // For cash transactions without a security symbol, use CASH with currency
         if (!symbol || symbol.trim() === '') {
-          if (['DEPOSIT', 'WITHDRAWAL', 'REFUND', 'DIVIDEND'].includes(transactionType)) {
+          if (['DEPOSIT', 'WITHDRAWAL', 'REFUND', 'DIVIDEND', 'DIVIDEND_REINVEST', 'TRANSFER_IN', 'INTEREST_CHARGE'].includes(transactionType)) {
             // Default to NOK for Norwegian brokerage, but could be enhanced to detect currency
             symbol = 'CASH_NOK'
           } else {
@@ -182,9 +193,14 @@ export default defineEventHandler(async (event) => {
         }
         
         // Special handling: Dividends should always use CASH_NOK symbol but keep DIVIDEND type
-        if (transactionType === 'DIVIDEND') {
+        if (['DIVIDEND', 'DIVIDEND_REINVEST'].includes(transactionType)) {
           symbol = 'CASH_NOK'
-          // Keep transactionType as 'DIVIDEND' - don't change it to 'DEPOSIT'
+          // Keep original transaction type - don't change it to 'DEPOSIT'
+        }
+        
+        // Special handling: Interest and transfer transactions should use CASH_NOK
+        if (['INTEREST_CHARGE', 'TRANSFER_IN'].includes(transactionType)) {
+          symbol = 'CASH_NOK'
         }
         
         // Keep exchange transactions as their original types - don't convert to BUY/SELL
@@ -345,10 +361,12 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         type: {
           in: [
             'DEPOSIT', 'WITHDRAWAL', 'REFUND',           // Direct cash transactions
-            'DIVIDEND',                                  // Dividends increase cash
+            'DIVIDEND', 'DIVIDEND_REINVEST',             // Dividends increase cash
             'LIQUIDATION', 'REDEMPTION',                 // Liquidations increase cash
             'DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL', // Decimal adjustments
-            'SPIN_OFF_IN'                               // Spin-offs can create cash
+            'SPIN_OFF_IN',                              // Spin-offs can create cash
+            'TRANSFER_IN', 'INTEREST_CHARGE',           // Transfers and interest
+            'RIGHTS_ISSUE'                              // Rights issues
           ]
         }
       },
@@ -381,9 +399,9 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
     for (const transaction of directCashTransactions) {
       const amount = transaction.quantity * transaction.price
       
-      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN'].includes(transaction.type)) {
+      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN', 'DIVIDEND_REINVEST', 'TRANSFER_IN', 'RIGHTS_ISSUE'].includes(transaction.type)) {
         totalCash += amount  // These increase cash
-      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
+      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL', 'INTEREST_CHARGE'].includes(transaction.type)) {
         totalCash -= amount  // These decrease cash
       }
     }
@@ -444,7 +462,8 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
             'SPIN_OFF_IN',                    // Spin-offs that create new holdings
             'DECIMAL_LIQUIDATION',            // Decimal adjustments
             'DECIMAL_WITHDRAWAL',             // Decimal withdrawals
-            'REFUND', 'LIQUIDATION', 'REDEMPTION'  // Corporate actions that liquidate positions
+            'REFUND', 'LIQUIDATION', 'REDEMPTION',  // Corporate actions that liquidate positions
+            'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'     // Rights allocations and issues
           ]
         }
       },
@@ -461,7 +480,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
       const price = transaction.price
       const fees = transaction.fees
       
-      if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(transaction.type)) {
+      if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
         // These increase holdings
         totalQuantity += quantity
         totalCost += quantity * price + fees
