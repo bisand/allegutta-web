@@ -32,12 +32,12 @@
             </li>
             <li>
               <NuxtLink to="/about" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors">
-                About
+                {{ $t('common.about') }}
               </NuxtLink>
             </li>
             <li>
               <NuxtLink to="/privacy" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors">
-                Privacy Policy
+                {{ $t('common.privacyPolicy') }}
               </NuxtLink>
             </li>
           </ul>
