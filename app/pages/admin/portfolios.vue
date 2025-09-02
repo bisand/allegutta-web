@@ -49,6 +49,7 @@
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Currency</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
@@ -71,6 +72,11 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {{ portfolio.description || 'No description' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    {{ portfolio.currency || 'NOK' }}
+                  </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span v-if="portfolio.isDefault" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -145,6 +151,21 @@
                       <textarea id="description" v-model="form.description" rows="3"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         placeholder="Enter portfolio description" />
+                    </div>
+
+                    <div>
+                      <label for="currency" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Currency
+                      </label>
+                      <select id="currency" v-model="form.currency" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="NOK">NOK - Norwegian Krone</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="SEK">SEK - Swedish Krona</option>
+                        <option value="DKK">DKK - Danish Krone</option>
+                      </select>
                     </div>
 
                     <div class="flex items-center">
@@ -249,16 +270,28 @@
                     placeholder="10">
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ($)</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK' }})</label>
                   <input v-model.number="transactionForm.price" type="number" step="0.01" required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="150.00">
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fees ($)</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fees ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK' }})</label>
                   <input v-model.number="transactionForm.fees" type="number" step="0.01" min="0"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="9.99">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
+                  <select v-model="transactionForm.currency"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="NOK">NOK - Norwegian Krone</option>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="SEK">SEK - Swedish Krona</option>
+                    <option value="DKK">DKK - Danish Krone</option>
+                  </select>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
@@ -377,6 +410,7 @@ interface TransactionData {
   quantity: number
   price: number
   fees: number
+  currency?: string
   date: string
   notes?: string
   createdAt: string
@@ -432,6 +466,7 @@ onMounted(async () => {
 const form = reactive({
   name: '',
   description: '',
+  currency: 'NOK',
   isDefault: false
 })
 
@@ -442,6 +477,7 @@ const transactionForm = reactive({
   quantity: 0,
   price: 0,
   fees: 0,
+  currency: 'NOK',
   date: new Date().toISOString().split('T')[0],
   notes: ''
 })
@@ -450,6 +486,7 @@ const transactionForm = reactive({
 function resetForm(): void {
   form.name = ''
   form.description = ''
+  form.currency = 'NOK'
   form.isDefault = false
 }
 
@@ -460,6 +497,7 @@ function resetTransactionForm(): void {
   transactionForm.quantity = 0
   transactionForm.price = 0
   transactionForm.fees = 0
+  transactionForm.currency = selectedPortfolio.value?.currency || 'NOK'
   transactionForm.date = new Date().toISOString().split('T')[0]
   transactionForm.notes = ''
 }
@@ -579,6 +617,7 @@ function editTransaction(transaction: TransactionData): void {
   transactionForm.fees = transaction.fees
   transactionForm.date = transaction.date
   transactionForm.notes = transaction.notes || ''
+  transactionForm.currency = transaction.currency || selectedPortfolio.value?.currency || 'NOK'
   showAddTransactionForm.value = true
 }
 
@@ -623,6 +662,7 @@ function editPortfolio(portfolio: Portfolio): void {
   form.name = portfolio.name
   form.description = portfolio.description || ''
   form.isDefault = portfolio.isDefault
+  form.currency = portfolio.currency || 'NOK'
 }
 
 // Format currency

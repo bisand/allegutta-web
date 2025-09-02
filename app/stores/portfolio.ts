@@ -4,6 +4,7 @@ export interface Portfolio {
   id: string
   name: string
   description?: string
+  currency?: string
   isDefault: boolean
   userId: string
   createdAt: string
@@ -18,6 +19,7 @@ interface Transaction {
   type: 'BUY' | 'SELL'
   quantity: number
   price: number
+  currency?: string
   date: string
   fee?: number
   notes?: string
@@ -32,6 +34,7 @@ interface Holding {
   isin?: string | null
   quantity: number
   avgPrice: number
+  currency?: string
   currentPrice?: number
   updatedAt: string
 }
@@ -49,6 +52,7 @@ interface PortfolioState {
 interface CreatePortfolioData {
   name: string
   description?: string
+  currency?: string
   isDefault?: boolean
 }
 
@@ -57,6 +61,7 @@ interface CreateTransactionData {
   type: 'BUY' | 'SELL'
   quantity: number
   price: number
+  currency?: string
   date: string
   fee?: number
   notes?: string
@@ -429,10 +434,14 @@ export const usePortfolioStore = defineStore('portfolio', {
     async updateTransaction(transactionId: string, transactionData: Partial<CreateTransactionData>): Promise<Transaction> {
       try {
         this.loading = true
+        if (!this.currentPortfolio) {
+          throw new Error('No current portfolio selected')
+        }
+
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
         
-        const response = await $fetch(`/api/transactions/${transactionId}`, {
+        const response = await $fetch(`/api/portfolios/${this.currentPortfolio.id}/transactions/${transactionId}`, {
           method: 'PUT',
           headers: headers as HeadersInit,
           body: transactionData

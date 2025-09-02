@@ -24,19 +24,25 @@
           <UFormGroup label="Price" name="price" required>
             <UInput v-model="form.price" type="number" step="0.01" placeholder="0.00">
               <template #leading>
-                <span class="text-gray-500 dark:text-gray-400 text-sm">$</span>
+                <span class="text-gray-500 dark:text-gray-400 text-sm">{{ form.currency || 'NOK' }}</span>
               </template>
             </UInput>
           </UFormGroup>
         </div>
 
-        <UFormGroup label="Fees" name="fees">
-          <UInput v-model="form.fees" type="number" step="0.01" placeholder="0.00">
-            <template #leading>
-              <span class="text-gray-500 dark:text-gray-400 text-sm">$</span>
-            </template>
-          </UInput>
-        </UFormGroup>
+        <div class="grid grid-cols-2 gap-4">
+          <UFormGroup label="Fees" name="fees">
+            <UInput v-model="form.fees" type="number" step="0.01" placeholder="0.00">
+              <template #leading>
+                <span class="text-gray-500 dark:text-gray-400 text-sm">{{ form.currency || 'NOK' }}</span>
+              </template>
+            </UInput>
+          </UFormGroup>
+
+          <UFormGroup label="Currency" name="currency">
+            <USelectMenu v-model="form.currency" :options="currencies" placeholder="Select currency" />
+          </UFormGroup>
+        </div>
 
         <UFormGroup label="Date" name="date" required>
           <UInput v-model="form.date" type="date" />
@@ -74,12 +80,22 @@ const transactionTypes = [
   { label: 'Sell', value: 'SELL' }
 ] as const
 
+const currencies = [
+  { label: 'NOK - Norwegian Krone', value: 'NOK' },
+  { label: 'USD - US Dollar', value: 'USD' },
+  { label: 'EUR - Euro', value: 'EUR' },
+  { label: 'GBP - British Pound', value: 'GBP' },
+  { label: 'SEK - Swedish Krona', value: 'SEK' },
+  { label: 'DKK - Danish Krone', value: 'DKK' }
+] as const
+
 const schema = z.object({
   symbol: z.string().min(1, 'Symbol is required').max(10),
   type: z.enum(['BUY', 'SELL']),
   quantity: z.number().positive('Quantity must be positive'),
   price: z.number().positive('Price must be positive'),
   fees: z.number().min(0, 'Fees cannot be negative').optional(),
+  currency: z.string().optional(),
   date: z.string().min(1, 'Date is required'),
   notes: z.string().optional()
 })
@@ -90,6 +106,7 @@ interface TransactionForm {
   quantity: number | null
   price: number | null
   fees: number
+  currency: string
   date: string
   notes: string
 }
@@ -100,6 +117,7 @@ const form = reactive<TransactionForm>({
   quantity: null,
   price: null,
   fees: 0,
+  currency: 'NOK',
   date: new Date().toISOString().split('T')[0] || '',
   notes: ''
 })
@@ -111,6 +129,7 @@ const resetForm = (): void => {
     quantity: null,
     price: null,
     fees: 0,
+    currency: 'NOK',
     date: new Date().toISOString().split('T')[0],
     notes: ''
   })
@@ -131,7 +150,8 @@ const handleSubmit = async (): Promise<void> => {
       ...form,
       quantity: Number(form.quantity),
       price: Number(form.price),
-      fee: Number(form.fees) || 0
+      fee: Number(form.fees) || 0,
+      currency: form.currency
     })
 
     resetForm()
