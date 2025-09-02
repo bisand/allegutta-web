@@ -6,41 +6,23 @@
           Add Transaction
         </h3>
       </template>
-      
+
       <UForm :state="form" :schema="schema" class="space-y-4" @submit="handleSubmit">
         <UFormGroup label="Symbol" name="symbol" required>
-          <UInput 
-            v-model="form.symbol" 
-            placeholder="e.g. AAPL, TSLA"
-            :uppercase="true"
-          />
+          <UInput v-model="form.symbol" placeholder="e.g. AAPL, TSLA" :uppercase="true" />
         </UFormGroup>
 
         <UFormGroup label="Type" name="type" required>
-          <USelectMenu
-            v-model="form.type"
-            :options="transactionTypes"
-            placeholder="Select transaction type"
-          />
+          <USelectMenu v-model="form.type" :options="transactionTypes" placeholder="Select transaction type" />
         </UFormGroup>
 
         <div class="grid grid-cols-2 gap-4">
           <UFormGroup label="Quantity" name="quantity" required>
-            <UInput 
-              v-model="form.quantity" 
-              type="number"
-              step="0.0001"
-              placeholder="0.00"
-            />
+            <UInput v-model="form.quantity" type="number" step="0.0001" placeholder="0.00" />
           </UFormGroup>
 
           <UFormGroup label="Price" name="price" required>
-            <UInput 
-              v-model="form.price" 
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-            >
+            <UInput v-model="form.price" type="number" step="0.01" placeholder="0.00">
               <template #leading>
                 <span class="text-gray-500 dark:text-gray-400 text-sm">$</span>
               </template>
@@ -49,12 +31,7 @@
         </div>
 
         <UFormGroup label="Fees" name="fees">
-          <UInput 
-            v-model="form.fees" 
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-          >
+          <UInput v-model="form.fees" type="number" step="0.01" placeholder="0.00">
             <template #leading>
               <span class="text-gray-500 dark:text-gray-400 text-sm">$</span>
             </template>
@@ -62,18 +39,11 @@
         </UFormGroup>
 
         <UFormGroup label="Date" name="date" required>
-          <UInput 
-            v-model="form.date" 
-            type="date"
-          />
+          <UInput v-model="form.date" type="date" />
         </UFormGroup>
 
         <UFormGroup label="Notes" name="notes">
-          <UTextarea 
-            v-model="form.notes" 
-            placeholder="Optional notes about this transaction"
-            :rows="3"
-          />
+          <UTextarea v-model="form.notes" placeholder="Optional notes about this transaction" :rows="3" />
         </UFormGroup>
 
         <div class="flex justify-end space-x-3 pt-4">
@@ -154,7 +124,7 @@ const handleCancel = (): void => {
 const handleSubmit = async (): Promise<void> => {
   try {
     loading.value = true
-    
+
     // Add the transaction via the portfolio store
     const portfolioStore = usePortfolioStore()
     await portfolioStore.addTransaction({
@@ -163,7 +133,7 @@ const handleSubmit = async (): Promise<void> => {
       price: Number(form.price),
       fee: Number(form.fees) || 0
     })
-    
+
     resetForm()
     isOpen.value = false
     emit('success')

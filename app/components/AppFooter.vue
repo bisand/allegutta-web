@@ -9,7 +9,7 @@
             <span class="text-lg font-bold text-gray-900 dark:text-white">AlleGutta</span>
           </div>
           <p class="text-gray-600 dark:text-gray-400 text-sm">
-            Personal portfolio and investment tracking application. 
+            Personal portfolio and investment tracking application.
             Manage your investments with precision and clarity.
           </p>
         </div>
@@ -21,34 +21,22 @@
           </h3>
           <ul class="space-y-2">
             <li>
-              <NuxtLink 
-                to="/" 
-                class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors"
-              >
+              <NuxtLink to="/" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors">
                 Home
               </NuxtLink>
             </li>
             <li v-if="loggedIn">
-              <NuxtLink 
-                to="/portfolio" 
-                class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors"
-              >
+              <NuxtLink to="/portfolio" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors">
                 Portfolio
               </NuxtLink>
             </li>
             <li>
-              <NuxtLink 
-                to="/about" 
-                class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors"
-              >
+              <NuxtLink to="/about" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors">
                 About
               </NuxtLink>
             </li>
             <li>
-              <NuxtLink 
-                to="/privacy" 
-                class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors"
-              >
+              <NuxtLink to="/privacy" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors">
                 Privacy Policy
               </NuxtLink>
             </li>

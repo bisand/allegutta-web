@@ -415,7 +415,7 @@ function getColorForSymbol(symbol: string): string {
   for (let i = 0; i < symbol.length; i++) {
     hash = symbol.charCodeAt(i) + ((hash << 5) - hash)
   }
-  return colors[Math.abs(hash) % colors.length]
+  return colors[Math.abs(hash) % colors.length] as string
 }
 
 // Get the symbol of the top performing holding
