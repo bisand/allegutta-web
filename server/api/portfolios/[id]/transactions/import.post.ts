@@ -338,6 +338,8 @@ export default defineEventHandler(async (event) => {
         const portfolioCurrency = portfolio.currency || 'NOK'
         const cashSymbol = `CASH_${portfolioCurrency}`
 
+        console.log(`📈 About to process ${transactions.length} transactions for holdings updates`)
+        
         if (transactions.length > 0) {
             console.log(`📊 Processing ${transactions.length} transactions with simple saldo validation...`)
 
@@ -356,7 +358,7 @@ export default defineEventHandler(async (event) => {
                 if (createdTransaction.saldo !== null && createdTransaction.saldo !== undefined) {
                     // Use the original beløp amount for accurate cash flow calculation
                     // The amount already has the correct sign: positive = cash inflow, negative = cash outflow
-                    const cashImpact = createdTransaction.amount
+                    const cashImpact = createdTransaction.amount || 0
 
                     expectedSaldo += cashImpact
                     const brokerSaldo = createdTransaction.saldo
@@ -396,11 +398,14 @@ export default defineEventHandler(async (event) => {
 
             // Update holdings for each unique symbol after all transactions are processed
             const uniqueSymbols = [...new Set(transactions.map(t => t.symbol))]
+            console.log(`🔄 Updating holdings for symbols: ${uniqueSymbols.join(', ')}`)
             for (const symbol of uniqueSymbols) {
+                console.log(`🔄 Updating holdings for symbol: ${symbol}`)
                 await updateHoldings(portfolioId, symbol)
             }
 
             // Final cash holdings update
+            console.log(`🔄 Final cash holdings update for: ${cashSymbol}`)
             await updateHoldings(portfolioId, cashSymbol)
         }
 
@@ -424,6 +429,8 @@ export default defineEventHandler(async (event) => {
 
 // Helper function to update holdings based on transactions
 async function updateHoldings(portfolioId: string, symbol: string): Promise<void> {
+    console.log(`🔧 updateHoldings called for portfolio ${portfolioId}, symbol ${symbol}`)
+    
     // Get the latest ISIN for this symbol from transactions
     const latestTransaction = await prisma.transaction.findFirst({
         where: {
@@ -442,72 +449,25 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
     const isin = latestTransaction?.isin || null
 
     if (symbol.startsWith('CASH_')) {
-        // Handle cash holdings - sum all transactions that affect cash balance
-        // This includes direct cash transactions AND the impact of stock transactions
-
-        // 1. Get direct cash transactions for this specific cash symbol
-        const directCashTransactions = await prisma.transaction.findMany({
+        // Handle cash holdings - use the saldo from the most recent transaction
+        // The saldo represents the actual cash balance at that point in time
+        
+        const latestTransaction = await prisma.transaction.findFirst({
             where: {
                 portfolioId: portfolioId,
-                symbol: symbol,
-                type: {
-                    in: [
-                        'DEPOSIT', 'WITHDRAWAL', 'REFUND',           // Direct cash transactions
-                        'DIVIDEND', 'DIVIDEND_REINVEST',             // Dividends increase cash
-                        'LIQUIDATION', 'REDEMPTION',                 // Liquidations increase cash
-                        'DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL', // Decimal adjustments
-                        'SPIN_OFF_IN',                              // Spin-offs can create cash
-                        'TRANSFER_IN', 'INTEREST_CHARGE',           // Transfers and interest
-                        'RIGHTS_ISSUE'                              // Rights issues
-                    ]
-                }
+                saldo: { not: null }  // Only transactions with saldo field
             },
             orderBy: {
-                date: 'asc'
-            }
-        })
-
-        // 2. Get all stock transactions that affect cash (since there are no automatic cash transactions)
-        const stockTransactions = await prisma.transaction.findMany({
-            where: {
-                portfolioId: portfolioId,
-                NOT: {
-                    symbol: {
-                        startsWith: 'CASH_'
-                    }
-                },
-                type: {
-                    in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE']
-                }
-            },
-            orderBy: {
-                date: 'asc'
+                date: 'desc'
             }
         })
 
         let totalCash = 0
-
-        // Process direct cash transactions
-        for (const transaction of directCashTransactions) {
-            const amount = transaction.quantity * transaction.price
-
-            if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN', 'DIVIDEND_REINVEST', 'TRANSFER_IN', 'RIGHTS_ISSUE'].includes(transaction.type)) {
-                totalCash += amount  // These increase cash
-            } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL', 'INTEREST_CHARGE'].includes(transaction.type)) {
-                totalCash -= amount  // These decrease cash
-            }
-        }
-
-        // Process stock transactions that affect cash (no automatic cash transactions exist)
-        for (const transaction of stockTransactions) {
-            const amount = transaction.quantity * transaction.price
-            const fees = transaction.fees || 0
-
-            if (['BUY', 'EXCHANGE_IN', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
-                totalCash -= (amount + fees)  // Buying stocks decreases cash (including fees)
-            } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
-                totalCash += (amount - fees)  // Selling stocks increases cash (minus fees)
-            }
+        if (latestTransaction && latestTransaction.saldo !== null) {
+            totalCash = latestTransaction.saldo
+            console.log(`💰 Using saldo from latest transaction: ${totalCash}`)
+        } else {
+            console.log(`⚠️ No transaction with saldo found for portfolio ${portfolioId}`)
         }
 
         if (totalCash !== 0) {
