@@ -224,6 +224,7 @@
     "date": "Date",
     "type": "Type",
     "price": "Price",
+    "fees": "Fees",
     "total": "Total",
     "actions": "Actions",
     "edit": "Edit",

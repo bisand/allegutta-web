@@ -19,6 +19,9 @@
             Price
           </th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Fees
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             Total
           </th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -28,7 +31,7 @@
       </thead>
       <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
         <tr v-if="transactions.length === 0">
-          <td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+          <td colspan="8" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
             <UIcon name="i-heroicons-banknotes" class="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p class="text-lg font-medium">No transactions found</p>
             <p class="text-sm">Add your first transaction to get started</p>
@@ -62,7 +65,10 @@
             ${{ formatCurrency(transaction.price) }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-            ${{ formatCurrency(transaction.quantity * transaction.price) }}
+            ${{ formatCurrency(transaction.fees || 0) }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+            ${{ formatCurrency(calculateTransactionTotal(transaction)) }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             <div class="flex items-center space-x-2">
@@ -90,16 +96,26 @@
 </template>
 
 <script setup lang="ts">
-defineProps({
-  transactions: {
-    type: Array,
-    default: () => []
-  }
-})
+interface Transaction {
+  id: string
+  symbol: string
+  type: string
+  quantity: number
+  price: number
+  fees: number
+  date: string
+}
 
-defineEmits(['edit', 'delete'])
+defineProps<{
+  transactions: Transaction[]
+}>()
 
-function formatDate(dateString) {
+defineEmits<{
+  edit: [transaction: Transaction]
+  delete: [transaction: Transaction]
+}>()
+
+function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -107,21 +123,63 @@ function formatDate(dateString) {
   })
 }
 
-function formatCurrency(value) {
+function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value)
 }
 
-function formatQuantity(value) {
+function formatQuantity(value: number): string {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 4
   }).format(value)
 }
 
-function getTypeColor(type) {
+function calculateTransactionTotal(transaction: Transaction): number {
+  const amount = transaction.quantity * transaction.price
+  const fees = transaction.fees || 0
+  
+  // For purchases (BUY), total is amount + fees (money going out)
+  // For sales (SELL), total is amount - fees (money coming in)
+  // For other types, follow the same logic based on cash flow direction
+  
+  switch (transaction.type) {
+    case 'BUY':
+    case 'RIGHTS_ALLOCATION':
+    case 'RIGHTS_ISSUE':
+      // Money going out (amount + fees)
+      return amount + fees
+      
+    case 'SELL':
+    case 'DIVIDEND':
+    case 'DIVIDEND_REINVEST':
+    case 'DEPOSIT':
+    case 'REFUND':
+    case 'LIQUIDATION':
+    case 'REDEMPTION':
+    case 'DECIMAL_LIQUIDATION':
+    case 'SPIN_OFF_IN':
+    case 'TRANSFER_IN':
+    case 'EXCHANGE_IN':
+      // Money coming in (amount - fees)
+      return amount - fees
+      
+    case 'WITHDRAWAL':
+    case 'DECIMAL_WITHDRAWAL':
+    case 'INTEREST_CHARGE':
+    case 'EXCHANGE_OUT':
+      // Money going out (amount + fees)
+      return amount + fees
+      
+    default:
+      // For unknown types, just show amount - fees
+      return amount - fees
+  }
+}
+
+function getTypeColor(type: string): string {
   switch (type) {
     case 'BUY':
       return 'green'

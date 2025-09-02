@@ -63,11 +63,17 @@ export default defineEventHandler(async (event) => {
     // Update holdings for the transaction symbol
     await updateHoldings(portfolioId, body.symbol.toUpperCase())
     
-    // For stock transactions, also update cash holdings since they affect cash balance
-    if (!body.symbol.toUpperCase().startsWith('CASH_') && 
-        ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT'].includes(body.type)) {
-      const portfolioCashSymbol = `CASH_${portfolio.currency || 'NOK'}`
-      await updateHoldings(portfolioId, portfolioCashSymbol)
+    // For ALL transactions (except direct cash transactions), update cash holdings
+    // Cash impact should mirror how the Norwegian broker calculates saldo changes
+    if (!body.symbol.toUpperCase().startsWith('CASH_')) {
+      await updateCashAfterTransaction(portfolioId, {
+        type: body.type,
+        symbol: body.symbol.toUpperCase(),
+        quantity: parseFloat(body.quantity),
+        price: parseFloat(body.price),
+        fees: parseFloat(body.fees) || 0,
+        currency: body.currency || portfolio.currency || 'NOK'
+      }, portfolio.currency || 'NOK')
     }
 
     return {
@@ -81,6 +87,127 @@ export default defineEventHandler(async (event) => {
     })
   }
 })
+
+// Function to update cash holdings after a transaction (mimicking Norwegian broker logic)
+async function updateCashAfterTransaction(
+  portfolioId: string, 
+  transaction: {
+    type: string,
+    symbol: string,
+    quantity: number,
+    price: number,
+    fees: number,
+    currency: string
+  },
+  portfolioCurrency: string
+): Promise<void> {
+  const cashSymbol = `CASH_${portfolioCurrency}`
+  
+  // Get current cash balance
+  const currentCashHolding = await prisma.holding.findUnique({
+    where: {
+      portfolioId_symbol: {
+        portfolioId,
+        symbol: cashSymbol
+      }
+    }
+  })
+  
+  const currentCash = currentCashHolding?.quantity || 0
+  let cashImpact = 0
+  
+  // Calculate cash impact based on transaction type (following Norwegian broker logic)
+  const amount = transaction.quantity * transaction.price
+  const fees = transaction.fees
+  
+  switch (transaction.type) {
+    case 'BUY':
+    case 'RIGHTS_ALLOCATION':
+    case 'RIGHTS_ISSUE':
+      // Buying securities decreases cash (amount + fees)
+      cashImpact = -(amount + fees)
+      break
+      
+    case 'SELL':
+      // Selling securities increases cash (amount) but fees are always subtracted
+      cashImpact = amount - fees
+      break
+      
+    case 'DIVIDEND':
+    case 'DIVIDEND_REINVEST':
+      // Dividends increase cash, fees (if any) are subtracted
+      cashImpact = amount - fees
+      break
+      
+    case 'DEPOSIT':
+    case 'REFUND':
+    case 'LIQUIDATION':
+    case 'REDEMPTION':
+    case 'DECIMAL_LIQUIDATION':
+    case 'SPIN_OFF_IN':
+    case 'TRANSFER_IN':
+      // These increase cash, fees (if any) are subtracted
+      cashImpact = amount - fees
+      break
+      
+    case 'WITHDRAWAL':
+    case 'DECIMAL_WITHDRAWAL':
+    case 'INTEREST_CHARGE':
+      // These decrease cash, fees make it worse
+      cashImpact = -(amount + fees)
+      break
+      
+    case 'EXCHANGE_IN':
+      // Exchange in increases cash, fees are subtracted
+      cashImpact = amount - fees
+      break
+      
+    case 'EXCHANGE_OUT':
+      // Exchange out decreases cash, fees make it worse
+      cashImpact = -(amount + fees)
+      break
+      
+    case 'SPLIT':
+    case 'MERGER':
+      // These typically don't affect cash directly, but fees (if any) are subtracted
+      cashImpact = -fees
+      break
+      
+    default:
+      // Unknown transaction types: only subtract fees if any
+      cashImpact = -fees
+      break
+  }
+  
+  // Update cash holdings with new balance
+  const newCashBalance = currentCash + cashImpact
+  
+  if (newCashBalance !== 0 || currentCashHolding) {
+    await prisma.holding.upsert({
+      where: {
+        portfolioId_symbol: {
+          portfolioId,
+          symbol: cashSymbol
+        }
+      },
+      update: {
+        quantity: newCashBalance,
+        avgPrice: 1.0,
+        currency: portfolioCurrency,
+        lastUpdated: new Date()
+      },
+      create: {
+        portfolioId,
+        symbol: cashSymbol,
+        quantity: newCashBalance,
+        avgPrice: 1.0,
+        currency: portfolioCurrency
+      }
+    })
+    
+    console.log(`💰 Cash impact for ${transaction.type}: ${cashImpact} ${portfolioCurrency} (new balance: ${newCashBalance})`)
+  }
+}
 
 // Helper function to update holdings based on transactions
 async function updateHoldings(portfolioId: string, symbol: string): Promise<void> {

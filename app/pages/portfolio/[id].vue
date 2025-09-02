@@ -309,6 +309,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.type') }}</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.quantity') }}</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.price') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.fees') }}</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.total') }}</th>
                 <th v-if="canEdit" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.actions') }}</th>
               </tr>
@@ -336,7 +337,10 @@
                   ${{ formatCurrency(transaction.price) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  ${{ formatCurrency(transaction.quantity * transaction.price) }}
+                  ${{ formatCurrency(transaction.fees || 0) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  ${{ formatCurrency(calculateTransactionTotal(transaction)) }}
                 </td>
                 <td v-if="canEdit" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   <button class="text-primary-600 hover:text-primary-500 mr-2">{{ $t('portfolioPage.edit') }}</button>
@@ -519,6 +523,49 @@ function formatPercentage(value: number): string {
 // Format date
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString()
+}
+
+// Calculate transaction total with fees
+function calculateTransactionTotal(transaction: { type: string; quantity: number; price: number; fees?: number }): number {
+  const amount = transaction.quantity * transaction.price
+  const fees = transaction.fees || 0
+  
+  // For purchases (BUY), total is amount + fees (money going out)
+  // For sales (SELL), total is amount - fees (money coming in)
+  // For other types, follow the same logic based on cash flow direction
+  
+  switch (transaction.type) {
+    case 'BUY':
+    case 'RIGHTS_ALLOCATION':
+    case 'RIGHTS_ISSUE':
+      // Money going out (amount + fees)
+      return amount + fees
+      
+    case 'SELL':
+    case 'DIVIDEND':
+    case 'DIVIDEND_REINVEST':
+    case 'DEPOSIT':
+    case 'REFUND':
+    case 'LIQUIDATION':
+    case 'REDEMPTION':
+    case 'DECIMAL_LIQUIDATION':
+    case 'SPIN_OFF_IN':
+    case 'TRANSFER_IN':
+    case 'EXCHANGE_IN':
+      // Money coming in (amount - fees)
+      return amount - fees
+      
+    case 'WITHDRAWAL':
+    case 'DECIMAL_WITHDRAWAL':
+    case 'INTEREST_CHARGE':
+    case 'EXCHANGE_OUT':
+      // Money going out (amount + fees)
+      return amount + fees
+      
+    default:
+      // For unknown types, just show amount - fees
+      return amount - fees
+  }
 }
 
 // Get holding gain/loss

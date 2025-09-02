@@ -31,7 +31,7 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <UFormGroup label="Fees" name="fees">
+          <UFormGroup :label="`Fees (${form.currency || 'NOK'})`" name="fees">
             <UInput v-model="form.fees" type="number" step="0.01" placeholder="0.00">
               <template #leading>
                 <span class="text-gray-500 dark:text-gray-400 text-sm">{{ form.currency || 'NOK' }}</span>

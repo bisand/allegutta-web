@@ -224,6 +224,7 @@
     "date": "Dato",
     "type": "Type",
     "price": "Pris",
+    "fees": "Avgifter",
     "total": "Totalt",
     "actions": "Handlinger",
     "edit": "Rediger",

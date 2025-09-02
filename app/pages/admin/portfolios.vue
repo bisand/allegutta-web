@@ -343,6 +343,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Price</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fees</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -367,7 +368,10 @@
                       ${{ formatCurrency(transaction.price) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      ${{ formatCurrency(transaction.quantity * transaction.price) }}
+                      ${{ formatCurrency(transaction.fees || 0) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      ${{ formatCurrency(calculateTransactionTotal(transaction)) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div class="flex items-center space-x-2">
@@ -690,6 +694,49 @@ function formatCurrency(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value)
+}
+
+// Calculate transaction total with fees
+function calculateTransactionTotal(transaction: TransactionData): number {
+  const amount = transaction.quantity * transaction.price
+  const fees = transaction.fees || 0
+  
+  // For purchases (BUY), total is amount + fees (money going out)
+  // For sales (SELL), total is amount - fees (money coming in)
+  // For other types, follow the same logic based on cash flow direction
+  
+  switch (transaction.type) {
+    case 'BUY':
+    case 'RIGHTS_ALLOCATION':
+    case 'RIGHTS_ISSUE':
+      // Money going out (amount + fees)
+      return amount + fees
+      
+    case 'SELL':
+    case 'DIVIDEND':
+    case 'DIVIDEND_REINVEST':
+    case 'DEPOSIT':
+    case 'REFUND':
+    case 'LIQUIDATION':
+    case 'REDEMPTION':
+    case 'DECIMAL_LIQUIDATION':
+    case 'SPIN_OFF_IN':
+    case 'TRANSFER_IN':
+    case 'EXCHANGE_IN':
+      // Money coming in (amount - fees)
+      return amount - fees
+      
+    case 'WITHDRAWAL':
+    case 'DECIMAL_WITHDRAWAL':
+    case 'INTEREST_CHARGE':
+    case 'EXCHANGE_OUT':
+      // Money going out (amount + fees)
+      return amount + fees
+      
+    default:
+      // For unknown types, just show amount - fees
+      return amount - fees
+  }
 }
 
 // Submit form

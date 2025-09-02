@@ -21,7 +21,7 @@ interface Transaction {
   price: number
   currency?: string
   date: string
-  fee?: number
+  fees?: number
   notes?: string
   createdAt: string
   updatedAt: string
