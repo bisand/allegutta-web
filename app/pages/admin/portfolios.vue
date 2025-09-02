@@ -259,8 +259,23 @@
                     <option value="BUY">Buy</option>
                     <option value="SELL">Sell</option>
                     <option value="DIVIDEND">Dividend</option>
+                    <option value="DIVIDEND_REINVEST">Dividend Reinvest</option>
+                    <option value="DEPOSIT">Deposit</option>
+                    <option value="WITHDRAWAL">Withdrawal</option>
+                    <option value="REFUND">Refund</option>
                     <option value="SPLIT">Stock Split</option>
                     <option value="MERGER">Merger</option>
+                    <option value="LIQUIDATION">Liquidation</option>
+                    <option value="REDEMPTION">Redemption</option>
+                    <option value="EXCHANGE_IN">Exchange In</option>
+                    <option value="EXCHANGE_OUT">Exchange Out</option>
+                    <option value="SPIN_OFF_IN">Spin-off In</option>
+                    <option value="DECIMAL_LIQUIDATION">Decimal Liquidation</option>
+                    <option value="DECIMAL_WITHDRAWAL">Decimal Withdrawal</option>
+                    <option value="RIGHTS_ALLOCATION">Rights Allocation</option>
+                    <option value="RIGHTS_ISSUE">Rights Issue</option>
+                    <option value="TRANSFER_IN">Transfer In</option>
+                    <option value="INTEREST_CHARGE">Interest Charge</option>
                   </select>
                 </div>
                 <div>
@@ -406,7 +421,10 @@ interface TransactionData {
   id: string
   portfolioId: string
   symbol: string
-  type: 'BUY' | 'SELL' | 'DIVIDEND' | 'SPLIT' | 'MERGER'
+  type: 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'WITHDRAWAL' | 'REFUND' | 'LIQUIDATION' | 'REDEMPTION' | 
+        'EXCHANGE_IN' | 'EXCHANGE_OUT' | 'SPIN_OFF_IN' | 'DECIMAL_LIQUIDATION' | 'DECIMAL_WITHDRAWAL' | 
+        'RIGHTS_ALLOCATION' | 'TRANSFER_IN' | 'DIVIDEND_REINVEST' | 'INTEREST_CHARGE' | 'RIGHTS_ISSUE' | 
+        'SPLIT' | 'MERGER'
   quantity: number
   price: number
   fees: number
@@ -615,7 +633,8 @@ function editTransaction(transaction: TransactionData): void {
   transactionForm.quantity = transaction.quantity
   transactionForm.price = transaction.price
   transactionForm.fees = transaction.fees
-  transactionForm.date = transaction.date
+  // Format date for HTML date input (YYYY-MM-DD)
+  transactionForm.date = transaction.date ? transaction.date.split('T')[0] : ''
   transactionForm.notes = transaction.notes || ''
   transactionForm.currency = transaction.currency || selectedPortfolio.value?.currency || 'NOK'
   showAddTransactionForm.value = true
@@ -733,11 +752,30 @@ function getTransactionTypeClass(type: string): string {
     case 'SELL':
       return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
     case 'DIVIDEND':
+    case 'DIVIDEND_REINVEST':
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+    case 'DEPOSIT':
+    case 'TRANSFER_IN':
+    case 'REFUND':
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+    case 'WITHDRAWAL':
+    case 'INTEREST_CHARGE':
+      return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
     case 'SPLIT':
+    case 'SPIN_OFF_IN':
       return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
     case 'MERGER':
+    case 'EXCHANGE_IN':
+    case 'EXCHANGE_OUT':
       return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
+    case 'LIQUIDATION':
+    case 'REDEMPTION':
+    case 'DECIMAL_LIQUIDATION':
+    case 'DECIMAL_WITHDRAWAL':
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+    case 'RIGHTS_ALLOCATION':
+    case 'RIGHTS_ISSUE':
+      return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400'
     default:
       return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
   }
