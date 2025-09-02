@@ -116,16 +116,16 @@
                     :key="availableLocale.code"
                     v-slot="{ active }"
                   >
-                    <button
+                    <NuxtLink
+                      :to="switchLocalePath(availableLocale.code)"
                       :class="[
                         active ? 'bg-gray-100 dark:bg-gray-700' : '',
                         locale === availableLocale.code ? 'text-primary-500' : 'text-gray-700 dark:text-gray-200',
                         'flex items-center w-full px-4 py-2 text-sm text-left'
                       ]"
-                      @click="setLocale(availableLocale.code)"
                     >
                       {{ availableLocale.name }}
-                    </button>
+                    </NuxtLink>
                   </MenuItem>
                 </div>
               </MenuItems>
@@ -368,7 +368,8 @@ const { loggedIn, user, login, register, logout, canManagePortfolios } = useAppA
 const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
 const route = useRoute()
-const { locale, setLocale, locales } = useI18n()
+const { locale, locales } = useI18n()
+const switchLocalePath = useSwitchLocalePath()
 const mobileMenuOpen = ref(false)
 const headerRef = ref()
 

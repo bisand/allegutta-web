@@ -27,7 +27,9 @@
     "date": "Dato",
     "actions": "Handlinger",
     "total": "Totalt",
-    "account": "Konto"
+    "account": "Konto",
+    "backToHome": "Tilbake til hjem",
+    "managementDescription": "Administrer investeringene dine med presisjon og klarhet."
   },
   "header": {
     "title": "AlleGutta",
@@ -41,7 +43,8 @@
   },
   "footer": {
     "description": "Personlig portefølje- og investeringssporingsapplikasjon.",
-    "allRightsReserved": "Alle rettigheter forbeholdt."
+    "allRightsReserved": "Alle rettigheter forbeholdt.",
+    "quickLinks": "Hurtiglenker"
   },
   "auth": {
     "loginRequired": "Du må være logget inn for å få tilgang til denne siden.",
@@ -128,5 +131,37 @@
     "loadError": "Kunne ikke laste data. Prøv igjen.",
     "networkError": "Nettverksfeil. Sjekk internetttilkoblingen din.",
     "unknownError": "En ukjent feil oppstod. Prøv igjen."
+  },
+  "homepage": {
+    "welcomeTitle": "Velkommen til",
+    "subtitle": "Din personlige porteføljeadministrasjonsplattform. Spor investeringene dine, administrer transaksjoner og overvåk din finansielle vekst med presisjon og klarhet.",
+    "getStarted": "Kom i gang",
+    "viewPortfolio": "Vis portefølje",
+    "signIn": "Logg inn",
+    "featuresTitle": "Kraftige funksjoner",
+    "featuresSubtitle": "Alt du trenger for å administrere investeringsporteføljen din effektivt",
+    "portfolioTracking": "Porteføljesporing",
+    "portfolioTrackingDesc": "Overvåk investeringene dine i sanntid med detaljerte analyser og ytelsesmålinger.",
+    "transactionManagement": "Transaksjonsadministrasjon",
+    "transactionManagementDesc": "Legg til, rediger og organiser alle dine kjøp/salg-transaksjoner med detaljerte registre.",
+    "secureAuth": "Sikker autentisering",
+    "secureAuthDesc": "Dine data er beskyttet med industristandardsikkerhet og kryptering.",
+    "multiPortfolio": "Flere porteføljer",
+    "multiPortfolioDesc": "Administrer flere investeringsporteføljer fra ett enkelt dashbord.",
+    "realTimeData": "Sanntidsdata",
+    "realTimeDataDesc": "Få oppdaterte markedspriser og ytelsesmålinger når du trenger dem.",
+    "reporting": "Detaljert rapportering",
+    "reportingDesc": "Generer omfattende rapporter for å spore fremgang og ytelse over tid.",
+    "progressiveWebApp": "Progressiv nettapp",
+    "progressiveWebAppDesc": "Installer som en app på hvilken som helst enhet for innfødt opplevelse og offline-tilgang.",
+    "darkMode": "Mørk modus",
+    "darkModeDesc": "Bytt mellom lyse og mørke temaer for komfortabel visning når som helst.",
+    "analytics": "Analyser og rapporter",
+    "analyticsDesc": "Generer detaljerte rapporter og få innsikt i investeringsytelsen din.",
+    "ctaTitle": "Klar til å ta kontroll over porteføljen din?",
+    "ctaSubtitle": "Bli med i tusenvis av investorer som stoler på AlleGutta for porteføljeadministrasjon.",
+    "startToday": "Start i dag",
+    "createPortfolio": "Opprett din portefølje",
+    "goToPortfolio": "Gå til portefølje"
   }
 }

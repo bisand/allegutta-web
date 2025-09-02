@@ -27,7 +27,9 @@
     "date": "Date",
     "actions": "Actions",
     "total": "Total",
-    "account": "Account"
+    "account": "Account",
+    "backToHome": "Go back to home",
+    "managementDescription": "Manage your investments with precision and clarity."
   },
   "header": {
     "title": "AlleGutta",
@@ -41,7 +43,8 @@
   },
   "footer": {
     "description": "Personal portfolio and investment tracking application.",
-    "allRightsReserved": "All rights reserved."
+    "allRightsReserved": "All rights reserved.",
+    "quickLinks": "Quick Links"
   },
   "auth": {
     "loginRequired": "You must be logged in to access this page.",
@@ -128,5 +131,37 @@
     "loadError": "Failed to load data. Please try again.",
     "networkError": "Network error. Please check your internet connection.",
     "unknownError": "An unknown error occurred. Please try again."
+  },
+  "homepage": {
+    "welcomeTitle": "Welcome to",
+    "subtitle": "Your personal portfolio management platform. Track your investments, manage transactions, and monitor your financial growth with precision and clarity.",
+    "getStarted": "Get Started",
+    "viewPortfolio": "View Portfolio",
+    "signIn": "Sign In",
+    "featuresTitle": "Powerful Features",
+    "featuresSubtitle": "Everything you need to manage your investment portfolio effectively",
+    "portfolioTracking": "Portfolio Tracking",
+    "portfolioTrackingDesc": "Monitor your investments in real-time with detailed analytics and performance metrics.",
+    "transactionManagement": "Transaction Management",
+    "transactionManagementDesc": "Add, edit, and organize all your buy/sell transactions with detailed records.",
+    "secureAuth": "Secure Authentication",
+    "secureAuthDesc": "Your data is protected with industry-standard security and encryption.",
+    "multiPortfolio": "Multiple Portfolios",
+    "multiPortfolioDesc": "Manage multiple investment portfolios from a single dashboard.",
+    "realTimeData": "Real-time Data",
+    "realTimeDataDesc": "Get up-to-date market prices and performance metrics when you need them.",
+    "reporting": "Detailed Reporting",
+    "reportingDesc": "Generate comprehensive reports to track progress and performance over time.",
+    "progressiveWebApp": "Progressive Web App",
+    "progressiveWebAppDesc": "Install as an app on any device for native-like experience and offline access.",
+    "darkMode": "Dark Mode",
+    "darkModeDesc": "Toggle between light and dark themes for comfortable viewing any time.",
+    "analytics": "Analytics & Reports",
+    "analyticsDesc": "Generate detailed reports and gain insights into your investment performance.",
+    "ctaTitle": "Ready to take control of your portfolio?",
+    "ctaSubtitle": "Join thousands of investors who trust AlleGutta for portfolio management.",
+    "startToday": "Start Today",
+    "createPortfolio": "Create Your Portfolio",
+    "goToPortfolio": "Go to Portfolio"
   }
 }

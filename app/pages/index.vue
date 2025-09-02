@@ -5,12 +5,11 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div class="text-center">
           <h1 class="text-4xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            Welcome to
+            {{ $t('homepage.welcomeTitle') }}
             <span class="text-primary-500">AlleGutta</span>
           </h1>
           <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-            Your personal portfolio management platform. Track your investments, 
-            manage transactions, and monitor your financial growth with precision and clarity.
+            {{ $t('homepage.subtitle') }}
           </p>
           
           <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -20,7 +19,7 @@
               external
               class="flex items-center px-8 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              Get Started
+              {{ $t('homepage.getStarted') }}
               <ArrowRightIcon class="ml-2 w-5 h-5" />
             </NuxtLink>
             
@@ -29,7 +28,7 @@
               to="/portfolio"
               class="flex items-center px-8 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              View Portfolio
+              {{ $t('homepage.viewPortfolio') }}
               <ChartBarIcon class="ml-2 w-5 h-5" />
             </NuxtLink>
             
@@ -39,7 +38,7 @@
               external
               class="flex items-center px-8 py-3 text-lg font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-800 border border-primary-300 dark:border-primary-600 hover:bg-primary-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
-              Sign In
+              {{ $t('homepage.signIn') }}
             </NuxtLink>
           </div>
         </div>
@@ -57,10 +56,10 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Powerful Features
+            {{ $t('homepage.featuresTitle') }}
           </h2>
           <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Everything you need to manage your investment portfolio effectively
+            {{ $t('homepage.featuresSubtitle') }}
           </p>
         </div>
 
@@ -71,10 +70,10 @@
               <ChartBarIcon class="w-6 h-6 text-primary-500" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Portfolio Tracking
+              {{ $t('homepage.portfolioTracking') }}
             </h3>
             <p class="text-gray-600 dark:text-gray-300">
-              Monitor your investments in real-time with detailed analytics and performance metrics.
+              {{ $t('homepage.portfolioTrackingDesc') }}
             </p>
           </div>
 
@@ -84,10 +83,10 @@
               <BanknotesIcon class="w-6 h-6 text-green-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Transaction Management
+              {{ $t('homepage.transactionManagement') }}
             </h3>
             <p class="text-gray-600 dark:text-gray-300">
-              Add, edit, and organize all your buy/sell transactions with detailed records.
+              {{ $t('homepage.transactionManagementDesc') }}
             </p>
           </div>
 
@@ -97,10 +96,10 @@
               <ShieldCheckIcon class="w-6 h-6 text-purple-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Secure Authentication
+              {{ $t('homepage.secureAuth') }}
             </h3>
             <p class="text-gray-600 dark:text-gray-300">
-              Your data is protected with enterprise-grade security and authentication.
+              {{ $t('homepage.secureAuthDesc') }}
             </p>
           </div>
 
@@ -110,10 +109,10 @@
               <DevicePhoneMobileIcon class="w-6 h-6 text-blue-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Progressive Web App
+              {{ $t('homepage.progressiveWebApp') }}
             </h3>
             <p class="text-gray-600 dark:text-gray-300">
-              Install as an app on any device for native-like experience and offline access.
+              {{ $t('homepage.progressiveWebAppDesc') }}
             </p>
           </div>
 
@@ -123,10 +122,10 @@
               <MoonIcon class="w-6 h-6 text-yellow-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Dark Mode
+              {{ $t('homepage.darkMode') }}
             </h3>
             <p class="text-gray-600 dark:text-gray-300">
-              Toggle between light and dark themes for comfortable viewing any time.
+              {{ $t('homepage.darkModeDesc') }}
             </p>
           </div>
 
@@ -136,10 +135,10 @@
               <PresentationChartLineIcon class="w-6 h-6 text-red-600" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Analytics & Reports
+              {{ $t('homepage.analytics') }}
             </h3>
             <p class="text-gray-600 dark:text-gray-300">
-              Generate detailed reports and gain insights into your investment performance.
+              {{ $t('homepage.analyticsDesc') }}
             </p>
           </div>
         </div>
@@ -150,10 +149,10 @@
     <section class="py-24 bg-primary-600 dark:bg-primary-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">
-          Ready to Start Tracking?
+          {{ $t('homepage.ctaTitle') }}
         </h2>
         <p class="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-          Join thousands of investors who trust AlleGutta to manage their portfolios.
+          {{ $t('homepage.ctaSubtitle') }}
         </p>
         
         <button 
@@ -162,7 +161,7 @@
           class="flex items-center mx-auto px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
           @click="register"
         >
-          Create Your Portfolio
+          {{ $t('homepage.createPortfolio') }}
           <ArrowRightIcon class="ml-2 w-5 h-5" />
         </button>
         
@@ -171,7 +170,7 @@
           to="/portfolio"
           class="flex items-center mx-auto px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
         >
-          Go to Portfolio
+          {{ $t('homepage.goToPortfolio') }}
           <ChartBarIcon class="ml-2 w-5 h-5" />
         </NuxtLink>
       </div>
