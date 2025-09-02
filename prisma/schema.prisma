@@ -55,6 +55,7 @@ model Transaction {
   fees        Float       @default(0)
   currency    String      @default("NOK") // Currency for this transaction
   date        DateTime
+  saldo       Float?      // Broker's authoritative cash balance after this transaction
   notes       String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -104,4 +105,5 @@ enum TransactionType {
   DIVIDEND_REINVEST
   INTEREST_CHARGE
   RIGHTS_ISSUE
+  SALDO_ADJUSTMENT
 }

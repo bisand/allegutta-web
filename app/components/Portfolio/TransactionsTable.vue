@@ -25,13 +25,16 @@
             Total
           </th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Saldo
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             Actions
           </th>
         </tr>
       </thead>
       <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
         <tr v-if="transactions.length === 0">
-          <td colspan="8" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+          <td colspan="9" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
             <UIcon name="i-heroicons-banknotes" class="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p class="text-lg font-medium">No transactions found</p>
             <p class="text-sm">Add your first transaction to get started</p>
@@ -70,6 +73,14 @@
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
             ${{ formatCurrency(calculateTransactionTotal(transaction)) }}
           </td>
+          <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+            <span v-if="transaction.saldo !== null && transaction.saldo !== undefined" 
+                  class="text-blue-600 dark:text-blue-400 font-medium" 
+                  :title="`Broker's authoritative cash balance: ${formatCurrency(transaction.saldo)}`">
+              ${{ formatCurrency(transaction.saldo) }}
+            </span>
+            <span v-else class="text-gray-400 dark:text-gray-500">—</span>
+          </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             <div class="flex items-center space-x-2">
               <UButton 
@@ -104,6 +115,7 @@ interface Transaction {
   price: number
   fees: number
   date: string
+  saldo?: number | null  // Broker's authoritative cash balance
 }
 
 defineProps<{

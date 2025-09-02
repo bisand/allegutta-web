@@ -293,6 +293,10 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
           cashImpact = withdrawalAmount - fees  // Money going out: negative amount minus fees
           break
         }
+        
+        case 'SALDO_ADJUSTMENT':
+          cashImpact = amount - fees  // Direct adjustment to match broker saldo
+          break
       }
     } else {
       // Stock/security transactions affect cash
@@ -335,6 +339,49 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
     }
     
     runningCashBalance += cashImpact
+  }
+  
+  // Check if we have a recent saldo value to validate against
+  const latestTransactionWithSaldo = await prisma.transaction.findFirst({
+    where: {
+      portfolioId: portfolioId,
+      saldo: { not: null }
+    },
+    orderBy: {
+      date: 'desc'
+    }
+  })
+  
+  if (latestTransactionWithSaldo?.saldo !== null && latestTransactionWithSaldo?.saldo !== undefined) {
+    const brokerSaldo = latestTransactionWithSaldo.saldo
+    const discrepancy = runningCashBalance - brokerSaldo
+    
+    console.log(`📊 Saldo validation: calculated=${runningCashBalance}, broker=${brokerSaldo}, discrepancy=${discrepancy}`)
+    
+    // If there's a significant discrepancy (more than 0.01 due to rounding), create adjustment
+    if (Math.abs(discrepancy) > 0.01) {
+      console.log(`⚠️  Saldo discrepancy detected: ${discrepancy} ${portfolioCurrency}. Creating adjustment transaction.`)
+      
+      // Create a SALDO_ADJUSTMENT transaction to align with broker's balance
+      await prisma.transaction.create({
+        data: {
+          portfolioId: portfolioId,
+          symbol: cashSymbol,
+          type: 'SALDO_ADJUSTMENT',
+          quantity: -discrepancy,  // Negative to correct the discrepancy
+          price: 1.0,
+          fees: 0,
+          currency: portfolioCurrency,
+          date: new Date(latestTransactionWithSaldo.date.getTime() + 1000), // 1 second after the reference transaction
+          notes: `Automatic adjustment to match broker saldo (${brokerSaldo}). Corrected discrepancy of ${discrepancy}.`,
+          saldo: brokerSaldo
+        }
+      })
+      
+      // Update the running balance with the adjustment
+      runningCashBalance = brokerSaldo
+      console.log(`✅ Created saldo adjustment. New balance: ${runningCashBalance} ${portfolioCurrency}`)
+    }
   }
   
   // Set the final cash balance (like final saldo)
