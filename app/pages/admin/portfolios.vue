@@ -412,6 +412,22 @@ const editingTransaction = ref<TransactionData | null>(null)
 
 initialize()
 
+// Check if there's a portfolio to edit from query params
+const route = useRoute()
+onMounted(async () => {
+  const editId = route.query.edit as string
+  if (editId) {
+    // Wait for portfolios to load
+    await portfolioStore.loadAllPortfolios()
+    
+    // Find and edit the portfolio
+    const portfolioToEdit = portfolioStore.allPortfolios.find(p => p.id === editId)
+    if (portfolioToEdit) {
+      editPortfolio(portfolioToEdit)
+    }
+  }
+})
+
 // Form data
 const form = reactive({
   name: '',

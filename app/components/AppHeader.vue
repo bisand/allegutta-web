@@ -165,6 +165,24 @@
                       Portfolio
                     </NuxtLink>
                   </MenuItem>
+                  
+                  <!-- Admin: Edit Current Portfolio - show when admin and on portfolio page -->
+                  <MenuItem 
+                    v-if="canManagePortfolios"
+                    v-slot="{ active }"
+                  >
+                    <NuxtLink
+                      :to="`/admin/portfolios?edit=${getCurrentPortfolioId()}`"
+                      :class="[
+                        active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                        'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                      ]"
+                    >
+                      <PencilSquareIcon class="w-4 h-4 mr-3" />
+                      Edit Portfolios
+                    </NuxtLink>
+                  </MenuItem>
+                  
                   <MenuItem v-slot="{ active }">
                     <NuxtLink
                       to="/settings"
@@ -305,12 +323,14 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   ChevronDownIcon,
-  PlusIcon
+  PlusIcon,
+  PencilSquareIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, user, login, register, logout } = useAppAuth()
+const { loggedIn, user, login, register, logout, canManagePortfolios } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
+const route = useRoute()
 const mobileMenuOpen = ref(false)
 const headerRef = ref()
 
@@ -320,6 +340,15 @@ const userDisplayName = computed(() => {
   if (!user.value) return 'User'
   return user.value.name || user.value.firstName || user.value.email || 'User'
 })
+
+// Get current portfolio ID from route if on portfolio page
+const getCurrentPortfolioId = () => {
+  if (route.path.startsWith('/portfolio/')) {
+    const segments = route.path.split('/')
+    return segments[2] || null
+  }
+  return null
+}
 
 // Ensure portfolio store is initialized
 onMounted(async () => {

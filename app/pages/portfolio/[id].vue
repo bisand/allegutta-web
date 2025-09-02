@@ -42,8 +42,19 @@
             </p>
           </div>
           
-          <div v-if="canEdit" class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
+          <div class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
+            <!-- Admin Edit Button - only for admins -->
+            <NuxtLink 
+              v-if="isAdmin"
+              :to="`/admin/portfolios?edit=${currentPortfolio.id}`"
+              class="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
+            >
+              <PencilSquareIcon class="w-4 h-4 mr-2" />
+              Admin Edit
+            </NuxtLink>
+            
             <button 
+              v-if="canEdit"
               type="button"
               class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               :disabled="portfolioStore.loading"
@@ -53,6 +64,7 @@
               Update Prices
             </button>
             <button 
+              v-if="canEdit"
               type="button"
               class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
               @click="showAddTransaction = true"
@@ -343,12 +355,13 @@ import {
   ArrowPathIcon,
   PlusIcon,
   ClockIcon,
-  ArrowTrendingUpIcon
+  ArrowTrendingUpIcon,
+  PencilSquareIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const portfolioStore = usePortfolioStore()
-const { loggedIn, user } = useAppAuth()
+const { loggedIn, user, canManagePortfolios } = useAppAuth()
 
 const showAddTransaction = ref(false)
 
@@ -371,6 +384,11 @@ const canEdit = computed(() => {
   // Only portfolio owners or admins can edit
   return portfolioStore.canManagePortfolios || 
          (currentPortfolio.value && currentPortfolio.value.userId === user.value.id)
+})
+
+// Check if user is admin (for admin edit button)
+const isAdmin = computed(() => {
+  return loggedIn.value && canManagePortfolios.value
 })
 
 // Load portfolio data when route changes
