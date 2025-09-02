@@ -147,10 +147,10 @@
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
-            v-if="!loggedIn"
+            v-if="!loggedIn && isRegistrationEnabled"
             type="button"
             class="px-6 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-            @click="register"
+            @click="() => register()"
           >
             Create Account
           </button>
@@ -181,7 +181,7 @@ import {
   DevicePhoneMobileIcon 
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, register } = useAuth()
+const { loggedIn, register, isRegistrationEnabled } = useAppAuth()
 
 useHead({
   title: 'About',

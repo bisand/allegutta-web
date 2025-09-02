@@ -31,6 +31,7 @@
               Sign In
             </button>
             <button
+              v-if="isRegistrationEnabled"
               class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
               @click="() => register()"
             >
@@ -128,7 +129,7 @@ import {
   PlusIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, login, register } = useAppAuth()
+const { loggedIn, login, register, isRegistrationEnabled } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 
 // Initialize portfolios (both public and user portfolios if authenticated)

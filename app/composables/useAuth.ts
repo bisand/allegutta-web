@@ -60,8 +60,15 @@ export const useAppAuth = () => {
     }
   }
 
-  // Register with Kinde
+  // Register with Kinde (only if registration is enabled)
   const register = async (redirectTo?: string) => {
+    const config = useRuntimeConfig()
+    
+    if (!config.public.registrationEnabled) {
+      console.warn('Registration is disabled')
+      return
+    }
+    
     if (redirectTo) {
       // Store redirect URL for after registration
       await navigateTo(`/api/auth/register?redirect=${encodeURIComponent(redirectTo)}`)
@@ -121,6 +128,12 @@ export const useAppAuth = () => {
     hasAnyPermission(['admin', 'portfolio_admin', 'admin:manage', 'write:portfolios'])
   )
 
+  // Check if registration is enabled
+  const isRegistrationEnabled = computed(() => {
+    const config = useRuntimeConfig()
+    return config.public.registrationEnabled
+  })
+
   return {
     // State
     user: readonly(computed(() => authState.value.user)),
@@ -141,6 +154,7 @@ export const useAppAuth = () => {
 
     // Computed helpers
     isAdmin,
-    canManagePortfolios
+    canManagePortfolios,
+    isRegistrationEnabled
   }
 }

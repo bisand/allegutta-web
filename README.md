@@ -93,6 +93,9 @@ KINDE_CLIENT_SECRET=your-client-secret
 KINDE_REDIRECT_URL=http://localhost:3000/auth/callback
 KINDE_LOGOUT_REDIRECT_URL=http://localhost:3000
 
+# Registration Control
+REGISTRATION_ENABLED=false  # Set to true to allow new user registration
+
 # Database
 DATABASE_URL="file:./dev.db"
 

@@ -156,14 +156,28 @@
         </p>
         
         <button 
-          v-if="!loggedIn"
+          v-if="!loggedIn && isRegistrationEnabled"
           type="button"
           class="flex items-center mx-auto px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-          @click="register"
+          @click="() => register()"
         >
           {{ $t('homepage.createPortfolio') }}
           <ArrowRightIcon class="ml-2 w-5 h-5" />
         </button>
+        
+        <div v-if="!loggedIn && !isRegistrationEnabled" class="text-center">
+          <p class="text-primary-100 mb-4">
+            {{ $t('homepage.registrationDisabled') }}
+          </p>
+          <NuxtLink 
+            to="/api/auth/login"
+            external
+            class="inline-flex items-center px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            {{ $t('common.login') }}
+            <ArrowRightIcon class="ml-2 w-5 h-5" />
+          </NuxtLink>
+        </div>
         
         <NuxtLink 
           v-else
@@ -189,7 +203,7 @@ import {
   PresentationChartLineIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn } = useAppAuth()
+const { loggedIn, register, isRegistrationEnabled } = useAppAuth()
 
 useHead({
   title: 'Home',

@@ -53,6 +53,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,
     databaseUrl: process.env.DATABASE_URL,
+    // Registration configuration
+    registrationEnabled: process.env.REGISTRATION_ENABLED === 'true',
     // Kinde configuration
     kindeClientId: process.env.NUXT_KINDE_CLIENT_ID,
     kindeClientSecret: process.env.NUXT_KINDE_CLIENT_SECRET,
@@ -61,7 +63,8 @@ export default defineNuxtConfig({
     kindeLogoutRedirectUrl: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL,
     public: {
       baseUrl: process.env.BASE_URL || 'http://localhost:3000',
-      kindeDomain: process.env.NUXT_KINDE_AUTH_DOMAIN
+      kindeDomain: process.env.NUXT_KINDE_AUTH_DOMAIN,
+      registrationEnabled: process.env.REGISTRATION_ENABLED === 'true'
     }
   },
 

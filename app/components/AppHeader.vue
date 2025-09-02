@@ -153,6 +153,7 @@
               {{ $t('common.login') }}
             </NuxtLink>
             <NuxtLink 
+              v-if="isRegistrationEnabled"
               to="/api/auth/register"
               external
               class="px-3 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
@@ -328,6 +329,7 @@
                 {{ $t('common.login') }}
               </button>
               <button 
+                v-if="isRegistrationEnabled"
                 class="block w-full text-left text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
                 @click="register(); mobileMenuOpen = false"
               >
@@ -364,7 +366,7 @@ import {
   PencilSquareIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, user, login, register, logout, canManagePortfolios } = useAppAuth()
+const { loggedIn, user, login, register, logout, canManagePortfolios, isRegistrationEnabled } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
 const route = useRoute()

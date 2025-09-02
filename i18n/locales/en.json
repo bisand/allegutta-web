@@ -163,6 +163,7 @@
     "ctaSubtitle": "Join thousands of investors who trust AlleGutta for portfolio management.",
     "startToday": "Start Today",
     "createPortfolio": "Create Your Portfolio",
-    "goToPortfolio": "Go to Portfolio"
+    "goToPortfolio": "Go to Portfolio",
+    "registrationDisabled": "Registration is disabled. Contact an administrator for access."
   }
 }
