@@ -8,7 +8,7 @@ export default withNuxt(
       'vue/multi-word-component-names': 'off',
       "vue/first-attribute-linebreak": ["error", {
         "singleline": "ignore",
-        "multiline": "below"
+        "multiline": "ignore"
       }]
     },
   }

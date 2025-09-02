@@ -195,8 +195,12 @@ export const usePortfolioStore = defineStore('portfolio', {
 
     async fetchPortfolios(): Promise<void> {
       try {
-        // Token will be added automatically by the plugin
-        const response = await $fetch('/api/portfolios') as { data: Portfolio[] }
+        // Get request headers for SSR authentication
+        const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+        
+        const response = await $fetch('/api/portfolios', {
+          headers: headers as HeadersInit
+        }) as { data: Portfolio[] }
         this.portfolios = response.data || []
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch portfolios'
@@ -219,8 +223,12 @@ export const usePortfolioStore = defineStore('portfolio', {
     async createPortfolio(portfolioData: CreatePortfolioData): Promise<Portfolio> {
       try {
         this.loading = true
+        // Get request headers for SSR authentication
+        const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+        
         const response = await $fetch('/api/portfolios', {
           method: 'POST',
+          headers: headers as HeadersInit,
           body: portfolioData
         }) as { data: Portfolio }
 
@@ -264,7 +272,11 @@ export const usePortfolioStore = defineStore('portfolio', {
         // Try authenticated endpoint first, fall back to public endpoint
         let response
         try {
-          response = await $fetch(`/api/portfolios/${portfolioId}/transactions`) as { data: Transaction[] }
+          // Get request headers for SSR authentication
+          const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+          response = await $fetch(`/api/portfolios/${portfolioId}/transactions`, {
+            headers: headers as HeadersInit
+          }) as { data: Transaction[] }
         } catch {
           // If authenticated endpoint fails, try public endpoint
           response = await $fetch(`/api/public/portfolios/${portfolioId}/transactions`) as { data: Transaction[] }
@@ -281,7 +293,11 @@ export const usePortfolioStore = defineStore('portfolio', {
         // Try authenticated endpoint first, fall back to public endpoint
         let response
         try {
-          response = await $fetch(`/api/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
+          // Get request headers for SSR authentication
+          const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+          response = await $fetch(`/api/portfolios/${portfolioId}/holdings`, {
+            headers: headers as HeadersInit
+          }) as { data: Holding[] }
         } catch {
           // If authenticated endpoint fails, try public endpoint
           response = await $fetch(`/api/public/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
@@ -300,8 +316,12 @@ export const usePortfolioStore = defineStore('portfolio', {
           throw new Error('No current portfolio selected')
         }
 
+        // Get request headers for SSR authentication
+        const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+
         const response = await $fetch(`/api/portfolios/${this.currentPortfolio.id}/transactions`, {
           method: 'POST',
+          headers: headers as HeadersInit,
           body: transactionData
         }) as { data: Transaction }
 
@@ -322,8 +342,12 @@ export const usePortfolioStore = defineStore('portfolio', {
     async updateTransaction(transactionId: string, transactionData: Partial<CreateTransactionData>): Promise<Transaction> {
       try {
         this.loading = true
+        // Get request headers for SSR authentication
+        const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+        
         const response = await $fetch(`/api/transactions/${transactionId}`, {
           method: 'PUT',
+          headers: headers as HeadersInit,
           body: transactionData
         }) as { data: Transaction }
 
@@ -349,8 +373,12 @@ export const usePortfolioStore = defineStore('portfolio', {
     async deleteTransaction(transactionId: string): Promise<void> {
       try {
         this.loading = true
+        // Get request headers for SSR authentication
+        const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+        
         await $fetch(`/api/transactions/${transactionId}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: headers as HeadersInit
         })
 
         this.transactions = this.transactions.filter(t => t.id !== transactionId)
