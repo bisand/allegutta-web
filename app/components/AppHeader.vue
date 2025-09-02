@@ -6,7 +6,7 @@
         <div class="flex items-center">
           <NuxtLink to="/" class="flex items-center space-x-2">
             <ChartBarIcon class="w-8 h-8 text-primary-500" />
-            <span class="text-xl font-bold text-gray-900 dark:text-white">AlleGutta</span>
+            <span class="text-xl font-bold text-gray-900 dark:text-white">{{ $t('header.title') }}</span>
           </NuxtLink>
         </div>
 
@@ -18,13 +18,13 @@
               class="text-gray-900 dark:text-white hover:text-primary-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               active-class="text-primary-500"
             >
-              Home
+              {{ $t('common.home') }}
             </NuxtLink>
             
             <!-- Portfolios dropdown -->
             <Menu as="div" class="relative">
               <MenuButton class="flex items-center text-gray-900 dark:text-white hover:text-primary-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Portfolios
+                {{ $t('header.portfolios') }}
                 <ChevronDownIcon class="ml-1 w-4 h-4" />
               </MenuButton>
               
@@ -54,13 +54,13 @@
                       >
                         <ChartBarIcon class="w-4 h-4 mr-3" />
                         {{ portfolio.name }}
-                        <span v-if="portfolio.isDefault" class="ml-auto text-xs text-primary-500">(Default)</span>
+                        <span v-if="portfolio.isDefault" class="ml-auto text-xs text-primary-500">({{ $t('portfolio.default') }})</span>
                       </NuxtLink>
                     </MenuItem>
                     
                     <!-- Empty state -->
                     <div v-if="portfolioStore.allPortfolios.length === 0" class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
-                      No portfolios available
+                      {{ $t('portfolio.noPortfolios') }}
                     </div>
                   </div>
                   
@@ -75,7 +75,7 @@
                         ]"
                       >
                         <PlusIcon class="w-4 h-4 mr-3" />
-                        Manage Portfolios
+                        {{ $t('header.portfolioManagement') }}
                       </NuxtLink>
                     </MenuItem>
                   </div>
@@ -88,13 +88,50 @@
               class="text-gray-900 dark:text-white hover:text-primary-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               active-class="text-primary-500"
             >
-              About
+              {{ $t('common.about') }}
             </NuxtLink>
           </div>
         </div>
 
         <!-- Right side actions -->
         <div class="flex items-center space-x-4">
+          <!-- Language switcher -->
+          <Menu as="div" class="relative">
+            <MenuButton class="p-2 text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <span class="text-sm font-medium">{{ locale.toUpperCase() }}</span>
+            </MenuButton>
+            
+            <Transition
+              enter-active-class="transition duration-100 ease-out"
+              enter-from-class="transform scale-95 opacity-0"
+              enter-to-class="transform scale-100 opacity-100"
+              leave-active-class="transition duration-75 ease-in"
+              leave-from-class="transform scale-100 opacity-100"
+              leave-to-class="transform scale-95 opacity-0"
+            >
+              <MenuItems class="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-[60]">
+                <div class="py-1">
+                  <MenuItem 
+                    v-for="availableLocale in locales" 
+                    :key="availableLocale.code"
+                    v-slot="{ active }"
+                  >
+                    <button
+                      :class="[
+                        active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                        locale === availableLocale.code ? 'text-primary-500' : 'text-gray-700 dark:text-gray-200',
+                        'flex items-center w-full px-4 py-2 text-sm text-left'
+                      ]"
+                      @click="setLocale(availableLocale.code)"
+                    >
+                      {{ availableLocale.name }}
+                    </button>
+                  </MenuItem>
+                </div>
+              </MenuItems>
+            </Transition>
+          </Menu>
+
           <!-- Dark mode toggle -->
           <button
             type="button"
@@ -113,14 +150,14 @@
               external
               class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
-              Sign In
+              {{ $t('common.login') }}
             </NuxtLink>
             <NuxtLink 
               to="/api/auth/register"
               external
               class="px-3 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
             >
-              Sign Up
+              {{ $t('common.register') }}
             </NuxtLink>
           </div>
 
@@ -162,7 +199,7 @@
                       ]"
                     >
                       <ChartBarIcon class="w-4 h-4 mr-3" />
-                      Portfolio
+                      {{ $t('common.portfolio') }}
                     </NuxtLink>
                   </MenuItem>
                   
@@ -179,7 +216,7 @@
                       ]"
                     >
                       <PencilSquareIcon class="w-4 h-4 mr-3" />
-                      Edit Portfolios
+                      {{ $t('header.editCurrentPortfolio') }}
                     </NuxtLink>
                   </MenuItem>
                   
@@ -192,7 +229,7 @@
                       ]"
                     >
                       <Cog6ToothIcon class="w-4 h-4 mr-3" />
-                      Settings
+                      {{ $t('header.settings') }}
                     </NuxtLink>
                   </MenuItem>
                 </div>
@@ -207,7 +244,7 @@
                       @click="logout"
                     >
                       <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
-                      Sign out
+                      {{ $t('header.signOut') }}
                     </button>
                   </MenuItem>
                 </div>
@@ -244,13 +281,13 @@
               class="block text-gray-900 dark:text-white hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-md text-base font-medium transition-colors"
               @click="mobileMenuOpen = false"
             >
-              Home
+              {{ $t('common.home') }}
             </NuxtLink>
             
             <!-- Portfolios section - always show -->
             <div class="space-y-1">
               <div class="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400">
-                Portfolios
+                {{ $t('header.portfolios') }}
               </div>
               <NuxtLink 
                 v-for="portfolio in portfolioStore.allPortfolios"
@@ -260,12 +297,12 @@
                 @click="mobileMenuOpen = false"
               >
                 {{ portfolio.name }}
-                <span v-if="portfolio.isDefault" class="ml-2 text-xs text-primary-500">(Default)</span>
+                <span v-if="portfolio.isDefault" class="ml-2 text-xs text-primary-500">({{ $t('portfolio.default') }})</span>
               </NuxtLink>
               
               <!-- Empty state -->
               <div v-if="portfolioStore.allPortfolios.length === 0" class="px-6 py-2 text-sm text-gray-400 dark:text-gray-500">
-                No portfolios available
+                {{ $t('portfolio.noPortfolios') }}
               </div>
               
               <!-- Admin link - only when logged in and has permissions -->
@@ -275,26 +312,26 @@
                 class="block text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
                 @click="mobileMenuOpen = false"
               >
-                Manage Portfolios
+                {{ $t('header.portfolioManagement') }}
               </NuxtLink>
             </div>
             
             <!-- Authentication section - only when not logged in -->
             <div v-if="!loggedIn" class="space-y-1">
               <div class="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
-                Account
+                {{ $t('common.account') }}
               </div>
               <button 
                 class="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
                 @click="login(); mobileMenuOpen = false"
               >
-                Sign In
+                {{ $t('common.login') }}
               </button>
               <button 
                 class="block w-full text-left text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
                 @click="register(); mobileMenuOpen = false"
               >
-                Create Account
+                {{ $t('common.register') }}
               </button>
             </div>
             
@@ -303,7 +340,7 @@
               class="block text-gray-900 dark:text-white hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-md text-base font-medium transition-colors"
               @click="mobileMenuOpen = false"
             >
-              About
+              {{ $t('common.about') }}
             </NuxtLink>
           </div>
         </div>
@@ -331,6 +368,7 @@ const { loggedIn, user, login, register, logout, canManagePortfolios } = useAppA
 const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
 const route = useRoute()
+const { locale, setLocale, locales } = useI18n()
 const mobileMenuOpen = ref(false)
 const headerRef = ref()
 

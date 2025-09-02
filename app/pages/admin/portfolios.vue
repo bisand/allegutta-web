@@ -5,13 +5,13 @@
       <div class="text-center">
         <LockClosedIcon class="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Access Denied
+          {{ $t('auth.noPermission') }}
         </h1>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
-          You don't have permission to manage portfolios.
+          {{ $t('auth.noPermissionManagePortfolios') }}
         </p>
         <NuxtLink to="/" class="text-primary-500 hover:text-primary-600">
-          Go back to home
+          {{ $t('common.backToHome') }}
         </NuxtLink>
       </div>
     </div>
@@ -23,17 +23,17 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Portfolio Management
+              {{ $t('portfolio.management') }}
             </h1>
             <p class="text-gray-600 dark:text-gray-400">
-              Create and manage portfolios for the application
+              {{ $t('portfolio.managementDescription') }}
             </p>
           </div>
 
           <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors mt-4 sm:mt-0"
             @click="showCreateModal = true">
             <PlusIcon class="w-4 h-4 mr-2" />
-            Create Portfolio
+            {{ $t('portfolio.createPortfolio') }}
           </button>
         </div>
       </div>
@@ -41,7 +41,7 @@
       <!-- Portfolios List -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All Portfolios</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('portfolio.allPortfolios') }}</h3>
         </div>
         <div class="overflow-x-auto">
           <table v-if="portfolioStore.allPortfolios.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">

@@ -16,7 +16,8 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
     '@vueuse/nuxt',
     '@pinia/nuxt',
-    '@nuxtjs/kinde'
+    '@nuxtjs/kinde',
+    '@nuxtjs/i18n'
   ],
 
   // Color mode configuration
@@ -70,5 +71,24 @@ export default defineNuxtConfig({
     redirectURL: process.env.NUXT_KINDE_REDIRECT_URL || 'http://localhost:3000/api/auth/kinde_callback',
     logoutRedirectURL: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL || 'http://localhost:3000',
     postLoginRedirectURL: process.env.NUXT_KINDE_POST_LOGIN_REDIRECT_URL || 'http://localhost:3000/portfolio'
+  },
+
+  // i18n configuration
+  i18n: {
+    locales: [
+      {
+        code: 'no',
+        language: 'no-NO',
+        name: 'Norsk'
+      },
+      {
+        code: 'en',
+        language: 'en-US', 
+        name: 'English'
+      }
+    ],
+    defaultLocale: 'no',
+    strategy: 'prefix_except_default',
+    vueI18n: './i18n.config.ts'
   }
 })
