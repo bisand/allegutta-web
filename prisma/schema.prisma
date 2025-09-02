@@ -33,6 +33,7 @@ model Portfolio {
   description String?
   userId      String
   isDefault   Boolean  @default(false)
+  currency    String   @default("NOK") // Default currency for the portfolio
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -52,6 +53,7 @@ model Transaction {
   quantity    Float
   price       Float
   fees        Float       @default(0)
+  currency    String      @default("NOK") // Currency for this transaction
   date        DateTime
   notes       String?
   createdAt   DateTime    @default(now())
@@ -70,6 +72,7 @@ model Holding {
   quantity    Float
   avgPrice    Float
   currentPrice Float?
+  currency    String   @default("NOK") // Currency for this holding
   lastUpdated DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

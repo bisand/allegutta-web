@@ -180,11 +180,13 @@ export default defineEventHandler(async (event) => {
         let symbol = csvRow.Verdipapir ? csvRow.Verdipapir.toUpperCase() : null
         const transactionType = mappedTransactionType
         
-        // For cash transactions without a security symbol, use CASH with currency
+        // Get portfolio currency for dynamic cash holdings
+        const portfolioCurrency = portfolio.currency || 'NOK'
+        
+        // For cash transactions without a security symbol, use CASH with portfolio currency
         if (!symbol || symbol.trim() === '') {
           if (['DEPOSIT', 'WITHDRAWAL', 'REFUND', 'DIVIDEND', 'DIVIDEND_REINVEST', 'TRANSFER_IN', 'INTEREST_CHARGE'].includes(transactionType)) {
-            // Default to NOK for Norwegian brokerage, but could be enhanced to detect currency
-            symbol = 'CASH_NOK'
+            symbol = `CASH_${portfolioCurrency}`
           } else {
             // Skip other transactions without securities
             skippedCount++
@@ -192,9 +194,9 @@ export default defineEventHandler(async (event) => {
           }
         }
         
-        // Special handling: Dividends should always use CASH_NOK symbol but keep DIVIDEND type
+        // Special handling: Dividends should always use portfolio currency for cash symbol
         if (['DIVIDEND', 'DIVIDEND_REINVEST'].includes(transactionType)) {
-          symbol = 'CASH_NOK'
+          symbol = `CASH_${portfolioCurrency}`
           // Keep original transaction type - don't change it to 'DEPOSIT'
         }
         
@@ -288,6 +290,7 @@ export default defineEventHandler(async (event) => {
           quantity: finalQuantity,
           price: finalPrice,
           fees: fees,
+          currency: portfolioCurrency,
           date: parseNorwegianDate(csvRow.Bokføringsdag),
           notes: csvRow.Transaksjonstekst || null
         }
@@ -317,8 +320,9 @@ export default defineEventHandler(async (event) => {
         'SPLIT', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'
       ]
       const hasStockTransactions = transactions.some(t => stockTransactionTypes.includes(t.type))
-      if (hasStockTransactions && !uniqueSymbols.includes('CASH_NOK')) {
-        await updateHoldings(portfolioId, 'CASH_NOK')
+      const portfolioCashSymbol = `CASH_${portfolio.currency || 'NOK'}`
+      if (hasStockTransactions && !uniqueSymbols.includes(portfolioCashSymbol)) {
+        await updateHoldings(portfolioId, portfolioCashSymbol)
       }
     }
 
@@ -429,6 +433,9 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
     }
 
     if (totalCash !== 0) {
+      // Extract currency from CASH symbol (e.g., CASH_NOK -> NOK)
+      const currency = symbol.startsWith('CASH_') ? symbol.substring(5) : 'NOK'
+      
       await prisma.holding.upsert({
         where: {
           portfolioId_symbol: {
@@ -439,6 +446,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         update: {
           quantity: totalCash,
           avgPrice: 1.0,
+          currency: currency,
           isin: isin,
           lastUpdated: new Date()
         },
@@ -447,7 +455,8 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
           symbol: symbol,
           isin: isin,
           quantity: totalCash,
-          avgPrice: 1.0
+          avgPrice: 1.0,
+          currency: currency
         }
       })
     } else {
@@ -520,6 +529,21 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
 
     if (totalQuantity > 0) {
       const avgPrice = totalCost / totalQuantity
+      
+      // Get currency from the latest transaction for this symbol
+      const latestTransactionWithCurrency = await prisma.transaction.findFirst({
+        where: {
+          portfolioId: portfolioId,
+          symbol: symbol
+        },
+        orderBy: {
+          date: 'desc'
+        },
+        select: {
+          currency: true
+        }
+      })
+      const currency = latestTransactionWithCurrency?.currency || 'NOK'
 
       await prisma.holding.upsert({
         where: {
@@ -531,6 +555,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         update: {
           quantity: totalQuantity,
           avgPrice: avgPrice,
+          currency: currency,
           isin: isin,
           lastUpdated: new Date()
         },
@@ -539,7 +564,8 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
           symbol: symbol,
           isin: isin,
           quantity: totalQuantity,
-          avgPrice: avgPrice
+          avgPrice: avgPrice,
+          currency: currency
         }
       })
     } else {

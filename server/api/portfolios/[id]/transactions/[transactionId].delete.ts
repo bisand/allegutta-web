@@ -68,7 +68,8 @@ export default defineEventHandler(async (event) => {
       'SPLIT', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'
     ]
     if (stockTransactionTypes.includes(transaction.type)) {
-      await recalculateHoldings(portfolioId, 'CASH_NOK')
+      const portfolioCashSymbol = `CASH_${portfolio.currency || 'NOK'}`
+      await recalculateHoldings(portfolioId, portfolioCashSymbol)
     }
 
     return { success: true }
@@ -128,6 +129,9 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
     }
 
     if (totalCash !== 0) {
+      // Extract currency from CASH symbol (e.g., CASH_NOK -> NOK)
+      const currency = symbol.startsWith('CASH_') ? symbol.substring(5) : 'NOK'
+      
       await prisma.holding.upsert({
         where: {
           portfolioId_symbol: {
@@ -138,13 +142,15 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
         update: {
           quantity: totalCash,
           avgPrice: 1.0,
+          currency: currency,
           lastUpdated: new Date()
         },
         create: {
           portfolioId: portfolioId,
           symbol: symbol,
           quantity: totalCash,
-          avgPrice: 1.0
+          avgPrice: 1.0,
+          currency: currency
         }
       })
     } else {
@@ -197,6 +203,21 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
 
   if (totalQuantity > 0) {
     const avgPrice = totalCostBasis / totalQuantity
+    
+    // Get currency from the latest transaction for this symbol
+    const latestTransactionWithCurrency = await prisma.transaction.findFirst({
+      where: {
+        portfolioId,
+        symbol
+      },
+      orderBy: {
+        date: 'desc'
+      },
+      select: {
+        currency: true
+      }
+    })
+    const currency = latestTransactionWithCurrency?.currency || 'NOK'
 
     // Update or create holding
     await prisma.holding.upsert({
@@ -209,6 +230,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
       update: {
         quantity: totalQuantity,
         avgPrice,
+        currency: currency,
         lastUpdated: new Date()
       },
       create: {
@@ -216,6 +238,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
         symbol,
         quantity: totalQuantity,
         avgPrice,
+        currency: currency,
         lastUpdated: new Date()
       }
     })

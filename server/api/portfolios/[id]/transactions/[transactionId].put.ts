@@ -64,6 +64,7 @@ export default defineEventHandler(async (event) => {
         quantity: body.quantity ? parseFloat(body.quantity.toString()) : undefined,
         price: body.price ? parseFloat(body.price.toString()) : undefined,
         fees: body.fees !== undefined ? parseFloat(body.fees.toString()) : undefined,
+        currency: body.currency || portfolio.currency || 'NOK',
         date: body.date ? new Date(body.date) : undefined,
         notes: body.notes
       }
@@ -84,7 +85,8 @@ export default defineEventHandler(async (event) => {
     ]
     if (stockTransactionTypes.includes(transaction.type) || 
         (existingTransaction.type !== transaction.type && stockTransactionTypes.includes(existingTransaction.type))) {
-      await updateHoldings(portfolioId, 'CASH_NOK')
+      const portfolioCashSymbol = `CASH_${portfolio.currency || 'NOK'}`
+      await updateHoldings(portfolioId, portfolioCashSymbol)
     }
 
     return {
@@ -170,6 +172,9 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
     }
 
     if (totalCash !== 0) {
+      // Extract currency from CASH symbol (e.g., CASH_NOK -> NOK)
+      const currency = symbol.startsWith('CASH_') ? symbol.substring(5) : 'NOK'
+      
       await prisma.holding.upsert({
         where: {
           portfolioId_symbol: {
@@ -180,13 +185,15 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         update: {
           quantity: totalCash,
           avgPrice: 1.0,
+          currency: currency,
           lastUpdated: new Date()
         },
         create: {
           portfolioId: portfolioId,
           symbol: symbol,
           quantity: totalCash,
-          avgPrice: 1.0
+          avgPrice: 1.0,
+          currency: currency
         }
       })
     } else {
@@ -237,6 +244,21 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
 
   if (totalQuantity > 0) {
     const avgPrice = totalCost / totalQuantity
+    
+    // Get currency from the latest transaction for this symbol
+    const latestTransactionWithCurrency = await prisma.transaction.findFirst({
+      where: {
+        portfolioId: portfolioId,
+        symbol: symbol
+      },
+      orderBy: {
+        date: 'desc'
+      },
+      select: {
+        currency: true
+      }
+    })
+    const currency = latestTransactionWithCurrency?.currency || 'NOK'
 
     await prisma.holding.upsert({
       where: {
@@ -248,13 +270,15 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
       update: {
         quantity: totalQuantity,
         avgPrice: avgPrice,
+        currency: currency,
         lastUpdated: new Date()
       },
       create: {
         portfolioId: portfolioId,
         symbol: symbol,
         quantity: totalQuantity,
-        avgPrice: avgPrice
+        avgPrice: avgPrice,
+        currency: currency
       }
     })
   } else {

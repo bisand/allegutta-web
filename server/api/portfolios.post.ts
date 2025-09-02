@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
       data: {
         name: body.name.trim(),
         description: body.description?.trim() || null,
+        currency: body.currency || 'NOK',
         userId: user.id,
         isDefault: body.isDefault || false
       }
