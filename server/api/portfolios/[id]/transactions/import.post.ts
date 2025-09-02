@@ -328,22 +328,63 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Create transactions in batch
+    // Create transactions one by one and check saldo after each
+    const portfolioCurrency = portfolio.currency || 'NOK'
+    const cashSymbol = `CASH_${portfolioCurrency}`
+    
     if (transactions.length > 0) {
-      await prisma.transaction.createMany({
-        data: transactions
-      })
-      successCount = transactions.length
+      console.log(`📊 Processing ${transactions.length} transactions with saldo validation...`)
+      
+      for (const transactionData of transactions) {
+        // Create the transaction
+        const createdTransaction = await prisma.transaction.create({
+          data: transactionData
+        })
+        
+        successCount++
+        console.log(`✅ Created transaction: ${createdTransaction.type} ${createdTransaction.symbol} (${createdTransaction.date.toISOString().split('T')[0]})`)
+        
+        // If this transaction has a saldo value, check for discrepancy and create adjustment if needed
+        if (createdTransaction.saldo !== null && createdTransaction.saldo !== undefined) {
+          // Calculate the current cash balance up to this point
+          const currentCashBalance = await calculateCashBalanceUpToDate(portfolioId, createdTransaction.date)
+          const brokerSaldo = createdTransaction.saldo
+          const discrepancy = currentCashBalance - brokerSaldo
+          
+          console.log(`🔍 Saldo check: calculated=${currentCashBalance}, broker=${brokerSaldo}, discrepancy=${discrepancy}`)
+          
+          // Create adjustment if discrepancy is significant (more than 1 NOK as requested)
+          if (Math.abs(discrepancy) > 1.0) {
+            console.log(`⚠️  Saldo discrepancy detected: ${discrepancy} ${portfolioCurrency}. Creating immediate adjustment.`)
+            
+            const adjustmentTransaction = await prisma.transaction.create({
+              data: {
+                portfolioId: portfolioId,
+                symbol: cashSymbol,
+                type: 'SALDO_ADJUSTMENT',
+                quantity: -discrepancy,  // Negative to correct the discrepancy
+                price: 1.0,
+                fees: 0,
+                currency: portfolioCurrency,
+                date: new Date(createdTransaction.date.getTime() + 1000), // 1 second after the reference transaction
+                notes: `Automatic adjustment after ${createdTransaction.type} ${createdTransaction.symbol}. Broker saldo: ${brokerSaldo}, calculated: ${currentCashBalance}, adjustment: ${-discrepancy}`,
+                saldo: brokerSaldo
+              }
+            })
+            
+            console.log(`✅ Created saldo adjustment: ${adjustmentTransaction.quantity} ${portfolioCurrency}`)
+          }
+        }
+      }
 
-      // Update holdings for each unique symbol
+      // Update holdings for each unique symbol after all transactions are processed
       const uniqueSymbols = [...new Set(transactions.map(t => t.symbol))]
       for (const symbol of uniqueSymbols) {
         await updateHoldings(portfolioId, symbol)
       }
 
-      // Use new saldo-based validation system for cash holdings
-      const portfolioCurrency = portfolio.currency || 'NOK'
-      await recalculateCashHoldings(portfolioId, portfolioCurrency)
+      // Final cash holdings update
+      await updateHoldings(portfolioId, cashSymbol)
     }
 
     return {
@@ -363,6 +404,105 @@ export default defineEventHandler(async (event) => {
     })
   }
 })
+
+// Helper function to calculate cash balance up to a specific date
+async function calculateCashBalanceUpToDate(portfolioId: string, upToDate: Date): Promise<number> {
+  // Get all transactions up to and including the specified date
+  const allTransactions = await prisma.transaction.findMany({
+    where: {
+      portfolioId: portfolioId,
+      date: {
+        lte: upToDate
+      }
+    },
+    orderBy: {
+      date: 'asc'
+    }
+  })
+  
+  let runningCashBalance = 0
+  
+  // Process each transaction chronologically to build running cash balance
+  for (const transaction of allTransactions) {
+    const amount = transaction.quantity * transaction.price
+    const fees = transaction.fees || 0
+    
+    // Calculate cash impact exactly like Norwegian broker saldo changes
+    let cashImpact = 0
+    
+    if (transaction.symbol.startsWith('CASH_')) {
+      // Direct cash transactions
+      switch (transaction.type) {
+        case 'DEPOSIT':
+        case 'REFUND':
+        case 'DIVIDEND':
+        case 'DIVIDEND_REINVEST':
+        case 'LIQUIDATION':
+        case 'REDEMPTION':
+        case 'DECIMAL_LIQUIDATION':
+        case 'SPIN_OFF_IN':
+        case 'TRANSFER_IN':
+          cashImpact = amount - fees  // Money coming in minus fees
+          break
+          
+        case 'WITHDRAWAL':
+        case 'DECIMAL_WITHDRAWAL':
+        case 'INTEREST_CHARGE': {
+          // For withdrawals: ensure amount is negative (manual entries are positive, imports are negative)
+          const withdrawalAmount = amount > 0 ? -amount : amount
+          cashImpact = withdrawalAmount - fees  // Money going out: negative amount minus fees
+          break
+        }
+        
+        case 'SALDO_ADJUSTMENT':
+          cashImpact = amount - fees  // Direct adjustment to match broker saldo
+          break
+      }
+    } else {
+      // Stock/security transactions affect cash
+      switch (transaction.type) {
+        case 'BUY':
+        case 'RIGHTS_ALLOCATION':
+        case 'RIGHTS_ISSUE':
+          cashImpact = -(amount + fees)  // Purchase: cash decreases by amount + fees
+          break
+          
+        case 'SELL':
+          cashImpact = amount - fees  // Sale: cash increases by amount - fees
+          break
+          
+        case 'DIVIDEND':
+        case 'DIVIDEND_REINVEST':
+          cashImpact = amount - fees  // Dividend: cash increases by amount - fees
+          break
+          
+        case 'LIQUIDATION':
+        case 'REDEMPTION':
+        case 'DECIMAL_LIQUIDATION':
+        case 'SPIN_OFF_IN':
+          cashImpact = amount - fees  // Corporate actions that bring cash
+          break
+          
+        case 'EXCHANGE_IN':
+          cashImpact = amount - fees  // Exchange in brings cash
+          break
+          
+        case 'EXCHANGE_OUT':
+          cashImpact = -(amount + fees)  // Exchange out removes cash
+          break
+          
+        case 'SPLIT':
+        case 'MERGER':
+          cashImpact = -fees  // Only fees affect cash for stock splits/mergers
+          break
+      }
+    }
+    
+    runningCashBalance += cashImpact
+  }
+  
+  return runningCashBalance
+}
 
 // Helper function to update holdings based on transactions
 async function updateHoldings(portfolioId: string, symbol: string): Promise<void> {
@@ -597,182 +737,5 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         }
       })
     }
-  }
-}
-
-// Function to recalculate cash holdings like the Norwegian broker saldo system
-async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: string): Promise<void> {
-  const cashSymbol = `CASH_${portfolioCurrency}`
-  
-  console.log(`🔍 Starting cash recalculation for ${cashSymbol}`)
-  
-  // Get ALL transactions for this portfolio in chronological order (like saldo progression)
-  const allTransactions = await prisma.transaction.findMany({
-    where: {
-      portfolioId: portfolioId
-    },
-    orderBy: {
-      date: 'asc'  // Oldest first, like saldo progression in reverse
-    }
-  })
-  
-  console.log(`📊 Processing ${allTransactions.length} transactions`)
-  
-  let runningCashBalance = 0
-  
-  // Process each transaction chronologically to build running cash balance
-  for (const transaction of allTransactions) {
-    const amount = transaction.quantity * transaction.price
-    const fees = transaction.fees || 0
-    
-    // Calculate cash impact exactly like Norwegian broker saldo changes
-    let cashImpact = 0
-    
-    if (transaction.symbol.startsWith('CASH_')) {
-      // Direct cash transactions
-      switch (transaction.type) {
-        case 'DEPOSIT':
-        case 'REFUND':
-        case 'DIVIDEND':
-        case 'DIVIDEND_REINVEST':
-        case 'LIQUIDATION':
-        case 'REDEMPTION':
-        case 'DECIMAL_LIQUIDATION':
-        case 'SPIN_OFF_IN':
-        case 'TRANSFER_IN':
-          cashImpact = amount - fees  // Money coming in minus fees
-          break
-          
-        case 'WITHDRAWAL':
-        case 'DECIMAL_WITHDRAWAL':
-        case 'INTEREST_CHARGE': {
-          // For withdrawals: ensure amount is negative (manual entries are positive, imports are negative)
-          const withdrawalAmount = amount > 0 ? -amount : amount
-          cashImpact = withdrawalAmount - fees  // Money going out: negative amount minus fees
-          break
-        }
-        
-        case 'SALDO_ADJUSTMENT':
-          cashImpact = amount - fees  // Direct adjustment to match broker saldo
-          break
-      }
-      
-      console.log(`💰 ${transaction.type} ${transaction.symbol}: qty=${transaction.quantity}, price=${transaction.price}, amount=${amount}, fees=${fees}, impact=${cashImpact}`)
-    } else {
-      // Stock/security transactions affect cash
-      switch (transaction.type) {
-        case 'BUY':
-        case 'RIGHTS_ALLOCATION':
-        case 'RIGHTS_ISSUE':
-          cashImpact = -(amount + fees)  // Purchase: cash decreases by amount + fees
-          break
-          
-        case 'SELL':
-          cashImpact = amount - fees  // Sale: cash increases by amount - fees
-          break
-          
-        case 'DIVIDEND':
-        case 'DIVIDEND_REINVEST':
-          cashImpact = amount - fees  // Dividend: cash increases by amount - fees
-          break
-          
-        case 'LIQUIDATION':
-        case 'REDEMPTION':
-        case 'DECIMAL_LIQUIDATION':
-        case 'SPIN_OFF_IN':
-          cashImpact = amount - fees  // Corporate actions that bring cash
-          break
-          
-        case 'EXCHANGE_IN':
-          cashImpact = amount - fees  // Exchange in brings cash
-          break
-          
-        case 'EXCHANGE_OUT':
-          cashImpact = -(amount + fees)  // Exchange out removes cash
-          break
-          
-        case 'SPLIT':
-        case 'MERGER':
-          cashImpact = -fees  // Only fees affect cash for stock splits/mergers
-          break
-      }
-    }
-    
-    runningCashBalance += cashImpact
-    console.log(`🔄 Running balance after this transaction: ${runningCashBalance}`)
-  }
-  
-  console.log(`🎯 Final calculated cash balance: ${runningCashBalance} ${portfolioCurrency}`)
-  
-  // Check if we have a recent saldo value to validate against
-  const latestTransactionWithSaldo = await prisma.transaction.findFirst({
-    where: {
-      portfolioId: portfolioId,
-      saldo: { not: null }
-    },
-    orderBy: {
-      date: 'desc'
-    }
-  })
-  
-  if (latestTransactionWithSaldo?.saldo !== null && latestTransactionWithSaldo?.saldo !== undefined) {
-    const brokerSaldo = latestTransactionWithSaldo.saldo
-    const discrepancy = runningCashBalance - brokerSaldo
-    
-    console.log(`📊 Saldo validation: calculated=${runningCashBalance}, broker=${brokerSaldo}, discrepancy=${discrepancy}`)
-    
-    // If there's a significant discrepancy (more than 0.01 due to rounding), create adjustment
-    if (Math.abs(discrepancy) > 0.01) {
-      console.log(`⚠️  Saldo discrepancy detected: ${discrepancy} ${portfolioCurrency}. Creating adjustment transaction.`)
-      
-      // Create a SALDO_ADJUSTMENT transaction to align with broker's balance
-      await prisma.transaction.create({
-        data: {
-          portfolioId: portfolioId,
-          symbol: cashSymbol,
-          type: 'SALDO_ADJUSTMENT',
-          quantity: -discrepancy,  // Negative to correct the discrepancy
-          price: 1.0,
-          fees: 0,
-          currency: portfolioCurrency,
-          date: new Date(latestTransactionWithSaldo.date.getTime() + 1000), // 1 second after the reference transaction
-          notes: `Automatic adjustment to match broker saldo (${brokerSaldo}). Corrected discrepancy of ${discrepancy}.`,
-          saldo: brokerSaldo
-        }
-      })
-      
-      // Update the running balance with the adjustment
-      runningCashBalance = brokerSaldo
-      console.log(`✅ Created saldo adjustment. New balance: ${runningCashBalance} ${portfolioCurrency}`)
-    }
-  }
-  
-  // Set the final cash balance (like final saldo)
-  if (runningCashBalance !== 0 || await prisma.holding.findUnique({
-    where: { portfolioId_symbol: { portfolioId, symbol: cashSymbol } }
-  })) {
-    await prisma.holding.upsert({
-      where: {
-        portfolioId_symbol: {
-          portfolioId,
-          symbol: cashSymbol
-        }
-      },
-      update: {
-        quantity: runningCashBalance,
-        avgPrice: 1.0,
-        currency: portfolioCurrency,
-        lastUpdated: new Date()
-      },
-      create: {
-        portfolioId,
-        symbol: cashSymbol,
-        quantity: runningCashBalance,
-        avgPrice: 1.0,
-        currency: portfolioCurrency
-      }
-    })
-    
-    console.log(`💰 Recalculated cash balance: ${runningCashBalance} ${portfolioCurrency} (like saldo: ${runningCashBalance})`)
   }
 }
