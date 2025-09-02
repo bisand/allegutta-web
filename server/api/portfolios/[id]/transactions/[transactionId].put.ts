@@ -288,6 +288,8 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
 async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: string): Promise<void> {
   const cashSymbol = `CASH_${portfolioCurrency}`
   
+  console.log(`🔍 Starting cash recalculation for ${cashSymbol}`)
+  
   // Get ALL transactions for this portfolio in chronological order (like saldo progression)
   const allTransactions = await prisma.transaction.findMany({
     where: {
@@ -297,6 +299,8 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
       date: 'asc'  // Oldest first, like saldo progression in reverse
     }
   })
+  
+  console.log(`📊 Processing ${allTransactions.length} transactions`)
   
   let runningCashBalance = 0
   
@@ -325,10 +329,15 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
           
         case 'WITHDRAWAL':
         case 'DECIMAL_WITHDRAWAL':
-        case 'INTEREST_CHARGE':
-          cashImpact = -(amount + fees)  // Money going out plus fees
+        case 'INTEREST_CHARGE': {
+          // For withdrawals: ensure amount is negative (manual entries are positive, imports are negative)
+          const withdrawalAmount = amount > 0 ? -amount : amount
+          cashImpact = withdrawalAmount - fees  // Money going out: negative amount minus fees
           break
+        }
       }
+      
+      console.log(`💰 ${transaction.type} ${transaction.symbol}: qty=${transaction.quantity}, price=${transaction.price}, amount=${amount}, fees=${fees}, impact=${cashImpact}`)
     } else {
       // Stock/security transactions affect cash
       switch (transaction.type) {
@@ -370,7 +379,10 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
     }
     
     runningCashBalance += cashImpact
+    console.log(`🔄 Running balance after this transaction: ${runningCashBalance}`)
   }
+  
+  console.log(`🎯 Final calculated cash balance: ${runningCashBalance} ${portfolioCurrency}`)
   
   // Set the final cash balance (like final saldo)
   if (runningCashBalance !== 0 || await prisma.holding.findUnique({

@@ -287,9 +287,12 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
           
         case 'WITHDRAWAL':
         case 'DECIMAL_WITHDRAWAL':
-        case 'INTEREST_CHARGE':
-          cashImpact = -(amount + fees)  // Money going out plus fees
+        case 'INTEREST_CHARGE': {
+          // For withdrawals: ensure amount is negative (manual entries are positive, imports are negative)
+          const withdrawalAmount = amount > 0 ? -amount : amount
+          cashImpact = withdrawalAmount - fees  // Money going out: negative amount minus fees
           break
+        }
       }
     } else {
       // Stock/security transactions affect cash
