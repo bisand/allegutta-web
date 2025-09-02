@@ -63,8 +63,9 @@
               <ArrowPathIcon class="w-4 h-4 mr-2" />
               {{ $t('portfolioPage.updatePrices') }}
             </button>
+            <!-- Import button - also show for demo/testing when portfolio exists -->
             <button 
-              v-if="canEdit"
+              v-if="canEdit || currentPortfolio"
               type="button"
               class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               @click="showImportTransactions = true"
@@ -356,10 +357,18 @@
     <!-- This would be the same modal component used in the current portfolio page -->
     
     <!-- Import Transactions Modal -->
-    <PortfolioImportTransactionsModal 
-      v-model="showImportTransactions" 
-      @success="handleImportSuccess" 
-    />
+    <Teleport to="body">
+      <LazyPortfolioImportTransactionsModal 
+        v-if="showImportTransactions"
+        v-model="showImportTransactions" 
+        @success="handleImportSuccess" 
+      />
+    </Teleport>
+    
+    <!-- Debug info (remove this later) -->
+    <div v-if="false" class="fixed bottom-4 right-4 bg-black text-white p-2 text-xs z-50">
+      showImportTransactions: {{ showImportTransactions }}
+    </div>
   </div>
 </template>
 

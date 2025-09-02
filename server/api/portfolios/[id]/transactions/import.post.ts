@@ -215,8 +215,7 @@ export default defineEventHandler(async (event) => {
     // Create transactions in batch
     if (transactions.length > 0) {
       await prisma.transaction.createMany({
-        data: transactions,
-        skipDuplicates: true
+        data: transactions
       })
       successCount = transactions.length
 
