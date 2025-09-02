@@ -8,6 +8,7 @@ interface CSVRow {
 interface TransactionData {
   portfolioId: string
   symbol: string
+  isin?: string | null
   type: string
   quantity: number
   price: number
@@ -247,9 +248,28 @@ export default defineEventHandler(async (event) => {
           }
         }
 
+        // Extract ISIN if available
+        let isin: string | null = null
+        
+        // Check common Norwegian CSV ISIN field names
+        if (csvRow.ISIN) {
+          isin = csvRow.ISIN.trim()
+        } else if (csvRow.Isin) {
+          isin = csvRow.Isin.trim()
+        } else if (csvRow.isin) {
+          isin = csvRow.isin.trim()
+        }
+        
+        // Validate ISIN format (12 characters: 2 letters + 9 alphanumeric + 1 check digit)
+        if (isin && !/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/.test(isin)) {
+          console.warn(`Invalid ISIN format for ${symbol}: ${isin}`)
+          isin = null
+        }
+
         const transactionData = {
           portfolioId: portfolioId,
           symbol: symbol,
+          isin: isin,
           type: transactionType,
           quantity: finalQuantity,
           price: finalPrice,
@@ -298,6 +318,23 @@ export default defineEventHandler(async (event) => {
 
 // Helper function to update holdings based on transactions
 async function updateHoldings(portfolioId: string, symbol: string): Promise<void> {
+  // Get the latest ISIN for this symbol from transactions
+  const latestTransaction = await prisma.transaction.findFirst({
+    where: {
+      portfolioId: portfolioId,
+      symbol: symbol,
+      isin: { not: null }
+    },
+    orderBy: {
+      date: 'desc'
+    },
+    select: {
+      isin: true
+    }
+  })
+  
+  const isin = latestTransaction?.isin || null
+
   if (symbol.startsWith('CASH_')) {
     // Handle cash holdings - sum all cash transactions
     const cashTransactions = await prisma.transaction.findMany({
@@ -329,11 +366,13 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         update: {
           quantity: totalCash,
           avgPrice: 1.0,
+          isin: isin,
           lastUpdated: new Date()
         },
         create: {
           portfolioId: portfolioId,
           symbol: symbol,
+          isin: isin,
           quantity: totalCash,
           avgPrice: 1.0
         }
@@ -392,11 +431,13 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         update: {
           quantity: totalQuantity,
           avgPrice: avgPrice,
+          isin: isin,
           lastUpdated: new Date()
         },
         create: {
           portfolioId: portfolioId,
           symbol: symbol,
+          isin: isin,
           quantity: totalQuantity,
           avgPrice: avgPrice
         }

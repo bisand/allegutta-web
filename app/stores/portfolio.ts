@@ -14,6 +14,7 @@ interface Transaction {
   id: string
   portfolioId: string
   symbol: string
+  isin?: string | null
   type: 'BUY' | 'SELL'
   quantity: number
   price: number
@@ -28,6 +29,7 @@ interface Holding {
   id: string
   portfolioId: string
   symbol: string
+  isin?: string | null
   quantity: number
   avgPrice: number
   currentPrice?: number

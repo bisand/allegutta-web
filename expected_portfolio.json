@@ -1,0 +1,10 @@
+{
+  "cash": 75500.0,
+  "holdings": [
+    {
+      "symbol": "EQUINOR",
+      "quantity": 100,
+      "value": 26000.0
+    }
+  ]
+}

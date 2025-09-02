@@ -7,6 +7,9 @@
             Symbol
           </th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            ISIN
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             Quantity
           </th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -28,7 +31,7 @@
       </thead>
       <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
         <tr v-if="holdings.length === 0">
-          <td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+          <td colspan="8" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
             <UIcon name="i-heroicons-chart-bar" class="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p class="text-lg font-medium">No holdings found</p>
             <p class="text-sm">Add some transactions to see your holdings here</p>
@@ -45,6 +48,14 @@
             </div>
             <div v-if="isCashHolding(holding.symbol)" class="text-xs text-gray-500 dark:text-gray-400">
               {{ getCurrency(holding.symbol) }}
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div v-if="holding.isin && !isCashHolding(holding.symbol)" class="text-sm font-mono text-gray-900 dark:text-white">
+              {{ holding.isin }}
+            </div>
+            <div v-else class="text-sm text-gray-400 dark:text-gray-500">
+              {{ isCashHolding(holding.symbol) ? 'N/A' : '-' }}
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
@@ -75,6 +86,7 @@
 interface Holding {
   id: string
   symbol: string
+  isin?: string | null
   quantity: number
   avgPrice: number
   currentPrice?: number
