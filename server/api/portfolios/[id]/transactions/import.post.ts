@@ -310,6 +310,16 @@ export default defineEventHandler(async (event) => {
       for (const symbol of uniqueSymbols) {
         await updateHoldings(portfolioId, symbol)
       }
+
+      // If any stock transactions were imported, also recalculate cash holdings
+      const stockTransactionTypes = [
+        'BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN',
+        'SPLIT', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'
+      ]
+      const hasStockTransactions = transactions.some(t => stockTransactionTypes.includes(t.type))
+      if (hasStockTransactions && !uniqueSymbols.includes('CASH_NOK')) {
+        await updateHoldings(portfolioId, 'CASH_NOK')
+      }
     }
 
     return {
@@ -385,7 +395,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
           }
         },
         type: {
-          in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT']
+          in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE']
         }
       },
       orderBy: {
@@ -411,7 +421,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
       const amount = transaction.quantity * transaction.price
       const fees = transaction.fees || 0
       
-      if (['BUY', 'EXCHANGE_IN'].includes(transaction.type)) {
+      if (['BUY', 'EXCHANGE_IN', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
         totalCash -= (amount + fees)  // Buying stocks decreases cash (including fees)
       } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
         totalCash += (amount - fees)  // Selling stocks increases cash (minus fees)
@@ -480,7 +490,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
       const price = transaction.price
       const fees = transaction.fees
       
-      if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
+      if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
         // These increase holdings
         totalQuantity += quantity
         totalCost += quantity * price + fees

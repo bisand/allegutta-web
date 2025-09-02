@@ -59,8 +59,14 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    // Update holdings
+    // Update holdings for the transaction symbol
     await updateHoldings(portfolioId, body.symbol.toUpperCase())
+    
+    // For stock transactions, also update cash holdings since they affect cash balance
+    if (!body.symbol.toUpperCase().startsWith('CASH_') && 
+        ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT'].includes(body.type)) {
+      await updateHoldings(portfolioId, 'CASH_NOK')
+    }
 
     return {
       success: true,
@@ -88,10 +94,12 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         type: {
           in: [
             'DEPOSIT', 'WITHDRAWAL', 'REFUND',           // Direct cash transactions
-            'DIVIDEND',                                  // Dividends increase cash
+            'DIVIDEND', 'DIVIDEND_REINVEST',             // Dividends increase cash
             'LIQUIDATION', 'REDEMPTION',                 // Liquidations increase cash
             'DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL', // Decimal adjustments
-            'SPIN_OFF_IN'                               // Spin-offs can create cash
+            'SPIN_OFF_IN',                              // Spin-offs can create cash
+            'TRANSFER_IN', 'INTEREST_CHARGE',           // Transfers and interest
+            'RIGHTS_ISSUE'                              // Rights issues
           ]
         }
       },
@@ -110,7 +118,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
           }
         },
         type: {
-          in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT']
+          in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE']
         }
       },
       orderBy: {
@@ -124,9 +132,9 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
     for (const transaction of directCashTransactions) {
       const amount = transaction.quantity * transaction.price
       
-      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN'].includes(transaction.type)) {
+      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN', 'DIVIDEND_REINVEST', 'TRANSFER_IN', 'RIGHTS_ISSUE'].includes(transaction.type)) {
         totalCash += amount  // These increase cash
-      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
+      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL', 'INTEREST_CHARGE'].includes(transaction.type)) {
         totalCash -= amount  // These decrease cash
       }
     }
@@ -136,7 +144,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
       const amount = transaction.quantity * transaction.price
       const fees = transaction.fees || 0
       
-      if (['BUY', 'EXCHANGE_IN'].includes(transaction.type)) {
+      if (['BUY', 'EXCHANGE_IN', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
         totalCash -= (amount + fees)  // Buying stocks decreases cash (including fees)
       } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
         totalCash += (amount - fees)  // Selling stocks increases cash (minus fees)

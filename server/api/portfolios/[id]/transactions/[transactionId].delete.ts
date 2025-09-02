@@ -62,6 +62,15 @@ export default defineEventHandler(async (event) => {
     // Recalculate holdings for the affected symbol
     await recalculateHoldings(portfolioId, transaction.symbol)
 
+    // If this was a stock transaction, also recalculate cash holdings
+    const stockTransactionTypes = [
+      'BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN',
+      'SPLIT', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'
+    ]
+    if (stockTransactionTypes.includes(transaction.type)) {
+      await recalculateHoldings(portfolioId, 'CASH_NOK')
+    }
+
     return { success: true }
   } catch (error) {
     console.error('Error deleting transaction:', error)
@@ -75,20 +84,10 @@ export default defineEventHandler(async (event) => {
 // Helper function to recalculate holdings after transaction deletion
 async function recalculateHoldings(portfolioId: string, symbol: string) {
   if (symbol.startsWith('CASH_')) {
-    // Handle cash holdings - sum all direct cash transactions only
-    const transactions = await prisma.transaction.findMany({
+    // Handle cash holdings - sum all direct cash transactions AND stock transaction impacts
+    const allTransactions = await prisma.transaction.findMany({
       where: {
-        portfolioId: portfolioId,
-        symbol: symbol,
-        type: {
-          in: [
-            'DEPOSIT', 'WITHDRAWAL', 'REFUND',           // Direct cash transactions
-            'DIVIDEND',                                  // Dividends increase cash
-            'LIQUIDATION', 'REDEMPTION',                 // Liquidations increase cash
-            'DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL', // Decimal adjustments
-            'SPIN_OFF_IN'                               // Spin-offs can create cash
-          ]
-        }
+        portfolioId: portfolioId
       },
       orderBy: {
         date: 'asc'
@@ -96,13 +95,35 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
     })
 
     let totalCash = 0
-    for (const transaction of transactions) {
+    
+    for (const transaction of allTransactions) {
       const amount = transaction.quantity * transaction.price
       
-      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN'].includes(transaction.type)) {
-        totalCash += amount  // These increase cash
-      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
-        totalCash -= amount  // These decrease cash
+      // Direct cash transactions
+      if (transaction.symbol === symbol && [
+        'DEPOSIT', 'WITHDRAWAL', 'REFUND',           // Direct cash transactions
+        'DIVIDEND',                                  // Dividends increase cash
+        'LIQUIDATION', 'REDEMPTION',                 // Liquidations increase cash
+        'DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL', // Decimal adjustments
+        'SPIN_OFF_IN',                              // Spin-offs can create cash
+        'TILBAKEBETALING', 'UTBYTTE_KONTANT'        // Norwegian types
+      ].includes(transaction.type)) {
+        if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN', 'TILBAKEBETALING', 'UTBYTTE_KONTANT'].includes(transaction.type)) {
+          totalCash += amount  // These increase cash
+        } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
+          totalCash -= amount  // These decrease cash
+        }
+      }
+      
+      // Stock transaction impacts on cash (all non-cash symbols)
+      if (!transaction.symbol.startsWith('CASH_')) {
+        const totalAmount = amount + (transaction.fees || 0)
+        
+        if (['BUY', 'EXCHANGE_IN', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
+          totalCash -= totalAmount  // Stock purchases decrease cash
+        } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
+          totalCash += totalAmount  // Stock sales increase cash
+        }
       }
     }
 
@@ -155,7 +176,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
 
   // Calculate totals from all transactions
   for (const transaction of transactions) {
-    if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(transaction.type)) {
+    if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
       totalQuantity += transaction.quantity
       totalCostBasis += (transaction.quantity * transaction.price) + (transaction.fees || 0)
     } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
