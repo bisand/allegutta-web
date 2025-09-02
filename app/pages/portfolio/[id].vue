@@ -4,7 +4,7 @@
     <div v-if="portfolioStore.loading" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500 mx-auto mb-4" />
-        <p class="text-gray-600 dark:text-gray-400">Loading portfolio...</p>
+        <p class="text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.loading') }}</p>
       </div>
     </div>
 
@@ -13,13 +13,13 @@
       <div class="text-center">
         <ChartBarIcon class="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Portfolio Not Found
+          {{ $t('portfolioPage.notFound') }}
         </h1>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
-          The requested portfolio doesn't exist or you don't have access to it.
+          {{ $t('portfolioPage.noAccess') }}
         </p>
         <NuxtLink to="/" class="text-primary-500 hover:text-primary-600">
-          Go back to home
+          {{ $t('common.backToHome') }}
         </NuxtLink>
       </div>
     </div>
@@ -32,13 +32,13 @@
           <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {{ currentPortfolio.name }}
-              <span v-if="currentPortfolio.isDefault" class="text-sm text-primary-500 ml-2">(Default)</span>
+              <span v-if="currentPortfolio.isDefault" class="text-sm text-primary-500 ml-2">({{ $t('portfolioPage.default') }})</span>
             </h1>
             <p v-if="currentPortfolio.description" class="text-gray-600 dark:text-gray-400 mb-2">
               {{ currentPortfolio.description }}
             </p>
             <p class="text-sm text-gray-500 dark:text-gray-500">
-              Portfolio ID: {{ currentPortfolio.id }}
+              {{ $t('portfolioPage.portfolioId') }}: {{ currentPortfolio.id }}
             </p>
           </div>
           
@@ -50,7 +50,7 @@
               class="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
             >
               <PencilSquareIcon class="w-4 h-4 mr-2" />
-              Admin Edit
+              {{ $t('portfolioPage.adminEdit') }}
             </NuxtLink>
             
             <button 
@@ -61,7 +61,16 @@
               @click="refreshPrices"
             >
               <ArrowPathIcon class="w-4 h-4 mr-2" />
-              Update Prices
+              {{ $t('portfolioPage.updatePrices') }}
+            </button>
+            <button 
+              v-if="canEdit"
+              type="button"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              @click="showImportTransactions = true"
+            >
+              <ArrowUpTrayIcon class="w-4 h-4 mr-2" />
+              {{ $t('portfolioPage.importTransactions') }}
             </button>
             <button 
               v-if="canEdit"
@@ -70,7 +79,7 @@
               @click="showAddTransaction = true"
             >
               <PlusIcon class="w-4 h-4 mr-2" />
-              Add Transaction
+              {{ $t('portfolioPage.addTransaction') }}
             </button>
           </div>
         </div>
@@ -86,7 +95,7 @@
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  Total Value
+                  {{ $t('portfolioPage.totalValue') }}
                 </dt>
                 <dd class="text-lg font-semibold text-gray-900 dark:text-white">
                   ${{ formatCurrency(portfolioStore.totalValue) }}
@@ -104,7 +113,7 @@
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  Total Gain/Loss
+                  {{ $t('portfolioPage.totalGainLoss') }}
                 </dt>
                 <dd class="text-lg font-semibold" :class="portfolioStore.totalGainLoss >= 0 ? 'text-green-600' : 'text-red-600'">
                   {{ portfolioStore.totalGainLoss >= 0 ? '+' : '' }}${{ formatCurrency(Math.abs(portfolioStore.totalGainLoss)) }}
@@ -123,10 +132,10 @@
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  Holdings
+                  {{ $t('portfolioPage.holdings') }}
                 </dt>
                 <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                  {{ portfolioStore.portfolioHoldings.length }} positions
+                  {{ portfolioStore.portfolioHoldings.length }} {{ $t('portfolioPage.positions') }}
                 </dd>
               </dl>
             </div>
@@ -141,7 +150,7 @@
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  Last Updated
+                  {{ $t('portfolioPage.lastUpdated') }}
                 </dt>
                 <dd class="text-lg font-semibold text-gray-900 dark:text-white">
                   {{ formatDate(currentPortfolio.updatedAt) }}
@@ -156,7 +165,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Top Performers -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Performers</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.topPerformers') }}</h3>
           <div v-if="topPerformers.length > 0" class="space-y-3">
             <div v-for="holding in topPerformers" :key="holding.id" class="flex items-center justify-between">
               <div class="flex items-center">
@@ -179,13 +188,13 @@
             </div>
           </div>
           <div v-else class="text-center py-4">
-            <p class="text-gray-500 dark:text-gray-400">No positive performers yet</p>
+            <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noPositivePerformers') }}</p>
           </div>
         </div>
 
         <!-- Portfolio Allocation -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Portfolio Allocation</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioAllocation') }}</h3>
           <div v-if="portfolioStore.portfolioHoldings.length > 0" class="space-y-3">
             <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id" class="flex items-center justify-between">
               <div class="flex items-center">
@@ -199,26 +208,26 @@
             </div>
           </div>
           <div v-else class="text-center py-4">
-            <p class="text-gray-500 dark:text-gray-400">No holdings to display</p>
+            <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noHoldingsToDisplay') }}</p>
           </div>
         </div>
       </div>
 
       <!-- Quick Insights -->
       <div v-if="portfolioStore.portfolioHoldings.length > 0" class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg p-6 mb-8">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Portfolio Insights</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioInsights') }}</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="text-center">
             <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ getTopPerformerSymbol() }}</p>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Best Performer</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.bestPerformer') }}</p>
           </div>
           <div class="text-center">
             <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ getLargestHoldingSymbol() }}</p>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Largest Position</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.largestPosition') }}</p>
           </div>
           <div class="text-center">
             <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ portfolioStore.portfolioTransactions.length }}</p>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Total Transactions</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.totalTransactions') }}</p>
           </div>
         </div>
       </div>
@@ -226,18 +235,18 @@
       <!-- Holdings Table -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Holdings</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('portfolioPage.holdingsTable') }}</h3>
         </div>
         <div class="overflow-x-auto">
           <table v-if="portfolioStore.portfolioHoldings.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Symbol</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Avg Price</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Current Price</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market Value</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Gain/Loss</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.symbol') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.quantity') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.avgPrice') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.currentPrice') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.marketValue') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.gainLoss') }}</th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -268,9 +277,9 @@
           </table>
           <div v-else class="px-6 py-8 text-center">
             <ChartBarIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p class="text-gray-500 dark:text-gray-400">No holdings found</p>
+            <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noHoldingsFound') }}</p>
             <p v-if="canEdit" class="text-sm text-gray-400 dark:text-gray-500 mt-2">
-              Start by adding your first transaction
+              {{ $t('portfolioPage.startByAdding') }}
             </p>
           </div>
         </div>
@@ -279,14 +288,14 @@
       <!-- Recent Transactions -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Transactions</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('portfolioPage.recentTransactions') }}</h3>
           <div v-if="canEdit" class="flex gap-2">
             <button
               type="button"
               class="text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
               @click="showAddTransaction = true"
             >
-              Add Transaction
+              {{ $t('portfolioPage.addTransaction') }}
             </button>
           </div>
         </div>
@@ -294,13 +303,13 @@
           <table v-if="portfolioStore.portfolioTransactions.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Symbol</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Price</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
-                <th v-if="canEdit" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.date') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.symbol') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.type') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.quantity') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.price') }}</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.total') }}</th>
+                <th v-if="canEdit" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.actions') }}</th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -329,15 +338,15 @@
                   ${{ formatCurrency(transaction.quantity * transaction.price) }}
                 </td>
                 <td v-if="canEdit" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  <button class="text-primary-600 hover:text-primary-500 mr-2">Edit</button>
-                  <button class="text-red-600 hover:text-red-500">Delete</button>
+                  <button class="text-primary-600 hover:text-primary-500 mr-2">{{ $t('portfolioPage.edit') }}</button>
+                  <button class="text-red-600 hover:text-red-500">{{ $t('portfolioPage.delete') }}</button>
                 </td>
               </tr>
             </tbody>
           </table>
           <div v-else class="px-6 py-8 text-center">
             <ClockIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p class="text-gray-500 dark:text-gray-400">No transactions found</p>
+            <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noTransactionsFound') }}</p>
           </div>
         </div>
       </div>
@@ -345,6 +354,12 @@
 
     <!-- Add Transaction Modal would go here -->
     <!-- This would be the same modal component used in the current portfolio page -->
+    
+    <!-- Import Transactions Modal -->
+    <PortfolioImportTransactionsModal 
+      v-model="showImportTransactions" 
+      @success="handleImportSuccess" 
+    />
   </div>
 </template>
 
@@ -356,7 +371,8 @@ import {
   PlusIcon,
   ClockIcon,
   ArrowTrendingUpIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -364,6 +380,7 @@ const portfolioStore = usePortfolioStore()
 const { loggedIn, user, canManagePortfolios } = useAppAuth()
 
 const showAddTransaction = ref(false)
+const showImportTransactions = ref(false)
 
 // Initialize store data
 onMounted(async () => {
@@ -524,14 +541,22 @@ async function refreshPrices(): Promise<void> {
   }
 }
 
+// Handle import success
+function handleImportSuccess(): void {
+  // The import modal will already refresh the portfolio data
+  showImportTransactions.value = false
+}
+
 // Page meta
+const { t } = useI18n()
+
 useHead({
-  title: computed(() => currentPortfolio.value ? currentPortfolio.value.name : 'Portfolio'),
+  title: computed(() => currentPortfolio.value ? currentPortfolio.value.name : t('portfolio.portfolio')),
   meta: [
     { name: 'description', content: computed(() => 
       currentPortfolio.value ? 
-      `Portfolio: ${currentPortfolio.value.name} - ${currentPortfolio.value.description || 'Investment tracking'}` :
-      'Portfolio not found'
+      `${t('portfolio.portfolio')}: ${currentPortfolio.value.name} - ${currentPortfolio.value.description || t('common.managementDescription')}` :
+      t('portfolioPage.notFound')
     )}
   ]
 })

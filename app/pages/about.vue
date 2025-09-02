@@ -4,34 +4,29 @@
       <!-- Header -->
       <div class="text-center mb-16">
         <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          About AlleGutta
+          {{ $t('about.pageTitle') }}
         </h1>
         <p class="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-          A modern, secure, and user-friendly portfolio management application 
-          built with cutting-edge web technologies.
+          {{ $t('about.pageDescription') }}
         </p>
       </div>
 
       <!-- Story Section -->
       <div class="mb-16">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Our Story</h2>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ $t('about.ourStory') }}</h2>
         <div class="prose prose-lg dark:prose-invert max-w-none">
           <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-            AlleGutta was born from the need for a simple yet powerful portfolio tracking solution. 
-            As individual investors, we found existing tools either too complex or lacking the 
-            features we needed to effectively manage our investments.
+            {{ $t('about.storyParagraph1') }}
           </p>
           <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-            This application represents a complete rebuild of our original Angular-based portfolio 
-            tracker, now powered by Nuxt 4 for better performance, user experience, and modern 
-            web capabilities including Progressive Web App (PWA) support.
+            {{ $t('about.storyParagraph2') }}
           </p>
         </div>
       </div>
 
       <!-- Features Section -->
       <div class="mb-16">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Key Features</h2>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">{{ $t('about.keyFeatures') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div class="flex items-start space-x-4">
             <div class="flex-shrink-0">
@@ -41,10 +36,10 @@
             </div>
             <div>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Portfolio Management
+                {{ $t('about.portfolioManagementTitle') }}
               </h3>
               <p class="text-gray-600 dark:text-gray-300">
-                Create and manage multiple portfolios with detailed tracking of holdings and performance.
+                {{ $t('about.portfolioManagementDesc') }}
               </p>
             </div>
           </div>
@@ -57,10 +52,10 @@
             </div>
             <div>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Transaction Tracking
+                {{ $t('about.transactionTrackingTitle') }}
               </h3>
               <p class="text-gray-600 dark:text-gray-300">
-                Record buy/sell orders, dividends, stock splits, and other investment activities.
+                {{ $t('about.transactionTrackingDesc') }}
               </p>
             </div>
           </div>
@@ -73,10 +68,10 @@
             </div>
             <div>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Secure Authentication
+                {{ $t('about.secureAuthTitle') }}
               </h3>
               <p class="text-gray-600 dark:text-gray-300">
-                Enterprise-grade security powered by Kinde authentication with multi-factor support.
+                {{ $t('about.secureAuthDesc') }}
               </p>
             </div>
           </div>
@@ -89,10 +84,10 @@
             </div>
             <div>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Progressive Web App
+                {{ $t('about.pwaTitle') }}
               </h3>
               <p class="text-gray-600 dark:text-gray-300">
-                Install on any device for a native app experience with offline capabilities.
+                {{ $t('about.pwaDesc') }}
               </p>
             </div>
           </div>
@@ -101,7 +96,7 @@
 
       <!-- Technology Stack -->
       <div class="mb-16">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Technology Stack</h2>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">{{ $t('about.technologyStack') }}</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div class="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mx-auto mb-3">
@@ -140,10 +135,10 @@
       <!-- Call to Action -->
       <div class="text-center bg-gray-50 dark:bg-gray-800 rounded-lg p-8">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          Ready to Get Started?
+          {{ $t('about.readyToStart') }}
         </h2>
         <p class="text-gray-600 dark:text-gray-300 mb-6">
-          Join us and start managing your portfolio like a pro.
+          {{ $t('about.joinUs') }}
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
@@ -152,20 +147,20 @@
             class="px-6 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
             @click="() => register()"
           >
-            Create Account
+            {{ $t('about.createAccount') }}
           </button>
           <NuxtLink 
             v-else
             to="/portfolio"
             class="px-6 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors text-center"
           >
-            Go to Portfolio
+            {{ $t('about.goToPortfolio') }}
           </NuxtLink>
           <NuxtLink 
             to="/"
             class="px-6 py-3 text-lg font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-700 border border-primary-300 dark:border-primary-600 hover:bg-primary-50 dark:hover:bg-gray-600 rounded-lg transition-colors text-center"
           >
-            Learn More
+            {{ $t('about.learnMore') }}
           </NuxtLink>
         </div>
       </div>
@@ -182,11 +177,12 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const { loggedIn, register, isRegistrationEnabled } = useAppAuth()
+const { t } = useI18n()
 
 useHead({
-  title: 'About',
+  title: () => t('about.pageTitle'),
   meta: [
-    { name: 'description', content: 'Learn about AlleGutta portfolio management application, its features, and technology stack.' }
+    { name: 'description', content: () => t('about.pageDescription') }
   ]
 })
 </script>
