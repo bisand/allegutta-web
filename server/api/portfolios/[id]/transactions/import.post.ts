@@ -334,14 +334,14 @@ export default defineEventHandler(async (event) => {
             }
         }
 
-        // Create transactions one by one and check saldo after each
+        // Create transactions one by one and maintain saldo validation during import
         const portfolioCurrency = portfolio.currency || 'NOK'
         const cashSymbol = `CASH_${portfolioCurrency}`
 
         console.log(`📈 About to process ${transactions.length} transactions for holdings updates`)
         
         if (transactions.length > 0) {
-            console.log(`📊 Processing ${transactions.length} transactions with simple saldo validation...`)
+            console.log(`📊 Processing ${transactions.length} transactions with saldo validation...`)
 
             let expectedSaldo = 0  // Track expected running saldo
 
@@ -391,7 +391,7 @@ export default defineEventHandler(async (event) => {
                     } else {
                         // Update our expected saldo to match broker for next calculation
                         expectedSaldo = brokerSaldo
-                        console.log(`✅ Saldo within tolerance (${discrepancy} <= 3.0 kr), using broker value: ${brokerSaldo}`)
+                        console.log(`✅ Saldo within tolerance (${discrepancy} <= 1.0 kr), using broker value: ${brokerSaldo}`)
                     }
                 }
             }
@@ -404,9 +404,7 @@ export default defineEventHandler(async (event) => {
                 await updateHoldings(portfolioId, symbol)
             }
 
-            // Final cash holdings update
-            console.log(`🔄 Final cash holdings update for: ${cashSymbol}`)
-            await updateHoldings(portfolioId, cashSymbol)
+            console.log(`✅ Import holdings update completed`)
         }
 
         return {
