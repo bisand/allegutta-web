@@ -34,6 +34,7 @@ model Portfolio {
   userId      String
   isDefault   Boolean  @default(false)
   currency    String   @default("NOK") // Default currency for the portfolio
+  cashBalance Float    @default(0) // Cash balance for the portfolio
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

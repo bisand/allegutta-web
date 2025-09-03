@@ -399,9 +399,15 @@ export default defineEventHandler(async (event) => {
             // Update holdings for each unique symbol after all transactions are processed
             const uniqueSymbols = [...new Set(transactions.map(t => t.symbol))]
             console.log(`🔄 Updating holdings for symbols: ${uniqueSymbols.join(', ')}`)
-            for (const symbol of uniqueSymbols) {
+            
+            // Update cash balance first
+            await updateCashBalance(portfolioId)
+            
+            // Update holdings for securities only (skip cash symbols)
+            const securitySymbols = uniqueSymbols.filter(symbol => !symbol.startsWith('CASH_'))
+            for (const symbol of securitySymbols) {
                 console.log(`🔄 Updating holdings for symbol: ${symbol}`)
-                await updateHoldings(portfolioId, symbol)
+                await updateSecurityHoldings(portfolioId, symbol)
             }
 
             console.log(`✅ Import holdings update completed`)
@@ -425,191 +431,180 @@ export default defineEventHandler(async (event) => {
     }
 })
 
-// Helper function to update holdings based on transactions
-async function updateHoldings(portfolioId: string, symbol: string): Promise<void> {
-    console.log(`🔧 updateHoldings called for portfolio ${portfolioId}, symbol ${symbol}`)
-    
-    // Get the latest ISIN for this symbol from transactions
-    const latestTransaction = await prisma.transaction.findFirst({
-        where: {
-            portfolioId: portfolioId,
-            symbol: symbol,
-            isin: { not: null }
+// Calculate and update the cash balance for a portfolio
+async function updateCashBalance(portfolioId: string): Promise<void> {
+  console.log(`� Recalculating cash balance for portfolio: ${portfolioId}`)
+  
+  // Get all cash-affecting transactions
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      portfolioId: portfolioId,
+      OR: [
+        // Direct cash transactions
+        {
+          symbol: {
+            startsWith: 'CASH_'
+          }
         },
-        orderBy: {
-            date: 'desc'
-        },
-        select: {
-            isin: true
+        // Stock transactions that affect cash
+        {
+          type: {
+            in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'DIVIDEND']
+          }
         }
-    })
-
-    const isin = latestTransaction?.isin || null
-
-    if (symbol.startsWith('CASH_')) {
-        // Handle cash holdings - use the saldo from the most recent transaction
-        // The saldo represents the actual cash balance at that point in time
-        
-        const latestTransaction = await prisma.transaction.findFirst({
-            where: {
-                portfolioId: portfolioId,
-                saldo: { not: null }  // Only transactions with saldo field
-            },
-            orderBy: {
-                date: 'desc'
-            }
-        })
-
-        let totalCash = 0
-        if (latestTransaction && latestTransaction.saldo !== null) {
-            totalCash = latestTransaction.saldo
-            console.log(`💰 Using saldo from latest transaction: ${totalCash}`)
-        } else {
-            console.log(`⚠️ No transaction with saldo found for portfolio ${portfolioId}`)
-        }
-
-        if (totalCash !== 0) {
-            // Extract currency from CASH symbol (e.g., CASH_NOK -> NOK)
-            const currency = symbol.startsWith('CASH_') ? symbol.substring(5) : 'NOK'
-
-            await prisma.holding.upsert({
-                where: {
-                    portfolioId_symbol: {
-                        portfolioId: portfolioId,
-                        symbol: symbol
-                    }
-                },
-                update: {
-                    quantity: totalCash,
-                    avgPrice: 1.0,
-                    currency: currency,
-                    isin: isin
-                },
-                create: {
-                    portfolioId: portfolioId,
-                    symbol: symbol,
-                    isin: isin,
-                    quantity: totalCash,
-                    avgPrice: 1.0,
-                    currency: currency
-                }
-            })
-        } else {
-            // Remove cash holding if balance is 0
-            await prisma.holding.deleteMany({
-                where: {
-                    portfolioId: portfolioId,
-                    symbol: symbol
-                }
-            })
-        }
-    } else {
-        // Handle security holdings - include all security-affecting transactions
-        const transactions = await prisma.transaction.findMany({
-            where: {
-                portfolioId: portfolioId,
-                symbol: symbol,
-                type: {
-                    in: [
-                        'BUY', 'SELL',                    // Standard buy/sell transactions
-                        'EXCHANGE_IN', 'EXCHANGE_OUT',    // Exchange transactions (treat as buy/sell)
-                        'SPIN_OFF_IN',                    // Spin-offs that create new holdings
-                        'DECIMAL_LIQUIDATION',            // Decimal adjustments
-                        'DECIMAL_WITHDRAWAL',             // Decimal withdrawals
-                        'REFUND', 'LIQUIDATION', 'REDEMPTION',  // Corporate actions that liquidate positions
-                        'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'     // Rights allocations and issues
-                    ]
-                }
-            },
-            orderBy: {
-                date: 'asc'
-            }
-        })
-
-        let totalQuantity = 0
-        let totalCost = 0
-
-        for (const transaction of transactions) {
-            const quantity = transaction.quantity
-            const price = transaction.price
-            const fees = transaction.fees
-
-            if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
-                // These increase holdings
-                totalQuantity += quantity
-                totalCost += quantity * price + fees
-            } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
-                // These decrease holdings
-                const sellQuantity = Math.min(quantity, totalQuantity)
-                const avgPrice = totalQuantity > 0 ? totalCost / totalQuantity : 0
-
-                totalQuantity -= sellQuantity
-                totalCost -= sellQuantity * avgPrice
-                totalCost = Math.max(0, totalCost) // Ensure non-negative
-            } else if (['REFUND', 'LIQUIDATION', 'REDEMPTION'].includes(transaction.type)) {
-                // Corporate actions that liquidate entire position (like capital repayment)
-                // These should zero out the holding regardless of quantity
-                console.log(`💰 Corporate action ${transaction.type} for ${symbol}: liquidating ${totalQuantity} shares`)
-                totalQuantity = 0
-                totalCost = 0
-            } else if (['DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
-                // Handle decimal adjustments - these typically adjust small quantities
-                if (transaction.type === 'DECIMAL_LIQUIDATION') {
-                    totalQuantity += quantity  // Add fractional shares
-                } else {
-                    totalQuantity -= quantity  // Remove fractional shares
-                }
-            }
-        }
-
-        if (totalQuantity > 0) {
-            const avgPrice = totalCost / totalQuantity
-
-            // Get currency from the latest transaction for this symbol
-            const latestTransactionWithCurrency = await prisma.transaction.findFirst({
-                where: {
-                    portfolioId: portfolioId,
-                    symbol: symbol
-                },
-                orderBy: {
-                    date: 'desc'
-                },
-                select: {
-                    currency: true
-                }
-            })
-            const currency = latestTransactionWithCurrency?.currency || 'NOK'
-
-            await prisma.holding.upsert({
-                where: {
-                    portfolioId_symbol: {
-                        portfolioId: portfolioId,
-                        symbol: symbol
-                    }
-                },
-                update: {
-                    quantity: totalQuantity,
-                    avgPrice: avgPrice,
-                    currency: currency,
-                    isin: isin
-                },
-                create: {
-                    portfolioId: portfolioId,
-                    symbol: symbol,
-                    isin: isin,
-                    quantity: totalQuantity,
-                    avgPrice: avgPrice,
-                    currency: currency
-                }
-            })
-        } else {
-            // Remove holding if quantity is 0
-            await prisma.holding.deleteMany({
-                where: {
-                    portfolioId: portfolioId,
-                    symbol: symbol
-                }
-            })
-        }
+      ]
+    },
+    orderBy: {
+      date: 'asc'
     }
+  })
+
+  console.log(`💰 Found ${transactions.length} cash-affecting transactions`)
+
+  let cashBalance = 0
+  
+  for (const transaction of transactions) {
+    const amount = transaction.quantity * transaction.price
+    const fees = transaction.fees || 0
+    
+    if (transaction.symbol.startsWith('CASH_')) {
+      // Direct cash transactions
+      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN'].includes(transaction.type)) {
+        cashBalance += amount  // These increase cash
+      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
+        cashBalance -= amount  // These decrease cash
+      }
+    } else {
+      // Stock transactions that affect cash
+      if (['BUY', 'EXCHANGE_IN'].includes(transaction.type)) {
+        cashBalance -= (amount + fees)  // Buying stocks decreases cash (including fees)
+      } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
+        cashBalance += (amount - fees)  // Selling stocks increases cash (minus fees)
+      } else if (transaction.type === 'DIVIDEND') {
+        cashBalance += amount  // Dividends increase cash
+      }
+    }
+  }
+  
+  console.log(`💰 Calculated cash balance: ${cashBalance.toFixed(2)} NOK`)
+
+  // Update the portfolio's cash balance
+  await prisma.portfolio.update({
+    where: { id: portfolioId },
+    data: { cashBalance }
+  })
+  
+  console.log(`✅ Updated portfolio cash balance to: ${cashBalance.toFixed(2)} NOK`)
+}
+
+// Calculate and update holdings for a specific security (not cash)
+async function updateSecurityHoldings(portfolioId: string, symbol: string): Promise<void> {
+  // Skip cash symbols - they're handled by updateCashBalance
+  if (symbol.startsWith('CASH_')) {
+    return
+  }
+  
+  console.log(`📊 Recalculating security holdings for: ${symbol}`)
+  
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      portfolioId: portfolioId,
+      symbol: symbol,
+      type: {
+        in: [
+          'BUY', 'SELL',                    // Standard buy/sell transactions
+          'EXCHANGE_IN', 'EXCHANGE_OUT',    // Exchange transactions (treat as buy/sell)
+          'SPIN_OFF_IN',                    // Spin-offs that create new holdings
+          'DECIMAL_LIQUIDATION',            // Decimal adjustments
+          'DECIMAL_WITHDRAWAL',             // Decimal withdrawals
+          'REFUND', 'LIQUIDATION', 'REDEMPTION'  // Corporate actions that liquidate positions
+        ]
+      }
+    },
+    orderBy: {
+      date: 'asc'
+    }
+  })
+
+  console.log(`📊 Found ${transactions.length} transactions for ${symbol}`)
+
+  let totalQuantity = 0
+  let totalCost = 0
+
+  for (const transaction of transactions) {
+    const quantity = transaction.quantity
+    const price = transaction.price
+    const fees = transaction.fees || 0
+    
+    if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(transaction.type)) {
+      // These increase holdings
+      totalQuantity += quantity
+      totalCost += quantity * price + fees
+      console.log(`  ➕ ${transaction.type}: +${quantity} shares`)
+    } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
+      // These decrease holdings
+      const sellQuantity = Math.min(quantity, totalQuantity)
+      const avgPrice = totalQuantity > 0 ? totalCost / totalQuantity : 0
+      
+      totalQuantity -= sellQuantity
+      totalCost -= sellQuantity * avgPrice
+      totalCost = Math.max(0, totalCost) // Ensure non-negative
+      console.log(`  ➖ ${transaction.type}: -${sellQuantity} shares`)
+    } else if (['REFUND', 'LIQUIDATION', 'REDEMPTION'].includes(transaction.type)) {
+      // Corporate actions that liquidate entire position (like capital repayment)
+      console.log(`  💰 ${transaction.type}: LIQUIDATING ${totalQuantity} shares (corporate action)`)
+      totalQuantity = 0
+      totalCost = 0
+    } else if (['DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
+      // Handle decimal adjustments - these typically adjust small quantities
+      if (transaction.type === 'DECIMAL_LIQUIDATION') {
+        totalQuantity += quantity  // Add fractional shares
+        console.log(`  🔢 Decimal liquidation: +${quantity} shares`)
+      } else {
+        totalQuantity -= quantity  // Remove fractional shares
+        console.log(`  🔢 Decimal withdrawal: -${quantity} shares`)
+      }
+    }
+  }
+
+  console.log(`📊 Final calculation for ${symbol}: ${totalQuantity} shares, cost: ${totalCost}`)
+
+  if (totalQuantity > 0) {
+    const avgPrice = totalCost / totalQuantity
+    const isin = transactions[0]?.isin || null
+    const currency = transactions[0]?.currency || 'NOK'
+
+    await prisma.holding.upsert({
+      where: {
+        portfolioId_symbol: {
+          portfolioId: portfolioId,
+          symbol: symbol
+        }
+      },
+      update: {
+        quantity: totalQuantity,
+        avgPrice: avgPrice,
+        isin: isin,
+        currency: currency
+      },
+      create: {
+        portfolioId: portfolioId,
+        symbol: symbol,
+        isin: isin,
+        quantity: totalQuantity,
+        avgPrice: avgPrice,
+        currency: currency
+      }
+    })
+    console.log(`✅ Updated ${symbol} holding: ${totalQuantity} shares @ ${avgPrice.toFixed(2)}`)
+  } else {
+    // Remove holding if quantity is 0
+    await prisma.holding.deleteMany({
+      where: {
+        portfolioId: portfolioId,
+        symbol: symbol
+      }
+    })
+    console.log(`❌ Removed ${symbol} holding (quantity is 0)`)
+  }
 }

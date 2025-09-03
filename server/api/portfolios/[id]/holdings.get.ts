@@ -40,7 +40,14 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
-      data: holdings
+      data: {
+        portfolio: {
+          id: portfolio.id,
+          name: portfolio.name,
+          cashBalance: portfolio.cashBalance || 0
+        },
+        holdings: holdings
+      }
     }
   } catch {
     throw createError({

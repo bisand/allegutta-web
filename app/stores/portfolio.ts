@@ -5,6 +5,7 @@ export interface Portfolio {
   name: string
   description?: string
   currency?: string
+  cashBalance?: number
   isDefault: boolean
   userId: string
   createdAt: string
@@ -389,12 +390,18 @@ export const usePortfolioStore = defineStore('portfolio', {
           const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
           response = await $fetch(`/api/portfolios/${portfolioId}/holdings`, {
             headers: headers as HeadersInit
-          }) as { data: Holding[] }
+          }) as { data: { portfolio: { id: string, name: string, cashBalance: number }, holdings: Holding[] } }
+          
+          // Update holdings and cash balance if we have portfolio data
+          this.holdings = response.data.holdings || []
+          if (this.currentPortfolio && response.data.portfolio) {
+            this.currentPortfolio.cashBalance = response.data.portfolio.cashBalance
+          }
         } catch {
-          // If authenticated endpoint fails, try public endpoint
-          response = await $fetch(`/api/public/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
+          // If authenticated endpoint fails, try public endpoint (legacy structure)
+          const publicResponse = await $fetch(`/api/public/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
+          this.holdings = publicResponse.data || []
         }
-        this.holdings = response.data || []
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch holdings'
         throw error
