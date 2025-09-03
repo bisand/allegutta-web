@@ -1,11 +1,11 @@
-import { MarketDataWorker } from './marketDataWorker'
+import { MarketDataWorkerV2 } from './marketDataWorkerV2'
 import prisma from './prisma'
 
-let globalMarketDataWorker: MarketDataWorker | null = null
+let globalMarketDataWorker: MarketDataWorkerV2 | null = null
 
-export function getMarketDataWorker(): MarketDataWorker {
+export function getMarketDataWorker(): MarketDataWorkerV2 {
   if (!globalMarketDataWorker) {
-    globalMarketDataWorker = new MarketDataWorker(prisma)
+    globalMarketDataWorker = new MarketDataWorkerV2(prisma)
   }
   
   return globalMarketDataWorker

@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
         symbol: h.symbol,
         quantity: h.quantity,
         avgPrice: h.avgPrice,
-        lastUpdated: h.lastUpdated
+        updatedAt: h.updatedAt
       }))
     }
 
@@ -157,13 +157,14 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         update: {
           quantity: totalCash,
           avgPrice: 1.0,
-          lastUpdated: new Date()
+          currency: 'NOK'
         },
         create: {
           portfolioId: portfolioId,
           symbol: symbol,
           quantity: totalCash,
-          avgPrice: 1.0
+          avgPrice: 1.0,
+          currency: 'NOK'
         }
       })
       console.log(`✅ Updated CASH_NOK holding to: ${totalCash.toFixed(2)} NOK`)
@@ -247,6 +248,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
     if (totalQuantity > 0) {
       const avgPrice = totalCost / totalQuantity
       const isin = transactions[0]?.isin || null
+      const currency = transactions[0]?.currency || 'NOK'
 
       await prisma.holding.upsert({
         where: {
@@ -259,14 +261,15 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
           quantity: totalQuantity,
           avgPrice: avgPrice,
           isin: isin,
-          lastUpdated: new Date()
+          currency: currency
         },
         create: {
           portfolioId: portfolioId,
           symbol: symbol,
           isin: isin,
           quantity: totalQuantity,
-          avgPrice: avgPrice
+          avgPrice: avgPrice,
+          currency: currency
         }
       })
       console.log(`✅ Updated ${symbol} holding: ${totalQuantity} shares @ ${avgPrice.toFixed(2)}`)

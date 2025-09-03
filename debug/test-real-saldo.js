@@ -130,8 +130,7 @@ async function testWithRealData() {
         update: {
           quantity: totalCash,
           avgPrice: 1.0,
-          currency: currency,
-          lastUpdated: new Date()
+          currency: currency
         },
         create: {
           portfolioId: portfolio.id,

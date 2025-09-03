@@ -178,8 +178,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
         update: {
           quantity: totalCash,
           avgPrice: 1.0,
-          currency: currency,
-          lastUpdated: new Date()
+          currency: currency
         },
         create: {
           portfolioId: portfolioId,
@@ -263,8 +262,7 @@ async function updateHoldings(portfolioId: string, symbol: string): Promise<void
       update: {
         quantity: totalQuantity,
         avgPrice: avgPrice,
-        currency: currency,
-        lastUpdated: new Date()
+        currency: currency
       },
       create: {
         portfolioId: portfolioId,
@@ -446,8 +444,7 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
       update: {
         quantity: runningCashBalance,
         avgPrice: 1.0,
-        currency: portfolioCurrency,
-        lastUpdated: new Date()
+        currency: portfolioCurrency
       },
       create: {
         portfolioId,

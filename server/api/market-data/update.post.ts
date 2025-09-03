@@ -13,23 +13,23 @@ export default defineEventHandler(async (event) => {
     console.log('Worker obtained successfully')
 
     if (portfolioId) {
-      // Update specific portfolio
-      console.log(`Starting update for portfolio ${portfolioId}`)
-      await worker.updateSpecificHoldings(portfolioId)
-      console.log(`Update completed for portfolio ${portfolioId}`)
+      // V2 worker only supports updating all market data, not portfolio-specific
+      console.log(`Updating all market data (portfolio-specific updates not supported in V2)`)
+      await worker.updateAllMarketData()
+      console.log(`Market data update completed`)
       return {
         success: true,
-        message: `Market data updated for portfolio ${portfolioId}`,
+        message: `Market data updated for all records (requested for portfolio ${portfolioId})`,
         portfolioId
       }
     } else {
-      // Update all holdings
-      console.log('Starting update for all holdings')
-      await worker.updateAllHoldings()
-      console.log('Update completed for all holdings')
+      // Update all market data
+      console.log('Starting update for all market data')
+      await worker.updateAllMarketData()
+      console.log('Update completed for all market data')
       return {
         success: true,
-        message: 'Market data updated for all holdings'
+        message: 'Market data updated for all records'
       }
     }
   } catch (error) {

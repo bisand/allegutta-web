@@ -66,8 +66,7 @@ export default defineEventHandler(async (event) => {
       data: {
         name: body.name,
         description: body.description || null,
-        isDefault: body.isDefault || false,
-        updatedAt: new Date()
+        isDefault: body.isDefault || false
       }
     })
 

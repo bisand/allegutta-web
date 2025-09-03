@@ -135,8 +135,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
         update: {
           quantity: totalCash,
           avgPrice: 1.0,
-          currency: currency,
-          lastUpdated: new Date()
+          currency: currency
         },
         create: {
           portfolioId: portfolioId,
@@ -223,16 +222,14 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
       update: {
         quantity: totalQuantity,
         avgPrice,
-        currency: currency,
-        lastUpdated: new Date()
+        currency: currency
       },
       create: {
         portfolioId,
         symbol,
         quantity: totalQuantity,
         avgPrice,
-        currency: currency,
-        lastUpdated: new Date()
+        currency: currency
       }
     })
   } else {
@@ -398,8 +395,7 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
       update: {
         quantity: runningCashBalance,
         avgPrice: 1.0,
-        currency: portfolioCurrency,
-        lastUpdated: new Date()
+        currency: portfolioCurrency
       },
       create: {
         portfolioId,

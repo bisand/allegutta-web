@@ -5,8 +5,8 @@ const prisma = new PrismaClient()
 async function testSaldoValidation() {
   console.log('🧪 Testing saldo-based validation system...')
 
-  try {
-    // Get the test portfolio
+  try {            currency: 'USD'
+          },  // Get the test portfolio
     const portfolio = await prisma.portfolio.findFirst({
       where: {
         user: {
@@ -188,8 +188,7 @@ async function testSaldoValidation() {
           update: {
             quantity: brokerSaldoValue,
             avgPrice: 1.0,
-            currency: 'NOK',
-            lastUpdated: new Date()
+            currency: 'NOK'
           },
           create: {
             portfolioId: portfolio.id,
