@@ -1,15 +1,192 @@
 import type { PrismaClient } from '@prisma/client'
-import { YahooMarketDataService } from './yahooMarketData'
+import { fetchWithRetry } from '~~/server/utils/fetchWithRetry'
+
+interface CacheData {
+  cookie: string
+  crumb: string
+  ts: number
+}
+
+interface QuoteResult {
+  symbol: string
+  longName?: string
+  shortName?: string
+  regularMarketPrice?: number
+  regularMarketChange?: number
+  regularMarketChangePercent?: number
+  regularMarketPreviousClose?: number
+  regularMarketDayHigh?: number
+  regularMarketDayLow?: number
+  regularMarketDayRange?: string
+  regularMarketVolume?: number
+  regularMarketTime?: number
+  
+  // 52-week data
+  fiftyTwoWeekLow?: number
+  fiftyTwoWeekHigh?: number
+  fiftyTwoWeekLowChange?: number
+  fiftyTwoWeekHighChange?: number
+  fiftyTwoWeekLowChangePercent?: number
+  fiftyTwoWeekHighChangePercent?: number
+  fiftyTwoWeekRange?: string
+  
+  // Market/Exchange info
+  exchange?: string
+  exchangeTimezoneName?: string
+  exchangeTimezoneShortName?: string
+  fullExchangeName?: string
+  marketState?: string
+  currency?: string
+  
+  // Company info
+  quoteType?: string
+  typeDisp?: string
+  firstTradeDateMilliseconds?: number
+  
+  // Additional fields
+  language?: string
+  region?: string
+  priceHint?: number
+  exchangeDataDelayedBy?: number
+  sourceInterval?: number
+}
+
+interface YahooQuoteResponse {
+  quoteResponse: {
+    result: QuoteResult[]
+    error: unknown
+  }
+}
 
 export class MarketDataWorker {
   private prisma: PrismaClient
-  private marketDataService: YahooMarketDataService
   private isRunning = false
   private intervalId?: NodeJS.Timeout
+  private cached: CacheData = { cookie: '', crumb: '', ts: 0 }
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma
-    this.marketDataService = new YahooMarketDataService()
+  }
+
+  private async getCookieAndCrumb(): Promise<CacheData> {
+    // Cache for 10 minutes
+    if (Date.now() - this.cached.ts < 600_000 && this.cached.cookie && this.cached.crumb) {
+      return this.cached
+    }
+
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Connection': 'keep-alive',
+    }
+
+    try {
+      // Step 1: Get cookie
+      const r1 = await fetchWithRetry('https://fc.yahoo.com/', {
+        redirect: 'manual',
+        headers
+      })
+      const setCookie = r1.headers.get('set-cookie')
+      const cookie = setCookie ? setCookie.split(',')[0] : ''
+
+      // Step 2: Get crumb
+      const r2 = await fetchWithRetry('https://query2.finance.yahoo.com/v1/test/getcrumb', {
+        headers: { ...headers, Cookie: cookie }
+      })
+      const crumb = (await r2.text()).trim()
+
+      this.cached = { cookie, crumb, ts: Date.now() }
+      console.log('Successfully refreshed Yahoo Finance cookie and crumb')
+      
+      return this.cached
+    } catch (error) {
+      console.error('Failed to get cookie and crumb:', error)
+      throw error
+    }
+  }
+
+  private async getBatchQuotes(symbols: string[]): Promise<QuoteResult[]> {
+    if (!symbols.length) {
+      return []
+    }
+
+    try {
+      const { cookie, crumb } = await this.getCookieAndCrumb()
+
+      const fields = [
+        'longName',
+        'shortName',
+        'regularMarketChange',
+        'regularMarketChangePercent',
+        'regularMarketDayHigh',
+        'regularMarketDayLow',
+        'regularMarketDayRange',
+        'regularMarketPreviousClose',
+        'regularMarketPrice',
+        'regularMarketTime',
+        'regularMarketVolume',
+        'fiftyTwoWeekLow',
+        'fiftyTwoWeekHigh',
+        'fiftyTwoWeekLowChange',
+        'fiftyTwoWeekHighChange',
+        'fiftyTwoWeekLowChangePercent',
+        'fiftyTwoWeekHighChangePercent',
+        'fiftyTwoWeekRange',
+        'exchange',
+        'exchangeTimezoneName',
+        'exchangeTimezoneShortName',
+        'fullExchangeName',
+        'marketState',
+        'currency',
+        'quoteType',
+        'typeDisp',
+        'firstTradeDateMilliseconds',
+        'language',
+        'region',
+        'priceHint',
+        'exchangeDataDelayedBy',
+        'sourceInterval'
+      ]
+
+      const params = new URLSearchParams({
+        fields: fields.join(','),
+        formatted: 'false',
+        symbols: symbols.join(','),
+        enablePrivateCompany: 'true',
+        overnightPrice: 'true',
+        lang: 'en-US',
+        region: 'US',
+        crumb
+      })
+
+      const response = await fetchWithRetry(
+        `https://query1.finance.yahoo.com/v7/finance/quote?${params}`,
+        { 
+          headers: { 
+            Cookie: cookie,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+          } 
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`Yahoo Finance API returned ${response.status}: ${response.statusText}`)
+      }
+
+      const data: YahooQuoteResponse = await response.json()
+      
+      if (data.quoteResponse.error) {
+        throw new Error(`Yahoo Finance API error: ${JSON.stringify(data.quoteResponse.error)}`)
+      }
+
+      console.log(`Successfully fetched quotes for ${symbols.length} symbols`)
+      return data.quoteResponse.result || []
+
+    } catch (error) {
+      console.error(`Error fetching batch quotes for symbols ${symbols.join(',')}:`, error)
+      throw error
+    }
   }
 
   async updateAllHoldings(): Promise<void> {
@@ -38,8 +215,8 @@ export class MarketDataWorker {
       console.log(`Found ${symbols.length} unique symbols to update: ${symbols.join(', ')}`)
 
       console.log('Starting market data fetch...')
-      // Fetch market data for all symbols (using individual requests for reliability)
-      const marketData = await this.marketDataService.getMultipleQuotes(symbols)
+      // Fetch market data for all symbols using the working batch method
+      const marketData = await this.getBatchQuotes(symbols)
       console.log(`Market data fetch completed. Received ${marketData.length} quotes`)
       
       if (marketData.length === 0) {
@@ -52,19 +229,26 @@ export class MarketDataWorker {
       let updatedCount = 0
       for (const quote of marketData) {
         try {
-          console.log(`Updating holdings for ${quote.symbol} with price $${quote.price}`)
-          const result = await this.prisma.holding.updateMany({
-            where: {
-              symbol: quote.symbol
-            },
-            data: {
-              currentPrice: quote.price,
-              lastUpdated: quote.lastUpdated
-            }
-          })
-          
-          updatedCount += result.count
-          console.log(`Updated ${result.count} holdings for ${quote.symbol} with price $${quote.price}`)
+          if (quote.regularMarketPrice) {
+            console.log(`Updating holdings for ${quote.symbol} (${quote.shortName || quote.longName}):`)
+            console.log(`  Price: $${quote.regularMarketPrice} (${quote.regularMarketChangePercent?.toFixed(2)}%)`)
+            console.log(`  Exchange: ${quote.fullExchangeName || quote.exchange} (${quote.currency || 'N/A'})`)
+            console.log(`  52W Range: ${quote.fiftyTwoWeekRange || 'N/A'}`)
+            console.log(`  Volume: ${quote.regularMarketVolume?.toLocaleString() || 'N/A'}`)
+            
+            const result = await this.prisma.holding.updateMany({
+              where: {
+                symbol: quote.symbol
+              },
+              data: {
+                currentPrice: quote.regularMarketPrice,
+                lastUpdated: new Date(quote.regularMarketTime ? quote.regularMarketTime * 1000 : Date.now())
+              }
+            })
+            
+            updatedCount += result.count
+            console.log(`  → Updated ${result.count} holdings\n`)
+          }
         } catch (error) {
           console.error(`Error updating holdings for ${quote.symbol}:`, error)
         }
@@ -100,26 +284,31 @@ export class MarketDataWorker {
       const symbols = [...new Set(holdings.map(h => h.symbol))] // Remove duplicates
       console.log(`Found ${symbols.length} unique symbols for portfolio ${portfolioId}: ${symbols.join(', ')}`)
 
-      // Fetch market data (using individual requests for reliability)
-      const marketData = await this.marketDataService.getMultipleQuotes(symbols)
+      // Fetch market data using the working batch method
+      const marketData = await this.getBatchQuotes(symbols)
       
       // Update holdings with new prices
       let updatedCount = 0
       for (const quote of marketData) {
         try {
-          const result = await this.prisma.holding.updateMany({
-            where: {
-              portfolioId: portfolioId,
-              symbol: quote.symbol
-            },
-            data: {
-              currentPrice: quote.price,
-              lastUpdated: quote.lastUpdated
-            }
-          })
-          
-          updatedCount += result.count
-          console.log(`Updated ${result.count} holdings for ${quote.symbol} in portfolio ${portfolioId} with price $${quote.price}`)
+          if (quote.regularMarketPrice) {
+            console.log(`Updating ${quote.symbol} (${quote.shortName || quote.longName}) in portfolio ${portfolioId}:`)
+            console.log(`  Price: $${quote.regularMarketPrice} (${quote.regularMarketChangePercent?.toFixed(2)}%)`)
+            
+            const result = await this.prisma.holding.updateMany({
+              where: {
+                portfolioId: portfolioId,
+                symbol: quote.symbol
+              },
+              data: {
+                currentPrice: quote.regularMarketPrice,
+                lastUpdated: new Date(quote.regularMarketTime ? quote.regularMarketTime * 1000 : Date.now())
+              }
+            })
+            
+            updatedCount += result.count
+            console.log(`  → Updated ${result.count} holdings`)
+          }
         } catch (error) {
           console.error(`Error updating holding for ${quote.symbol}:`, error)
         }
@@ -138,7 +327,7 @@ export class MarketDataWorker {
     }
 
     this.isRunning = true
-    console.log(`Starting periodic market data updates every ${intervalMinutes} minutes (15s delay between Yahoo Finance requests)`)
+    console.log(`Starting periodic market data updates every ${intervalMinutes} minutes`)
 
     // Run immediately
     this.updateAllHoldings()
@@ -160,5 +349,11 @@ export class MarketDataWorker {
 
   isWorkerRunning(): boolean {
     return this.isRunning
+  }
+
+  // Force refresh of cached credentials
+  invalidateCache(): void {
+    this.cached = { cookie: '', crumb: '', ts: 0 }
+    console.log('Market data cache invalidated')
   }
 }
