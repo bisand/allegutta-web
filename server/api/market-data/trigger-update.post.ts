@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody } from 'h3'
-import { MarketDataWorker } from '~~/server/lib/marketDataWorkerSimplified'
+import { MarketDataWorkerV2 } from '~~/server/lib/marketDataWorkerV2'
 import { PrismaClient } from '@prisma/client'
 
 export default defineEventHandler(async (event) => {
@@ -8,11 +8,11 @@ export default defineEventHandler(async (event) => {
     const portfolioId = body?.portfolioId
 
     const prisma = new PrismaClient()
-    const worker = new MarketDataWorker(prisma)
+    const worker = new MarketDataWorkerV2(prisma)
 
     if (portfolioId) {
       console.log(`Manually triggering market data update for portfolio: ${portfolioId}`)
-      await worker.updateSpecificHoldings(portfolioId)
+      await worker.updateAllMarketData()
       await prisma.$disconnect()
       
       return {
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
       }
     } else {
       console.log('Manually triggering market data update for all holdings')
-      await worker.updateAllHoldings()
+      await worker.updateAllMarketData()
       await prisma.$disconnect()
       
       return {

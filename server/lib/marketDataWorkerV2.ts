@@ -144,7 +144,6 @@ export class MarketDataWorkerV2 {
         await this.prisma.marketData.create({
           data: {
             isin: item.isin,
-            symbol: item.symbol,
             symbolYahoo: symbolYahoo,
           }
         })
@@ -238,7 +237,6 @@ export class MarketDataWorkerV2 {
         select: {
           isin: true,
           symbolYahoo: true,
-          symbol: true
         }
       })
 
