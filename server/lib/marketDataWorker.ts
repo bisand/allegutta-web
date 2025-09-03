@@ -9,6 +9,8 @@ interface CacheData {
 
 interface QuoteResult {
   symbol: string
+  holdingId?: string       // For direct database updates
+  originalSymbol?: string  // For mapping back to database symbols
   longName?: string
   shortName?: string
   regularMarketPrice?: number
@@ -68,6 +70,69 @@ export class MarketDataWorker {
     this.prisma = prisma
   }
 
+  private async resolveYahooSymbol(isin: string): Promise<string | null> {
+    try {
+      console.log(`Resolving Yahoo symbol for ISIN: ${isin}`)
+      const response = await fetch(`http://localhost:3000/api/finance/instruments/search/${isin}`)
+      
+      if (!response.ok) {
+        console.warn(`Failed to resolve ISIN ${isin}: ${response.status}`)
+        return null
+      }
+      
+      const symbolYahoo = await response.text()
+      
+      // Remove quotes if present and validate
+      const cleanSymbol = symbolYahoo.replace(/['"]/g, '').trim()
+      if (cleanSymbol && cleanSymbol !== 'null' && cleanSymbol !== 'undefined') {
+        console.log(`Resolved ISIN ${isin} → ${cleanSymbol}`)
+        return cleanSymbol
+      }
+      
+      console.warn(`No valid symbol found for ISIN: ${isin}`)
+      return null
+    } catch (error) {
+      console.error(`Error resolving ISIN ${isin}:`, error)
+      return null
+    }
+  }
+
+  private async updateYahooSymbols(): Promise<void> {
+    console.log('Updating missing Yahoo symbols...')
+    
+    // Find holdings with ISIN but no symbolYahoo
+    const holdingsNeedingSymbols = await this.prisma.holding.findMany({
+      where: {
+        isin: { not: null },
+        symbolYahoo: null
+      },
+      select: {
+        id: true,
+        symbol: true,
+        isin: true
+      }
+    })
+
+    console.log(`Found ${holdingsNeedingSymbols.length} holdings needing Yahoo symbol resolution`)
+
+    for (const holding of holdingsNeedingSymbols) {
+      if (holding.isin) {
+        const symbolYahoo = await this.resolveYahooSymbol(holding.isin)
+        
+        if (symbolYahoo) {
+          await this.prisma.holding.update({
+            where: { id: holding.id },
+            data: { symbolYahoo }
+          })
+          console.log(`Updated ${holding.symbol} with Yahoo symbol: ${symbolYahoo}`)
+        }
+        
+        // Rate limit to be respectful to the API
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+  }
+
   private async getCookieAndCrumb(): Promise<CacheData> {
     // Cache for 10 minutes
     if (Date.now() - this.cached.ts < 600_000 && this.cached.cookie && this.cached.crumb) {
@@ -106,13 +171,16 @@ export class MarketDataWorker {
     }
   }
 
-  private async getBatchQuotes(symbols: string[]): Promise<QuoteResult[]> {
-    if (!symbols.length) {
+  private async getBatchQuotes(holdings: Array<{id: string, symbol: string, symbolYahoo: string}>): Promise<QuoteResult[]> {
+    if (!holdings.length) {
       return []
     }
 
     try {
       const { cookie, crumb } = await this.getCookieAndCrumb()
+
+      const yahooSymbols = holdings.map(h => h.symbolYahoo)
+      console.log(`Fetching quotes for Yahoo symbols: ${yahooSymbols.join(', ')}`)
 
       const fields = [
         'longName',
@@ -152,11 +220,11 @@ export class MarketDataWorker {
       const params = new URLSearchParams({
         fields: fields.join(','),
         formatted: 'false',
-        symbols: symbols.join(','),
+        symbols: yahooSymbols.join(','),
         enablePrivateCompany: 'true',
         overnightPrice: 'true',
         lang: 'en-US',
-        region: 'US',
+        region: 'NO',
         crumb
       })
 
@@ -180,11 +248,25 @@ export class MarketDataWorker {
         throw new Error(`Yahoo Finance API error: ${JSON.stringify(data.quoteResponse.error)}`)
       }
 
-      console.log(`Successfully fetched quotes for ${symbols.length} symbols`)
-      return data.quoteResponse.result || []
+      console.log(`Successfully fetched quotes for ${holdings.length} symbols`)
+      
+      // Map Yahoo symbols back to holding info for database updates
+      const holdingMap = new Map<string, {id: string, symbol: string}>()
+      holdings.forEach(holding => {
+        holdingMap.set(holding.symbolYahoo, {id: holding.id, symbol: holding.symbol})
+      })
+
+      // Update the returned results to include holding reference for database matching
+      const results = (data.quoteResponse.result || []).map(quote => ({
+        ...quote,
+        holdingId: holdingMap.get(quote.symbol)?.id,
+        originalSymbol: holdingMap.get(quote.symbol)?.symbol || quote.symbol
+      }))
+
+      return results
 
     } catch (error) {
-      console.error(`Error fetching batch quotes for symbols ${symbols.join(',')}:`, error)
+      console.error(`Error fetching batch quotes for holdings:`, error)
       throw error
     }
   }
@@ -193,30 +275,37 @@ export class MarketDataWorker {
     console.log('Starting market data update for all holdings...')
     
     try {
+      // First, update any missing Yahoo symbols
+      await this.updateYahooSymbols()
+      
       console.log('Fetching holdings from database...')
-      // Get all unique symbols from holdings
+      // Get all holdings with valid Yahoo symbols
       const holdings = await this.prisma.holding.findMany({
-        select: {
-          symbol: true,
-          portfolioId: true,
-          id: true
+        where: {
+          symbolYahoo: { not: null }
         },
-        distinct: ['symbol']
+        select: {
+          id: true,
+          symbol: true,
+          symbolYahoo: true,
+          portfolioId: true
+        },
+        distinct: ['symbolYahoo']
       })
 
-      console.log(`Database query completed. Found ${holdings.length} holdings`)
+      console.log(`Database query completed. Found ${holdings.length} holdings with Yahoo symbols`)
 
       if (holdings.length === 0) {
-        console.log('No holdings found to update')
+        console.log('No holdings with Yahoo symbols found to update')
         return
       }
 
-      const symbols = holdings.map(h => h.symbol)
-      console.log(`Found ${symbols.length} unique symbols to update: ${symbols.join(', ')}`)
+      const validHoldings = holdings.filter(h => h.symbolYahoo) as Array<{id: string, symbol: string, symbolYahoo: string, portfolioId: string}>
+      console.log(`Found ${validHoldings.length} valid holdings to update`)
 
       console.log('Starting market data fetch...')
-      // Fetch market data for all symbols using the working batch method
-      const marketData = await this.getBatchQuotes(symbols)
+      // Fetch market data for all holdings using the working batch method
+      const marketData = await this.getBatchQuotes(validHoldings)
       console.log(`Market data fetch completed. Received ${marketData.length} quotes`)
       
       if (marketData.length === 0) {
@@ -224,30 +313,56 @@ export class MarketDataWorker {
         return
       }
 
-      // Update holdings with new prices
+      // Update holdings with new prices and market data
       console.log('Starting database updates...')
       let updatedCount = 0
       for (const quote of marketData) {
         try {
-          if (quote.regularMarketPrice) {
-            console.log(`Updating holdings for ${quote.symbol} (${quote.shortName || quote.longName}):`)
+          if (quote.regularMarketPrice && quote.holdingId) {
+            console.log(`Updating holdings for ${quote.symbol} → ${quote.originalSymbol} (${quote.shortName || quote.longName}):`)
             console.log(`  Price: $${quote.regularMarketPrice} (${quote.regularMarketChangePercent?.toFixed(2)}%)`)
             console.log(`  Exchange: ${quote.fullExchangeName || quote.exchange} (${quote.currency || 'N/A'})`)
             console.log(`  52W Range: ${quote.fiftyTwoWeekRange || 'N/A'}`)
             console.log(`  Volume: ${quote.regularMarketVolume?.toLocaleString() || 'N/A'}`)
             
-            const result = await this.prisma.holding.updateMany({
+            const result = await this.prisma.holding.update({
               where: {
-                symbol: quote.symbol
+                id: quote.holdingId
               },
               data: {
                 currentPrice: quote.regularMarketPrice,
-                lastUpdated: new Date(quote.regularMarketTime ? quote.regularMarketTime * 1000 : Date.now())
+                lastUpdated: new Date(quote.regularMarketTime ? quote.regularMarketTime * 1000 : Date.now()),
+                // Store all the market data
+                longName: quote.longName,
+                shortName: quote.shortName,
+                regularMarketChange: quote.regularMarketChange,
+                regularMarketChangePercent: quote.regularMarketChangePercent,
+                regularMarketPreviousClose: quote.regularMarketPreviousClose,
+                regularMarketDayHigh: quote.regularMarketDayHigh,
+                regularMarketDayLow: quote.regularMarketDayLow,
+                regularMarketDayRange: quote.regularMarketDayRange,
+                regularMarketVolume: quote.regularMarketVolume,
+                regularMarketTime: quote.regularMarketTime ? new Date(quote.regularMarketTime * 1000) : null,
+                fiftyTwoWeekLow: quote.fiftyTwoWeekLow,
+                fiftyTwoWeekHigh: quote.fiftyTwoWeekHigh,
+                fiftyTwoWeekLowChange: quote.fiftyTwoWeekLowChange,
+                fiftyTwoWeekHighChange: quote.fiftyTwoWeekHighChange,
+                fiftyTwoWeekLowChangePercent: quote.fiftyTwoWeekLowChangePercent,
+                fiftyTwoWeekHighChangePercent: quote.fiftyTwoWeekHighChangePercent,
+                fiftyTwoWeekRange: quote.fiftyTwoWeekRange,
+                exchange: quote.exchange,
+                exchangeTimezoneName: quote.exchangeTimezoneName,
+                exchangeTimezoneShortName: quote.exchangeTimezoneShortName,
+                fullExchangeName: quote.fullExchangeName,
+                marketState: quote.marketState,
+                quoteType: quote.quoteType,
+                typeDisp: quote.typeDisp,
+                firstTradeDateMilliseconds: quote.firstTradeDateMilliseconds
               }
             })
             
-            updatedCount += result.count
-            console.log(`  → Updated ${result.count} holdings\n`)
+            updatedCount += 1
+            console.log(`  → Updated holding with full market data\n`)
           }
         } catch (error) {
           console.error(`Error updating holdings for ${quote.symbol}:`, error)
@@ -292,13 +407,14 @@ export class MarketDataWorker {
       for (const quote of marketData) {
         try {
           if (quote.regularMarketPrice) {
-            console.log(`Updating ${quote.symbol} (${quote.shortName || quote.longName}) in portfolio ${portfolioId}:`)
+            const dbSymbol = quote.originalSymbol || quote.symbol
+            console.log(`Updating ${quote.symbol} → ${dbSymbol} (${quote.shortName || quote.longName}) in portfolio ${portfolioId}:`)
             console.log(`  Price: $${quote.regularMarketPrice} (${quote.regularMarketChangePercent?.toFixed(2)}%)`)
             
             const result = await this.prisma.holding.updateMany({
               where: {
                 portfolioId: portfolioId,
-                symbol: quote.symbol
+                symbol: dbSymbol
               },
               data: {
                 currentPrice: quote.regularMarketPrice,
