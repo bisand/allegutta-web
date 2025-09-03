@@ -1,7 +1,7 @@
-import { MarketDataWorker } from '../lib/marketDataWorkerSimplified'
+import { MarketDataWorkerV2 } from '../lib/marketDataWorkerV2'
 import { PrismaClient } from '@prisma/client'
 
-let globalWorker: MarketDataWorker | null = null
+let globalWorker: MarketDataWorkerV2 | null = null
 
 export default defineNitroPlugin(async (nitroApp) => {
   // Only start the worker in production or when explicitly enabled
@@ -13,12 +13,12 @@ export default defineNitroPlugin(async (nitroApp) => {
     
     try {
       const prisma = new PrismaClient()
-      globalWorker = new MarketDataWorker(prisma)
+      globalWorker = new MarketDataWorkerV2(prisma)
       
       // Start the worker with updates every 2 hours
       globalWorker.startPeriodicUpdates(120) // 120 minutes = 2 hours
       
-      console.log('Market data worker started - will update holdings every 2 hours using Yahoo Finance')
+      console.log('Market data worker started - will update market data every 2 hours using Yahoo Finance')
     } catch (error) {
       console.error('Failed to start market data worker:', error)
     }
