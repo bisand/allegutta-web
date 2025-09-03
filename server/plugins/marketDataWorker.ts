@@ -1,4 +1,4 @@
-import { MarketDataWorker } from '../lib/marketDataWorker'
+import { MarketDataWorker } from '../lib/marketDataWorkerSimplified'
 import { PrismaClient } from '@prisma/client'
 
 let globalWorker: MarketDataWorker | null = null

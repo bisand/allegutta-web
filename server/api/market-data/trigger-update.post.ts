@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody } from 'h3'
-import { MarketDataWorker } from '~~/server/lib/marketDataWorker'
+import { MarketDataWorker } from '~~/server/lib/marketDataWorkerSimplified'
 import { PrismaClient } from '@prisma/client'
 
 export default defineEventHandler(async (event) => {

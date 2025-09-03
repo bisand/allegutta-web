@@ -62,27 +62,23 @@ model Transaction {
   updatedAt   DateTime    @updatedAt
   
   portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  marketData  MarketData? @relation(fields: [isin], references: [isin])
   
   @@map("transactions")
 }
 
-model Holding {
-  id          String   @id @default(cuid())
-  portfolioId String
-  symbol      String
-  isin        String?  // International Securities Identification Number
+model MarketData {
+  isin        String   @id // ISIN as primary key
+  symbol      String   // Original symbol (e.g., NHY)
   symbolYahoo String?  // Yahoo Finance symbol (e.g., NHY.OL)
-  quantity    Float
-  avgPrice    Float
-  currentPrice Float?
-  currency    String   @default("NOK") // Currency for this holding
-  lastUpdated DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
   
-  // Market data fields
+  // Basic info
   longName    String?
   shortName   String?
+  currency    String?
+  
+  // Current market data
+  currentPrice Float?
   regularMarketChange Float?
   regularMarketChangePercent Float?
   regularMarketPreviousClose Float?
@@ -113,7 +109,31 @@ model Holding {
   typeDisp String?
   firstTradeDateMilliseconds Float?
   
+  // Metadata
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  holdings    Holding[]
+  transactions Transaction[]
+  
+  @@map("market_data")
+}
+
+model Holding {
+  id          String   @id @default(cuid())
+  portfolioId String
+  symbol      String
+  isin        String?  // International Securities Identification Number
+  quantity    Float
+  avgPrice    Float
+  currency    String   @default("NOK") // Currency for this holding
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
   portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  marketData  MarketData? @relation(fields: [isin], references: [isin])
   
   @@unique([portfolioId, symbol])
   @@map("holdings")
