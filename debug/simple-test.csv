@@ -1,2 +1,0 @@
-Id,Bokføringsdag,Handelsdag,Oppgjørsdag,Portefølje,Transaksjonstype,Verdipapir,ISIN,Antall,Kurs,Beløp,Gebyr,Netto beløp,Saldo,Transaksjonsid,Valutakurs,Opprinnelig kurs,Opprinnelig valuta
-1000000001,2025-09-02,2025-09-02,2025-09-02,Portefølje 1,INNSKUDD,,,,,,,-10000,-10000,transaction-1,,,NOK
