@@ -440,16 +440,19 @@ async function updateCashBalance(portfolioId: string): Promise<void> {
     where: {
       portfolioId: portfolioId,
       OR: [
-        // Direct cash transactions
+        // Direct cash transactions (excluding dividend reinvestments)
         {
           symbol: {
             startsWith: 'CASH_'
+          },
+          type: {
+            not: 'DIVIDEND_REINVEST'  // Exclude dividend reinvestments as they don't affect cash
           }
         },
         // Stock transactions that affect cash
         {
           type: {
-            in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'DIVIDEND']
+            in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'DIVIDEND', 'RIGHTS_ISSUE']
           }
         }
       ]
@@ -469,20 +472,23 @@ async function updateCashBalance(portfolioId: string): Promise<void> {
     
     if (transaction.symbol.startsWith('CASH_')) {
       // Direct cash transactions
-      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN'].includes(transaction.type)) {
+      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN', 'TRANSFER_IN', 'SALDO_ADJUSTMENT'].includes(transaction.type)) {
         cashBalance += amount  // These increase cash
-      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
+      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL', 'INTEREST_CHARGE'].includes(transaction.type)) {
         cashBalance -= amount  // These decrease cash
       }
+      // Note: DIVIDEND_REINVEST is excluded - it doesn't affect cash as dividends go directly to shares
     } else {
       // Stock transactions that affect cash
-      if (['BUY', 'EXCHANGE_IN'].includes(transaction.type)) {
-        cashBalance -= (amount + fees)  // Buying stocks decreases cash (including fees)
+      if (['BUY', 'EXCHANGE_IN', 'RIGHTS_ISSUE'].includes(transaction.type)) {
+        cashBalance -= (amount + fees)  // Buying stocks/rights decreases cash (including fees)
       } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
         cashBalance += (amount - fees)  // Selling stocks increases cash (minus fees)
       } else if (transaction.type === 'DIVIDEND') {
         cashBalance += amount  // Dividends increase cash
       }
+      // Note: DIVIDEND_REINVEST and RIGHTS_ALLOCATION typically don't affect cash directly
+      // as they convert cash to shares or allocate existing rights
     }
   }
   

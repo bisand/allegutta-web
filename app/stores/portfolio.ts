@@ -80,11 +80,20 @@ export const usePortfolioStore = defineStore('portfolio', {
   }),
 
   getters: {
-    // Calculate total portfolio value
-    totalValue: (state): number => {
+    // Calculate market value (securities only, no cash)
+    marketValue: (state): number => {
       return state.holdings.reduce((total, holding) => {
         return total + (holding.quantity * (holding.currentPrice || holding.avgPrice))
       }, 0)
+    },
+
+    // Calculate total portfolio value including cash balance
+    totalValue: (state): number => {
+      const securitiesValue = state.holdings.reduce((total, holding) => {
+        return total + (holding.quantity * (holding.currentPrice || holding.avgPrice))
+      }, 0)
+      const cashBalance = state.currentPortfolio?.cashBalance || 0
+      return securitiesValue + cashBalance
     },
 
     // Calculate total gain/loss

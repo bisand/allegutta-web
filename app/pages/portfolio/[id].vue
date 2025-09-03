@@ -87,11 +87,47 @@
       </div>
 
       <!-- Portfolio Statistics -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <CurrencyDollarIcon class="w-8 h-8 text-green-500" />
+              <ChartBarIcon class="w-8 h-8 text-blue-500" />
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                  Market Value
+                </dt>
+                <dd class="text-lg font-semibold text-gray-900 dark:text-white">
+                  ${{ formatCurrency(portfolioStore.marketValue) }}
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <BanknotesIcon class="w-8 h-8 text-green-500" />
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                  Cash Balance
+                </dt>
+                <dd class="text-lg font-semibold text-gray-900 dark:text-white">
+                  ${{ formatCurrency(currentPortfolio?.cashBalance || 0) }}
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <CurrencyDollarIcon class="w-8 h-8 text-green-600" />
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
@@ -128,7 +164,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <ChartBarIcon class="w-8 h-8 text-blue-500" />
+              <ClockIcon class="w-8 h-8 text-purple-500" />
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
@@ -142,25 +178,10 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <BanknotesIcon class="w-8 h-8 text-green-500" />
-            </div>
-            <div class="ml-5 w-0 flex-1">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  Cash Balance
-                </dt>
-                <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                  ${{ formatCurrency(currentPortfolio?.cashBalance || 0) }}
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
+      <!-- Last Updated -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="flex items-center">
             <div class="flex-shrink-0">
@@ -398,6 +419,7 @@
 import {
   ChartBarIcon,
   CurrencyDollarIcon,
+  BanknotesIcon,
   ArrowPathIcon,
   PlusIcon,
   ClockIcon,
