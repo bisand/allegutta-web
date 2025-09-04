@@ -83,94 +83,18 @@ export default defineEventHandler(async (event) => {
 
 // Calculate and update the cash balance for a portfolio
 async function updateCashBalance(portfolioId: string): Promise<void> {
-  console.log(`� Recalculating cash balance for portfolio: ${portfolioId}`)
+  console.log(`💰 Recalculating cash balance for portfolio: ${portfolioId}`)
   
-    // Get all cash-affecting transactions
-  const transactions = await prisma.transaction.findMany({
-    where: {
-      portfolioId: portfolioId,
-      OR: [
-        // Direct cash transactions (excluding dividend reinvestments)
-        {
-          symbol: {
-            startsWith: 'CASH_'
-          },
-          type: {
-            not: 'DIVIDEND_REINVEST'  // Exclude dividend reinvestments as they don't affect cash
-          }
-        },
-        // Stock transactions that affect cash
-        {
-          type: {
-            in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'DIVIDEND', 'RIGHTS_ISSUE']
-          }
-        }
-      ]
-    },
-    orderBy: {
-      date: 'asc'
-    }
-  })
+  // Simple sum of all transaction amounts - the amount field already contains the correct cash impact
+  const result = await prisma.$queryRaw<Array<{ total: number | null }>>`
+    SELECT COALESCE(SUM(amount), 0) as total 
+    FROM transactions 
+    WHERE portfolioId = ${portfolioId}
+  `
 
-  console.log(`� Found ${transactions.length} cash-affecting transactions`)
+  const cashBalance = result[0]?.total || 0
 
-  let cashBalance = 0
-  
-  for (const transaction of transactions) {
-    // Use the more accurate 'amount' field when available, otherwise calculate
-    const amount = transaction.amount ?? (transaction.quantity * transaction.price)
-    const fees = transaction.fees || 0
-    
-    if (transaction.symbol.startsWith('CASH_')) {
-      // Direct cash transactions
-      if (['DEPOSIT', 'DIVIDEND', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'DECIMAL_LIQUIDATION', 'SPIN_OFF_IN', 'TRANSFER_IN', 'SALDO_ADJUSTMENT'].includes(transaction.type)) {
-        cashBalance += amount  // These increase cash
-      } else if (['WITHDRAWAL', 'DECIMAL_WITHDRAWAL', 'INTEREST_CHARGE'].includes(transaction.type)) {
-        cashBalance -= amount  // These decrease cash
-      }
-      // Note: DIVIDEND_REINVEST is excluded - it doesn't affect cash as dividends go directly to shares
-    } else {
-      // Stock transactions that affect cash
-      if (['BUY', 'EXCHANGE_IN', 'RIGHTS_ISSUE'].includes(transaction.type)) {
-        cashBalance -= (amount + fees)  // Buying stocks/rights decreases cash (including fees)
-      } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
-        cashBalance += (amount - fees)  // Selling stocks increases cash (minus fees)
-      } else if (transaction.type === 'DIVIDEND') {
-        cashBalance += amount  // Dividends increase cash
-      }
-      // Note: DIVIDEND_REINVEST and RIGHTS_ALLOCATION typically don't affect cash directly
-      // as they convert cash to shares or allocate existing rights
-    }
-  }
-  
   console.log(`💰 Calculated cash balance: ${cashBalance.toFixed(2)} NOK`)
-
-  // Validate against broker's saldo if available
-  const latestTransactionWithSaldo = await prisma.transaction.findFirst({
-    where: {
-      portfolioId: portfolioId,
-      saldo: {
-        not: null
-      }
-    },
-    orderBy: {
-      date: 'desc'
-    }
-  })
-  
-  if (latestTransactionWithSaldo?.saldo !== null && latestTransactionWithSaldo?.saldo !== undefined) {
-    const brokerSaldo = latestTransactionWithSaldo.saldo
-    const discrepancy = cashBalance - brokerSaldo
-    
-    console.log(`📊 Saldo validation: calculated=${cashBalance}, broker=${brokerSaldo}, discrepancy=${discrepancy}`)
-    
-    // If there's a significant discrepancy (more than 0.01 due to rounding), use broker's balance
-    if (Math.abs(discrepancy) > 0.01) {
-      console.log(`⚠️  Saldo discrepancy detected: ${discrepancy} NOK. Using broker's authoritative balance.`)
-      cashBalance = brokerSaldo
-      console.log(`✅ Corrected to broker saldo: ${cashBalance.toFixed(2)} NOK`)
-    }
-  }
 
   // Update the portfolio's cash balance
   await prisma.portfolio.update({
