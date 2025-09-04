@@ -14,11 +14,23 @@ export default defineNitroPlugin(async (nitroApp) => {
     try {
       const prisma = new PrismaClient()
       globalWorker = new MarketDataWorkerV2(prisma)
+
+      // Get configurable update interval from environment variable (default: 1 minute)
+      const configuredInterval = parseFloat(process.env.MARKET_DATA_UPDATE_INTERVAL_MINUTES || '1')
       
-      // Start the worker with updates every 2 hours
-      globalWorker.startPeriodicUpdates(120) // 120 minutes = 2 hours
+      // Enforce minimum interval of 15 seconds (0.25 minutes) to prevent API abuse
+      const MIN_INTERVAL_MINUTES = 0.25 // 15 seconds
+      const updateIntervalMinutes = Math.max(configuredInterval, MIN_INTERVAL_MINUTES)
       
-      console.log('Market data worker started - will update market data every 2 hours using Yahoo Finance')
+      // Log warning if interval was adjusted
+      if (configuredInterval < MIN_INTERVAL_MINUTES) {
+        console.warn(`Warning: Configured interval ${configuredInterval} minutes is too short. Using minimum interval of ${MIN_INTERVAL_MINUTES} minutes (15 seconds) instead.`)
+      }
+      
+      // Start the worker with validated update interval
+      globalWorker.startPeriodicUpdates(updateIntervalMinutes)
+
+      console.log(`Market data worker started - will update market data every ${updateIntervalMinutes} minute(s) using Yahoo Finance`)
     } catch (error) {
       console.error('Failed to start market data worker:', error)
     }

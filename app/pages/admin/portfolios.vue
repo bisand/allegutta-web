@@ -568,12 +568,12 @@ async function loadPortfolioData(portfolioId: string): Promise<void> {
     portfolioTransactions.value = transactionsResponse.data || []
     console.log('Portfolio transactions set to:', portfolioTransactions.value)
 
-    // Load holdings
+    // Load holdings - note the different response structure
     const holdingsResponse = await $fetch(`/api/portfolios/${portfolioId}/holdings`, {
       headers: headers as HeadersInit
-    }) as { data: HoldingData[] }
+    }) as { data: { holdings: HoldingData[] } }
     console.log('Holdings response:', holdingsResponse)
-    portfolioHoldings.value = holdingsResponse.data || []
+    portfolioHoldings.value = holdingsResponse.data?.holdings || []
     console.log('Portfolio holdings set to:', portfolioHoldings.value)
   } catch (error) {
     console.error('Failed to load portfolio data:', error)

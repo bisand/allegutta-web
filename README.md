@@ -104,6 +104,10 @@ JWT_SECRET=your-super-secret-jwt-key
 
 # App
 BASE_URL=http://localhost:3000
+
+# Market Data Worker
+ENABLE_MARKET_DATA_WORKER=true           # Enable background market data updates
+MARKET_DATA_UPDATE_INTERVAL_MINUTES=1   # Update interval in minutes (default: 1, minimum: 0.25)
 ```
 
 ### Technologies Used

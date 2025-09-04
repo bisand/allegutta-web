@@ -116,21 +116,14 @@ export class MarketDataWorkerV2 {
     }
 
     private async ensureMarketDataRecords(): Promise<void> {
-        console.log('Ensuring market data records exist...')
+        console.log('Ensuring market data records exist for current holdings...')
 
-        // Get unique ISINs from holdings and transactions that don't have market data records
+        // Get unique ISINs from holdings that don't have market data records
         const missingISINs = await this.prisma.$queryRaw`
       SELECT DISTINCT h.isin, h.symbol
       FROM holdings h
       WHERE h.isin IS NOT NULL 
       AND h.isin NOT IN (SELECT isin FROM market_data)
-      
-      UNION
-      
-      SELECT DISTINCT t.isin, t.symbol
-      FROM transactions t
-      WHERE t.isin IS NOT NULL 
-      AND t.isin NOT IN (SELECT isin FROM market_data)
     ` as Array<{ isin: string, symbol: string }>
 
         console.log(`Found ${missingISINs.length} ISINs needing market data records`)
@@ -140,16 +133,17 @@ export class MarketDataWorkerV2 {
                 // Resolve Yahoo symbol if needed
                 const symbolYahoo = await this.resolveYahooSymbol(item.isin)
 
-        // Create market data record
-        await this.prisma.$executeRaw`
-          INSERT INTO market_data (isin, symbolYahoo)
-          VALUES (${item.isin}, ${symbolYahoo})
+                // Create market data record - include the required symbol field and timestamps
+                await this.prisma.$executeRaw`
+          INSERT INTO market_data (isin, symbol, symbolYahoo, createdAt, updatedAt)
+          VALUES (${item.isin}, ${item.symbol}, ${symbolYahoo}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
           ON CONFLICT(isin) DO UPDATE SET
+            symbol = ${item.symbol},
             symbolYahoo = ${symbolYahoo},
             updatedAt = CURRENT_TIMESTAMP
         `
-        
-        console.log(`Created market data record for ${item.symbol} (${item.isin})`)
+
+                console.log(`Created market data record for ${item.symbol} (${item.isin})`)
 
                 // Rate limit to be respectful
                 await new Promise(resolve => setTimeout(resolve, 500))
@@ -169,58 +163,88 @@ export class MarketDataWorkerV2 {
             return []
         }
 
-        try {
-            const { cookie, crumb } = await this.getCookieAndCrumb()
-            const yahooSymbols = validRecords.map(r => r.symbolYahoo)
+        // Split into smaller batches to avoid overwhelming Yahoo Finance
+        const BATCH_SIZE = 20 // Reduced from 48 to 20 symbols per request
+        const batches: Array<Array<{ isin: string, symbolYahoo: string }>> = []
 
-            console.log(`Fetching quotes for Yahoo symbols: ${yahooSymbols.join(', ')}`)
-
-            const fields = [
-                'longName', 'shortName', 'regularMarketChange', 'regularMarketChangePercent',
-                'regularMarketDayHigh', 'regularMarketDayLow', 'regularMarketDayRange',
-                'regularMarketPreviousClose', 'regularMarketPrice', 'regularMarketTime',
-                'regularMarketVolume', 'fiftyTwoWeekLow', 'fiftyTwoWeekHigh', 'fiftyTwoWeekRange',
-                'exchange', 'fullExchangeName', 'marketState', 'currency'
-            ]
-
-            const params = new URLSearchParams({
-                fields: fields.join(','),
-                formatted: 'false',
-                symbols: yahooSymbols.join(','),
-                enablePrivateCompany: 'true',
-                overnightPrice: 'true',
-                lang: 'en-US',
-                region: 'NO',
-                crumb
-            })
-
-            const response = await fetchWithRetry(
-                `https://query1.finance.yahoo.com/v7/finance/quote?${params}`,
-                {
-                    headers: {
-                        Cookie: cookie,
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-                    }
-                }
-            )
-
-            if (!response.ok) {
-                throw new Error(`Yahoo Finance API returned ${response.status}: ${response.statusText}`)
-            }
-
-            const data: YahooQuoteResponse = await response.json()
-
-            if (data.quoteResponse.error) {
-                throw new Error(`Yahoo Finance API error: ${JSON.stringify(data.quoteResponse.error)}`)
-            }
-
-            console.log(`Successfully fetched quotes for ${yahooSymbols.length} symbols`)
-            return data.quoteResponse.result || []
-
-        } catch (error) {
-            console.error(`Error fetching batch quotes:`, error)
-            throw error
+        for (let i = 0; i < validRecords.length; i += BATCH_SIZE) {
+            batches.push(validRecords.slice(i, i + BATCH_SIZE))
         }
+
+        console.log(`Processing ${validRecords.length} symbols in ${batches.length} batches of ${BATCH_SIZE}`)
+
+        const allQuotes: QuoteResult[] = []
+
+        for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+            const batch = batches[batchIndex]
+
+            try {
+                const { cookie, crumb } = await this.getCookieAndCrumb()
+                const yahooSymbols = batch.map(r => r.symbolYahoo)
+
+                console.log(`[Batch ${batchIndex + 1}/${batches.length}] Fetching quotes for: ${yahooSymbols.join(', ')}`)
+
+                const fields = [
+                    'longName', 'shortName', 'regularMarketChange', 'regularMarketChangePercent',
+                    'regularMarketDayHigh', 'regularMarketDayLow', 'regularMarketDayRange',
+                    'regularMarketPreviousClose', 'regularMarketPrice', 'regularMarketTime',
+                    'regularMarketVolume', 'fiftyTwoWeekLow', 'fiftyTwoWeekHigh', 'fiftyTwoWeekRange',
+                    'exchange', 'fullExchangeName', 'marketState', 'currency'
+                ]
+
+                const params = new URLSearchParams({
+                    fields: fields.join(','),
+                    formatted: 'false',
+                    symbols: yahooSymbols.join(','),
+                    enablePrivateCompany: 'true',
+                    overnightPrice: 'true',
+                    lang: 'en-US',
+                    region: 'NO',
+                    crumb
+                })
+
+                const response = await fetchWithRetry(
+                    `https://query1.finance.yahoo.com/v7/finance/quote?${params}`,
+                    {
+                        headers: {
+                            Cookie: cookie,
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                        }
+                    }
+                )
+
+                if (!response.ok) {
+                    throw new Error(`Yahoo Finance API returned ${response.status}: ${response.statusText}`)
+                }
+
+                const data: YahooQuoteResponse = await response.json()
+
+                if (data.quoteResponse.error) {
+                    throw new Error(`Yahoo Finance API error: ${JSON.stringify(data.quoteResponse.error)}`)
+                }
+
+                console.log(`[Batch ${batchIndex + 1}/${batches.length}] Successfully fetched quotes for ${yahooSymbols.length} symbols`)
+
+                // Add this batch's results to the collection
+                if (data.quoteResponse.result) {
+                    allQuotes.push(...data.quoteResponse.result)
+                }
+
+                // Add a small delay between batches to be respectful to Yahoo Finance
+                if (batchIndex < batches.length - 1) {
+                    console.log(`Waiting 1 second before next batch...`)
+                    await new Promise(resolve => setTimeout(resolve, 1000))
+                }
+
+            } catch (error) {
+                console.error(`[Batch ${batchIndex + 1}/${batches.length}] Error fetching quotes:`, error)
+                // Continue with next batch instead of failing entirely
+                continue
+            }
+        }
+
+        console.log(`Completed all batches. Total quotes fetched: ${allQuotes.length}`)
+        return allQuotes
     }
 
     async updateAllMarketData(): Promise<void> {
