@@ -64,7 +64,8 @@ interface CreatePortfolioData {
 
 interface CreateTransactionData {
   symbol: string
-  type: 'BUY' | 'SELL'
+  isin?: string
+  type: 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'WITHDRAWAL' | 'SPLIT' | 'EXCHANGE_IN' | 'EXCHANGE_OUT'
   quantity: number
   price: number
   currency?: string

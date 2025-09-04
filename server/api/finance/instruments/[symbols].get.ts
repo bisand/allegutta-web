@@ -58,6 +58,9 @@ export default defineEventHandler(async (event) => {
       'regularMarketTime',
       'regularMarketVolume',
       'shortName',
+      'contractSymbol',
+      'currency',
+      'exchange',
     ];
 
     const params = new URLSearchParams({

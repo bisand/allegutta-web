@@ -253,6 +253,12 @@
                     placeholder="AAPL">
                 </div>
                 <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ISIN (Optional)</label>
+                  <input v-model="transactionForm.isin" type="text" maxlength="12"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="US0378331005" style="text-transform: uppercase;">
+                </div>
+                <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
                   <select v-model="transactionForm.type" required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -425,6 +431,7 @@ interface TransactionData {
   id: string
   portfolioId: string
   symbol: string
+  isin?: string
   type: 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'WITHDRAWAL' | 'REFUND' | 'LIQUIDATION' | 'REDEMPTION' | 
         'EXCHANGE_IN' | 'EXCHANGE_OUT' | 'SPIN_OFF_IN' | 'DECIMAL_LIQUIDATION' | 'DECIMAL_WITHDRAWAL' | 
         'RIGHTS_ALLOCATION' | 'TRANSFER_IN' | 'DIVIDEND_REINVEST' | 'INTEREST_CHARGE' | 'RIGHTS_ISSUE' | 
@@ -495,6 +502,7 @@ const form = reactive({
 // Transaction form data
 const transactionForm = reactive({
   symbol: '',
+  isin: '',
   type: 'BUY',
   quantity: 0,
   price: 0,
@@ -515,6 +523,7 @@ function resetForm(): void {
 // Reset transaction form
 function resetTransactionForm(): void {
   transactionForm.symbol = ''
+  transactionForm.isin = ''
   transactionForm.type = 'BUY'
   transactionForm.quantity = 0
   transactionForm.price = 0
@@ -592,6 +601,7 @@ async function submitTransaction(): Promise<void> {
 
     const transactionData = {
       symbol: transactionForm.symbol.toUpperCase(),
+      isin: transactionForm.isin || undefined,
       type: transactionForm.type,
       quantity: transactionForm.quantity,
       price: transactionForm.price,
@@ -633,6 +643,7 @@ async function submitTransaction(): Promise<void> {
 function editTransaction(transaction: TransactionData): void {
   editingTransaction.value = transaction
   transactionForm.symbol = transaction.symbol
+  transactionForm.isin = transaction.isin || ''
   transactionForm.type = transaction.type
   transactionForm.quantity = transaction.quantity
   transactionForm.price = transaction.price

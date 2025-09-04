@@ -45,19 +45,69 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Try to get ISIN from existing market data records
+    let isin: string | null = body.isin || null
+    if (!isin) {
+      const marketData = await prisma.marketData.findFirst({
+        where: { symbol: body.symbol.toUpperCase() }
+      })
+      isin = marketData?.isin || null
+    }
+
+    if (!isin) {
+      // Return error if ISIN is still not found
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'ISIN is required for securities transactions'
+      })
+    }
+
+    // Get the previous saldo (running balance) from the last transaction
+    const lastTransaction = await prisma.transaction.findFirst({
+      where: {
+        portfolioId: portfolioId
+      },
+      orderBy: {
+        date: 'desc'
+      }
+    })
+
+    const previousSaldo = lastTransaction?.saldo || 0
+    const baseAmount = parseFloat(body.amount) || (parseFloat(body.quantity) * parseFloat(body.price)) + (parseFloat(body.fees) || 0)
+    
+    // Determine cash impact based on transaction type
+    let transactionAmount = baseAmount
+    const transactionType = body.type as string
+    
+    // Transaction types that subtract cash (negative impact)
+    const cashOutTypes = ['BUY', 'WITHDRAWAL', 'EXCHANGE_OUT', 'INTEREST_CHARGE', 'DECIMAL_WITHDRAWAL']
+    // Transaction types that add cash (positive impact)
+    const cashInTypes = ['SELL', 'DIVIDEND', 'DEPOSIT', 'EXCHANGE_IN', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'SPIN_OFF_IN', 'DECIMAL_LIQUIDATION', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'TRANSFER_IN', 'SALDO_ADJUSTMENT']
+    
+    if (cashOutTypes.includes(transactionType)) {
+      transactionAmount = -Math.abs(baseAmount) // Ensure negative for cash out
+    } else if (cashInTypes.includes(transactionType)) {
+      transactionAmount = Math.abs(baseAmount) // Ensure positive for cash in
+    }
+    // For other types like SPLIT, MERGER, RIGHTS_ISSUE, keep the amount as provided
+    
+    const newSaldo = previousSaldo + transactionAmount
+
     // Create transaction
     const transaction = await prisma.transaction.create({
       data: {
         portfolioId: portfolioId,
         symbol: body.symbol.toUpperCase(),
+        isin: isin,
         type: body.type,
         quantity: parseFloat(body.quantity),
         price: parseFloat(body.price),
         fees: parseFloat(body.fees) || 0,
+        amount: transactionAmount,
         currency: body.currency || portfolio.currency || 'NOK',
         date: new Date(body.date),
         notes: body.notes || null,
-        saldo: body.saldo ? parseFloat(body.saldo) : null  // Store broker's authoritative cash balance
+        saldo: newSaldo
       }
     })
 

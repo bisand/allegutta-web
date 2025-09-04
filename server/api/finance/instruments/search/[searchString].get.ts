@@ -1,5 +1,14 @@
 export default defineEventHandler(async (event) => {
   const symbolOrName = event.context.params?.searchString ?? '';
+  const query = getQuery(event)
+  const full = query.full === 'true' || query.full === true || query.full === 1 || query.full === '1'
+
+  if (!symbolOrName) {
+    return { error: 'Missing searchString parameter' };
+  }
+  if (symbolOrName.length < 2) {
+    return { error: 'searchString must be at least 2 characters long' };
+  }
 
   const params = new URLSearchParams({
     q: symbolOrName,
@@ -16,7 +25,8 @@ export default defineEventHandler(async (event) => {
   );
 
   const data = await res.json();
-  const resolvedSymbol = data.quotes?.[0]?.symbol;
-
-  return resolvedSymbol;
+  if (full) {
+    return data.quotes?.[0] || null;
+  }
+  return data.quotes?.[0]?.symbol || null;
 })
