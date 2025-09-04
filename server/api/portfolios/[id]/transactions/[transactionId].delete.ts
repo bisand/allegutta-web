@@ -91,7 +91,8 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
     let totalCash = 0
     
     for (const transaction of allTransactions) {
-      const amount = transaction.quantity * transaction.price
+      // Use the more accurate 'amount' field when available, otherwise calculate
+      const amount = transaction.amount ?? (transaction.quantity * transaction.price)
       
       // Direct cash transactions
       if (transaction.symbol === symbol && [
@@ -176,7 +177,9 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
   for (const transaction of transactions) {
     if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
       totalQuantity += transaction.quantity
-      totalCostBasis += (transaction.quantity * transaction.price) + (transaction.fees || 0)
+      // Use the more accurate 'amount' field when available, otherwise calculate
+      const amount = transaction.amount ?? (transaction.quantity * transaction.price)
+      totalCostBasis += amount + (transaction.fees || 0)
     } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
       totalQuantity -= transaction.quantity
       // For sells, we reduce cost basis proportionally
@@ -261,7 +264,8 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
   
   // Process each transaction chronologically to build running cash balance
   for (const transaction of allTransactions) {
-    const amount = transaction.quantity * transaction.price
+    // Use the more accurate 'amount' field when available, otherwise calculate
+    const amount = transaction.amount ?? (transaction.quantity * transaction.price)
     const fees = transaction.fees || 0
     
     // Calculate cash impact exactly like Norwegian broker saldo changes

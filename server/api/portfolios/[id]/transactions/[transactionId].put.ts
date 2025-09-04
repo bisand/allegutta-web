@@ -134,7 +134,8 @@ async function updateCashBalance(portfolioId: string): Promise<void> {
   let cashBalance = 0
   
   for (const transaction of transactions) {
-    const amount = transaction.quantity * transaction.price
+    // Use the more accurate 'amount' field when available, otherwise calculate
+    const amount = transaction.amount ?? (transaction.quantity * transaction.price)
     const fees = transaction.fees || 0
     
     if (transaction.symbol.startsWith('CASH_')) {

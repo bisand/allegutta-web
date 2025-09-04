@@ -36,7 +36,12 @@ interface Holding {
   quantity: number
   avgPrice: number
   currency?: string
-  currentPrice?: number
+  currentPrice?: number | null
+  regularMarketChange?: number | null
+  regularMarketChangePercent?: number | null
+  regularMarketPreviousClose?: number | null
+  regularMarketTime?: string | null
+  lastUpdated?: string | null
   updatedAt: string
 }
 
@@ -514,14 +519,10 @@ export const usePortfolioStore = defineStore('portfolio', {
           throw new Error('No current portfolio selected')
         }
 
-        // TODO: Implement price update API endpoint
-        /*
-        await $fetch(`/api/portfolios/${this.currentPortfolio.id}/update-prices`, {
-          method: 'POST' as const
+        // Trigger market data update
+        await $fetch('/api/market-data/trigger-update', {
+          method: 'POST'
         })
-        */
-
-        console.log('Price update feature will be implemented later')
 
         // Refresh holdings after updating prices
         await this.fetchHoldings(this.currentPortfolio.id)
