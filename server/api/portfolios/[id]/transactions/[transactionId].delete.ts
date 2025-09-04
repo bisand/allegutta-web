@@ -89,11 +89,11 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
     })
 
     let totalCash = 0
-    
+
     for (const transaction of allTransactions) {
       // Use the more accurate 'amount' field when available, otherwise calculate
       const amount = transaction.amount ?? (transaction.quantity * transaction.price)
-      
+
       // Direct cash transactions
       if (transaction.symbol === symbol && [
         'DEPOSIT', 'WITHDRAWAL', 'REFUND',           // Direct cash transactions
@@ -109,11 +109,11 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
           totalCash -= amount  // These decrease cash
         }
       }
-      
+
       // Stock transaction impacts on cash (all non-cash symbols)
       if (!transaction.symbol.startsWith('CASH_')) {
         const totalAmount = amount + (transaction.fees || 0)
-        
+
         if (['BUY', 'EXCHANGE_IN', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'RIGHTS_ISSUE'].includes(transaction.type)) {
           totalCash -= totalAmount  // Stock purchases decrease cash
         } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
@@ -125,7 +125,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
     if (totalCash !== 0) {
       // Extract currency from CASH symbol (e.g., CASH_NOK -> NOK)
       const currency = symbol.startsWith('CASH_') ? symbol.substring(5) : 'NOK'
-      
+
       await prisma.holding.upsert({
         where: {
           portfolioId_symbol: {
@@ -198,7 +198,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
 
   if (totalQuantity > 0) {
     const avgPrice = totalCostBasis / totalQuantity
-    
+
     // Get currency from the latest transaction for this symbol
     const latestTransactionWithCurrency = await prisma.transaction.findFirst({
       where: {
@@ -249,7 +249,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
 // Function to recalculate cash holdings like the Norwegian broker saldo system
 async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: string): Promise<void> {
   const cashSymbol = `CASH_${portfolioCurrency}`
-  
+
   // Get ALL transactions for this portfolio in chronological order (like saldo progression)
   const allTransactions = await prisma.transaction.findMany({
     where: {
@@ -259,18 +259,18 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
       date: 'asc'  // Oldest first, like saldo progression in reverse
     }
   })
-  
+
   let runningCashBalance = 0
-  
+
   // Process each transaction chronologically to build running cash balance
   for (const transaction of allTransactions) {
     // Use the more accurate 'amount' field when available, otherwise calculate
     const amount = transaction.amount ?? (transaction.quantity * transaction.price)
     const fees = transaction.fees || 0
-    
+
     // Calculate cash impact exactly like Norwegian broker saldo changes
     let cashImpact = 0
-    
+
     if (transaction.symbol.startsWith('CASH_')) {
       // Direct cash transactions
       switch (transaction.type) {
@@ -285,7 +285,7 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
         case 'TRANSFER_IN':
           cashImpact = amount - fees  // Money coming in minus fees
           break
-          
+
         case 'WITHDRAWAL':
         case 'DECIMAL_WITHDRAWAL':
         case 'INTEREST_CHARGE': {
@@ -294,7 +294,7 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
           cashImpact = withdrawalAmount - fees  // Money going out: negative amount minus fees
           break
         }
-        
+
         case 'SALDO_ADJUSTMENT':
           cashImpact = amount - fees  // Direct adjustment to match broker saldo
           break
@@ -307,41 +307,41 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
         case 'RIGHTS_ISSUE':
           cashImpact = -(amount + fees)  // Purchase: cash decreases by amount + fees
           break
-          
+
         case 'SELL':
           cashImpact = amount - fees  // Sale: cash increases by amount - fees
           break
-          
+
         case 'DIVIDEND':
         case 'DIVIDEND_REINVEST':
           cashImpact = amount - fees  // Dividend: cash increases by amount - fees
           break
-          
+
         case 'LIQUIDATION':
         case 'REDEMPTION':
         case 'DECIMAL_LIQUIDATION':
         case 'SPIN_OFF_IN':
           cashImpact = amount - fees  // Corporate actions that bring cash
           break
-          
+
         case 'EXCHANGE_IN':
           cashImpact = amount - fees  // Exchange in brings cash
           break
-          
+
         case 'EXCHANGE_OUT':
           cashImpact = -(amount + fees)  // Exchange out removes cash
           break
-          
+
         case 'SPLIT':
         case 'MERGER':
           cashImpact = -fees  // Only fees affect cash for stock splits/mergers
           break
       }
     }
-    
+
     runningCashBalance += cashImpact
   }
-  
+
   // Check if we have a recent saldo value to validate against
   const latestTransactionWithSaldo = await prisma.transaction.findFirst({
     where: {
@@ -352,17 +352,18 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
       date: 'desc'
     }
   })
-  
+
   if (latestTransactionWithSaldo?.saldo !== null && latestTransactionWithSaldo?.saldo !== undefined) {
     const brokerSaldo = latestTransactionWithSaldo.saldo
     const discrepancy = runningCashBalance - brokerSaldo
-    
+
     console.log(`📊 Saldo validation: calculated=${runningCashBalance}, broker=${brokerSaldo}, discrepancy=${discrepancy}`)
-    
+
     // If there's a significant discrepancy (more than 0.01 due to rounding), create adjustment
     if (Math.abs(discrepancy) > 0.01) {
       console.log(`⚠️  Saldo discrepancy detected: ${discrepancy} ${portfolioCurrency}. Creating adjustment transaction.`)
-      
+
+      const adjustmentPrice = 1.0
       // Create a SALDO_ADJUSTMENT transaction to align with broker's balance
       await prisma.transaction.create({
         data: {
@@ -370,21 +371,22 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
           symbol: cashSymbol,
           type: 'SALDO_ADJUSTMENT',
           quantity: -discrepancy,  // Negative to correct the discrepancy
-          price: 1.0,
+          price: adjustmentPrice,
           fees: 0,
+          amount: -(discrepancy * adjustmentPrice),
           currency: portfolioCurrency,
           date: new Date(latestTransactionWithSaldo.date.getTime() + 1000), // 1 second after the reference transaction
           notes: `Automatic adjustment to match broker saldo (${brokerSaldo}). Corrected discrepancy of ${discrepancy}.`,
           saldo: brokerSaldo
         }
       })
-      
+
       // Update the running balance with the adjustment
       runningCashBalance = brokerSaldo
       console.log(`✅ Created saldo adjustment. New balance: ${runningCashBalance} ${portfolioCurrency}`)
     }
   }
-  
+
   // Set the final cash balance (like final saldo)
   if (runningCashBalance !== 0 || await prisma.holding.findUnique({
     where: { portfolioId_symbol: { portfolioId, symbol: cashSymbol } }
@@ -409,7 +411,7 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
         currency: portfolioCurrency
       }
     })
-    
+
     console.log(`💰 Recalculated cash balance: ${runningCashBalance} ${portfolioCurrency} (like saldo: ${runningCashBalance})`)
   }
 }

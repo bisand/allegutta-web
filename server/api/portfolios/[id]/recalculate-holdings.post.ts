@@ -145,6 +145,33 @@ async function updateCashBalance(portfolioId: string): Promise<void> {
   
   console.log(`💰 Calculated cash balance: ${cashBalance.toFixed(2)} NOK`)
 
+  // Validate against broker's saldo if available
+  const latestTransactionWithSaldo = await prisma.transaction.findFirst({
+    where: {
+      portfolioId: portfolioId,
+      saldo: {
+        not: null
+      }
+    },
+    orderBy: {
+      date: 'desc'
+    }
+  })
+  
+  if (latestTransactionWithSaldo?.saldo !== null && latestTransactionWithSaldo?.saldo !== undefined) {
+    const brokerSaldo = latestTransactionWithSaldo.saldo
+    const discrepancy = cashBalance - brokerSaldo
+    
+    console.log(`📊 Saldo validation: calculated=${cashBalance}, broker=${brokerSaldo}, discrepancy=${discrepancy}`)
+    
+    // If there's a significant discrepancy (more than 0.01 due to rounding), use broker's balance
+    if (Math.abs(discrepancy) > 0.01) {
+      console.log(`⚠️  Saldo discrepancy detected: ${discrepancy} NOK. Using broker's authoritative balance.`)
+      cashBalance = brokerSaldo
+      console.log(`✅ Corrected to broker saldo: ${cashBalance.toFixed(2)} NOK`)
+    }
+  }
+
   // Update the portfolio's cash balance
   await prisma.portfolio.update({
     where: { id: portfolioId },
