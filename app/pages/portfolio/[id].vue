@@ -660,7 +660,11 @@ const refreshEnhancedData = async () => {
 
   try {
     refreshingEnhanced.value = true
-    await fetchEnhancedData()
+    // Refresh both enhanced data and holdings to get updated market prices
+    await Promise.all([
+      fetchEnhancedData(),
+      portfolioStore.fetchHoldings(currentPortfolio.value.id)
+    ])
   } catch (error) {
     console.error('Failed to refresh enhanced data:', error)
   } finally {
@@ -703,7 +707,11 @@ onMounted(() => {
   // Set up periodic refresh - every 1 minute for more responsive updates
   refreshInterval = setInterval(async () => {
     if (currentPortfolio.value && !document.hidden) {
-      await fetchEnhancedData()
+      // Refresh both enhanced data and holdings to get updated market prices
+      await Promise.all([
+        fetchEnhancedData(),
+        portfolioStore.fetchHoldings(currentPortfolio.value.id)
+      ])
     }
   }, 1 * 60 * 1000) // 1 minute
 })
@@ -717,7 +725,11 @@ onUnmounted(() => {
 // Refresh when tab becomes visible again
 useEventListener(document, 'visibilitychange', async () => {
   if (!document.hidden && currentPortfolio.value) {
-    await fetchEnhancedData()
+    // Refresh both enhanced data and holdings to get updated market prices
+    await Promise.all([
+      fetchEnhancedData(),
+      portfolioStore.fetchHoldings(currentPortfolio.value.id)
+    ])
   }
 })
 
