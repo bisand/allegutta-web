@@ -37,6 +37,12 @@
     "managementDescription": "Manage your investments with precision and clarity.",
     "privacyPolicy": "Privacy Policy"
   },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{count} minute ago | {count} minutes ago",
+    "hoursAgo": "{count} hour ago | {count} hours ago",
+    "daysAgo": "{count} day ago | {count} days ago"
+  },
   "privacy": {
     "title": "Privacy Policy",
     "description": "This privacy policy describes how AlleGutta Portfolio Manager handles your personal information.",
@@ -212,6 +218,7 @@
     "noAccess": "The requested portfolio doesn't exist or you don't have access to it.",
     "adminEdit": "Edit Portfolio",
     "updatePrices": "Update Prices",
+    "refreshData": "Refresh Portfolio Data",
     "addTransaction": "Add Transaction",
     "importTransactions": "Import Transactions",
     "default": "Default",

@@ -35,6 +35,7 @@ interface Holding {
   portfolioId: string
   symbol: string
   isin?: string | null
+  instrumentName: string
   quantity: number
   avgPrice: number
   currency?: string
@@ -58,6 +59,7 @@ interface PortfolioState {
   loadingTransactions: boolean
   loadingHoldings: boolean
   error: string | null
+  lastUpdated: number // Timestamp for reactive updates
 }
 
 interface CreatePortfolioData {
@@ -90,7 +92,8 @@ export const usePortfolioStore = defineStore('portfolio', {
     initializing: false,
     loadingTransactions: false,
     loadingHoldings: false,
-    error: null
+    error: null,
+    lastUpdated: Date.now()
   }),
 
   getters: {
@@ -216,7 +219,7 @@ export const usePortfolioStore = defineStore('portfolio', {
 
     async fetchPublicPortfolios(): Promise<void> {
       try {
-        const response = await $fetch('/api/public/portfolios') as { data: Portfolio[] }
+        const response = await $fetch<{ data: Portfolio[] }>('/api/public/portfolios')
         this.publicPortfolios = response.data || []
       } catch (error) {
         console.error('Failed to fetch public portfolios:', error)
@@ -401,6 +404,7 @@ export const usePortfolioStore = defineStore('portfolio', {
           response = await $fetch(`/api/public/portfolios/${portfolioId}/transactions`) as { data: Transaction[] }
         }
         this.transactions = response.data || []
+        this.updateTimestamp()
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch transactions'
         throw error
@@ -423,10 +427,12 @@ export const usePortfolioStore = defineStore('portfolio', {
           if (this.currentPortfolio && response.data.portfolio) {
             this.currentPortfolio.cashBalance = response.data.portfolio.cashBalance
           }
+          this.updateTimestamp()
         } catch {
           // If authenticated endpoint fails, try public endpoint (legacy structure)
           const publicResponse = await $fetch(`/api/public/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
           this.holdings = publicResponse.data || []
+          this.updateTimestamp()
         }
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch holdings'
@@ -451,6 +457,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         }) as { data: Transaction }
 
         this.transactions.unshift(response.data)
+        this.updateTimestamp()
 
         // Refresh holdings after adding transaction
         await this.fetchHoldings(this.currentPortfolio.id)
@@ -484,6 +491,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         if (index !== -1) {
           this.transactions[index] = response.data
         }
+        this.updateTimestamp()
 
         // Refresh holdings after updating transaction
         if (this.currentPortfolio) {
@@ -511,6 +519,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         })
 
         this.transactions = this.transactions.filter(t => t.id !== transactionId)
+        this.updateTimestamp()
 
         // Refresh holdings after deleting transaction
         if (this.currentPortfolio) {
@@ -544,6 +553,11 @@ export const usePortfolioStore = defineStore('portfolio', {
       } finally {
         this.loading = false
       }
+    },
+
+    // Update timestamp for reactive watchers
+    updateTimestamp(): void {
+      this.lastUpdated = Date.now()
     },
 
     clearError(): void {

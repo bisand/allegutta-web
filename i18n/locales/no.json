@@ -37,6 +37,12 @@
     "managementDescription": "Administrer investeringene dine med presisjon og klarhet.",
     "privacyPolicy": "Personvernerklæring"
   },
+  "time": {
+    "justNow": "Akkurat nå",
+    "minutesAgo": "{count} minutt siden | {count} minutter siden",
+    "hoursAgo": "{count} time siden | {count} timer siden",
+    "daysAgo": "{count} dag siden | {count} dager siden"
+  },
   "privacy": {
     "title": "Personvernerklæring",
     "description": "Denne personvernerklæringen beskriver hvordan AlleGutta Portfolio Manager håndterer din personlige informasjon.",
@@ -214,6 +220,7 @@
     "noAccess": "Den forespurte porteføljen eksisterer ikke eller du har ikke tilgang til den.",
     "adminEdit": "Redigér Portefølje",
     "updatePrices": "Oppdater priser",
+    "refreshData": "Oppdater porteføljedata",
     "addTransaction": "Legg til transaksjon",
     "importTransactions": "Importer transaksjoner",
     "default": "Standard",
