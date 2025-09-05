@@ -413,6 +413,7 @@ export const usePortfolioStore = defineStore('portfolio', {
 
     async fetchHoldings(portfolioId: string): Promise<void> {
       try {
+        console.log('[HOLDINGS] Starting holdings fetch...')
         this.loadingHoldings = true
         // Try authenticated endpoint first, fall back to public endpoint
         let response: { data: { portfolio: { id: string, name: string, cashBalance: number }, holdings: Holding[] } }
@@ -442,6 +443,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         console.error('Error fetching holdings:', error)
         throw error
       } finally {
+        console.log('[HOLDINGS] Holdings fetch completed')
         this.loadingHoldings = false
       }
     },
@@ -456,11 +458,11 @@ export const usePortfolioStore = defineStore('portfolio', {
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
 
-        const response = await $fetch(`/api/portfolios/${this.currentPortfolio.id}/transactions`, {
+        const response = await $fetch<{ data: Transaction }>(`/api/portfolios/${this.currentPortfolio.id}/transactions`, {
           method: 'POST',
           headers: headers as HeadersInit,
           body: transactionData
-        }) as { data: Transaction }
+        })
 
         this.transactions.unshift(response.data)
         this.updateTimestamp()
@@ -487,11 +489,11 @@ export const usePortfolioStore = defineStore('portfolio', {
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
 
-        const response = await $fetch(`/api/portfolios/${this.currentPortfolio.id}/transactions/${transactionId}`, {
+        const response = await $fetch<{ data: Transaction }>(`/api/portfolios/${this.currentPortfolio.id}/transactions/${transactionId}`, {
           method: 'PUT',
           headers: headers as HeadersInit,
           body: transactionData
-        }) as { data: Transaction }
+        })
 
         const index = this.transactions.findIndex(t => t.id === transactionId)
         if (index !== -1) {

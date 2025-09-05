@@ -43,7 +43,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /opt/allegutta/data  # Host path for persistence
+      device: /mnt/docker/allegutta-web/data  # Host path for persistence
 
 networks:
   default:

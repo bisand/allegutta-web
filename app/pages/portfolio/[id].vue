@@ -69,7 +69,7 @@
         </div>
 
         <!-- Portfolio Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8" :class="{ 'opacity-60 pointer-events-none': refreshingEnhanced }">
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -79,6 +79,7 @@
                 <dl>
                   <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                     Market Value
+                    <div v-if="refreshingEnhanced" class="inline-block animate-spin rounded-full h-3 w-3 border border-blue-400 border-t-transparent ml-2" />
                   </dt>
                   <dd class="text-lg font-semibold text-gray-900 dark:text-white">
                     {{ formatCurrency(portfolioStore.marketValue, { decimals: 0 }) }}
@@ -168,7 +169,7 @@
         </div>
 
         <!-- Enhanced Portfolio Metrics -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" :class="{ 'opacity-60 pointer-events-none': refreshingEnhanced }">
           <!-- Last Updated with timestamp -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div class="flex items-center">
@@ -177,8 +178,9 @@
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate flex items-center">
                     {{ $t('portfolioPage.lastUpdated') }}
+                    <div v-if="refreshingEnhanced" class="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-500 ml-2" />
                   </dt>
                   <dd class="text-lg font-semibold text-gray-900 dark:text-white">
                     {{ formatDateTime(marketDataLastUpdated || currentPortfolio.updatedAt) }}
@@ -600,10 +602,10 @@ onUnmounted(() => {
 
 // Fetch enhanced data when portfolio changes
 const fetchEnhancedData = async () => {
-  if (!currentPortfolio.value || refreshingEnhanced.value) return
+  if (!currentPortfolio.value) return
 
   try {
-    refreshingEnhanced.value = true
+    console.log('[ENHANCED] Fetching enhanced portfolio data...')
     const response = await $fetch(`/api/portfolios/${currentPortfolio.value.id}/enhanced`)
     // Update only the properties that exist in the response
     enhancedData.value = {
@@ -612,10 +614,9 @@ const fetchEnhancedData = async () => {
     }
     // Update portfolio store timestamp for real-time updates
     portfolioStore.updateTimestamp()
+    console.log('[ENHANCED] Enhanced data fetched successfully')
   } catch (error) {
-    console.error('Failed to fetch enhanced portfolio data:', error)
-  } finally {
-    refreshingEnhanced.value = false
+    console.error('[ENHANCED] Failed to fetch enhanced portfolio data:', error)
   }
 }
 
@@ -699,15 +700,21 @@ const refreshEnhancedData = async () => {
 
   try {
     refreshingEnhanced.value = true
+    console.log('[REFRESH] Starting enhanced data refresh...')
+    console.log('[REFRESH] Fetching enhanced data and holdings in parallel...')
+    
     // Refresh both enhanced data and holdings to get updated market prices
     await Promise.all([
       fetchEnhancedData(),
       portfolioStore.fetchHoldings(currentPortfolio.value.id)
     ])
+    
+    console.log('[REFRESH] Both enhanced data and holdings fetch completed')
     // Force a timestamp update to trigger reactivity
     portfolioStore.updateTimestamp()
+    console.log('[REFRESH] Enhanced data refresh completed')
   } catch (error) {
-    console.error('Failed to refresh enhanced data:', error)
+    console.error('[REFRESH] Failed to refresh enhanced data:', error)
   } finally {
     refreshingEnhanced.value = false
   }
