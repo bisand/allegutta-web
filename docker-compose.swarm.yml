@@ -2,22 +2,19 @@ version: '3.8'
 
 services:
   allegutta-web:
-    image: allegutta-web:latest
-    build: .
+    image: bisand/allegutta-web:latest
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/production.db
-      - NUXT_KINDE_AUTH_DOMAIN=${NUXT_KINDE_AUTH_DOMAIN}
+      - NUXT_DEV_AUTH=false
+      - NUXT_SECRET_KEY=${NUXT_SECRET_KEY}
+      - NUXT_KINDE_ISSUER_BASE_URL=${NUXT_KINDE_ISSUER_BASE_URL}
       - NUXT_KINDE_CLIENT_ID=${NUXT_KINDE_CLIENT_ID}
       - NUXT_KINDE_CLIENT_SECRET=${NUXT_KINDE_CLIENT_SECRET}
-      - NUXT_KINDE_REDIRECT_URL=${NUXT_KINDE_REDIRECT_URL}
-      - NUXT_KINDE_LOGOUT_REDIRECT_URL=${NUXT_KINDE_LOGOUT_REDIRECT_URL}
-      - NUXT_KINDE_POST_LOGIN_REDIRECT_URL=${NUXT_KINDE_POST_LOGIN_REDIRECT_URL}
-      - NUXT_KINDE_PASSWORD=${NUXT_KINDE_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
+      - NUXT_KINDE_CALLBACK_URL=${NUXT_KINDE_CALLBACK_URL}
+      - NUXT_KINDE_POST_LOGOUT_REDIRECT_URL=${NUXT_KINDE_POST_LOGOUT_REDIRECT_URL}
     volumes:
       # Persistent volume for SQLite database
       - sqlite_data:/app/data
@@ -30,12 +27,24 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        order: stop-first
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - allegutta-network
 
 volumes:
   sqlite_data:
@@ -46,6 +55,6 @@ volumes:
       device: /mnt/docker/allegutta-web/data  # Host path for persistence
 
 networks:
-  default:
+  allegutta-network:
     driver: overlay
     attachable: true

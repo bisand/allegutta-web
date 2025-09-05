@@ -3,12 +3,12 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
   if (to.path === '/auth/callback') {
     return
   }
-  
+
   const { loggedIn, initialize } = useAppAuth()
-  
+
   // Ensure auth state is initialized
   await initialize()
-  
+
   // Check if user is logged in
   if (!loggedIn.value) {
     throw createError({

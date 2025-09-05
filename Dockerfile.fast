@@ -1,12 +1,16 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Fast build Dockerfile for testing (Dockerfile.fast)
+# Single stage build for testing - not optimized for size
 
-# Install build dependencies
+FROM node:20-alpine
+
+# Install necessary build tools
 RUN apk add --no-cache \
     python3 \
     make \
     g++ \
-    sqlite
+    sqlite \
+    curl \
+    dumb-init
 
 # Set working directory
 WORKDIR /app
@@ -33,29 +37,8 @@ COPY . .
 # Build the application
 RUN pnpm run build
 
-# Production stage
-FROM node:20-alpine AS production
-
-# Install only runtime dependencies
-RUN apk add --no-cache \
-    sqlite \
-    curl \
-    dumb-init
-
-# Set working directory
-WORKDIR /app
-
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nuxtjs -u 1001
-
-# Copy only the built application and necessary files from builder stage
-COPY --from=builder /app/.output ./.output
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
-COPY --from=builder /app/prisma ./prisma
-
-# Copy package.json for metadata only (no npm install needed in production)
-COPY --from=builder /app/package.json ./package.json
 
 # Create data directory with proper permissions
 RUN mkdir -p /app/data && chown -R nuxtjs:nodejs /app
@@ -73,5 +56,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application directly with Node.js
+# Start the application
 CMD ["node", ".output/server/index.mjs"]

@@ -69,7 +69,7 @@
         </div>
 
         <!-- Portfolio Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8" :class="{ 'opacity-60 pointer-events-none': refreshingEnhanced }">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -98,6 +98,7 @@
                 <dl>
                   <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                     Cash Balance
+                    <div v-if="portfolioStore.loadingHoldings" class="inline-block animate-spin rounded-full h-3 w-3 border border-blue-400 border-t-transparent ml-2" />
                   </dt>
                   <dd class="text-lg font-semibold text-gray-900 dark:text-white">
                     {{ formatCurrency(currentPortfolio?.cashBalance || 0, { decimals: 0 }) }}
@@ -116,6 +117,7 @@
                 <dl>
                   <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                     {{ $t('portfolioPage.totalValue') }}
+                    <div v-if="refreshingEnhanced" class="inline-block animate-spin rounded-full h-3 w-3 border border-blue-400 border-t-transparent ml-2" />
                   </dt>
                   <dd class="text-lg font-semibold text-gray-900 dark:text-white">
                     {{ formatCurrency(portfolioStore.totalValue, { decimals: 0 }) }}
@@ -169,7 +171,7 @@
         </div>
 
         <!-- Enhanced Portfolio Metrics -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" :class="{ 'opacity-60 pointer-events-none': refreshingEnhanced }">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <!-- Last Updated with timestamp -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div class="flex items-center">
@@ -260,7 +262,7 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('portfolioPage.holdingsTable') }}</h3>
             <div v-if="portfolioStore.loadingHoldings" class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500" />
           </div>
-          <div class="overflow-x-auto" :class="{ 'opacity-60 pointer-events-none': portfolioStore.loadingHoldings }">
+          <div class="overflow-x-auto">
             <table v-if="portfolioStore.portfolioHoldings.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead class="bg-gray-50 dark:bg-gray-900">
                 <tr>
@@ -586,7 +588,7 @@ const lastKnownChange = ref<string | null>(null)
 const currentTime = ref(new Date())
 
 // Update current time every 5 seconds for dynamic relative time
-let timeInterval: NodeJS.Timeout | null = null
+let timeInterval: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   timeInterval = setInterval(() => {
@@ -721,7 +723,7 @@ const refreshEnhancedData = async () => {
 }
 
 // Watch for portfolio changes and fetch enhanced data
-watch(currentPortfolio, async (newPortfolio) => {
+watch(currentPortfolio, async (newPortfolio: typeof currentPortfolio.value) => {
   if (newPortfolio) {
     // Reset the change tracking for new portfolio
     lastKnownChange.value = null
@@ -743,7 +745,7 @@ watch(currentPortfolio, async (newPortfolio) => {
 // The smart polling will handle updates more efficiently
 
 // Smart polling setup - much more efficient than constant fetching
-let refreshInterval: NodeJS.Timeout | null = null
+let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   // Start smart polling that only fetches when data actually changes
@@ -852,7 +854,7 @@ const athData = computed(() => {
 })
 
 // Load portfolio data when route changes
-watch(portfolioId, async (newId) => {
+watch(portfolioId, async (newId: unknown) => {
   if (newId && currentPortfolio.value) {
     try {
       await portfolioStore.setCurrentPortfolio(newId)
@@ -865,12 +867,12 @@ watch(portfolioId, async (newId) => {
 // Computed properties for enhanced portfolio analytics
 const topPerformers = computed(() => {
   return portfolioStore.portfolioHoldings
-    .filter(holding => holding.currentPrice != null && getHoldingGainLoss({
+    .filter((holding: { currentPrice: null; quantity: number; avgPrice: number }) => holding.currentPrice != null && getHoldingGainLoss({
       quantity: holding.quantity,
       currentPrice: holding.currentPrice,
       avgPrice: holding.avgPrice
     }) > 0)
-    .sort((a, b) => getHoldingGainLoss({
+    .sort((a: { quantity: number; currentPrice: number | null | undefined; avgPrice: number }, b: { quantity: number; currentPrice: number | null | undefined; avgPrice: number }) => getHoldingGainLoss({
       quantity: b.quantity,
       currentPrice: b.currentPrice!,
       avgPrice: b.avgPrice
@@ -970,7 +972,7 @@ function getSortIcon(column: SortKey) {
 }
 
 const totalPortfolioValue = computed(() => {
-  return portfolioStore.portfolioHoldings.reduce((total, holding) => {
+  return portfolioStore.portfolioHoldings.reduce((total: number, holding: { quantity: number; currentPrice: number | null; avgPrice: number }) => {
     return total + (holding.quantity * (holding.currentPrice || holding.avgPrice))
   }, 0)
 })
@@ -1005,7 +1007,7 @@ function getTopPerformerSymbol(): string {
 function getLargestHoldingSymbol(): string {
   if (portfolioStore.portfolioHoldings.length === 0) return 'N/A'
 
-  const largest = portfolioStore.portfolioHoldings.reduce((max, holding) => {
+  const largest = portfolioStore.portfolioHoldings.reduce((max: { quantity: number; currentPrice: number | null; avgPrice: number; symbol: string }, holding: { quantity: number; currentPrice: number | null; avgPrice: number; symbol: string }) => {
     const value = holding.quantity * (holding.currentPrice || holding.avgPrice)
     const maxValue = max.quantity * (max.currentPrice || max.avgPrice)
     return value > maxValue ? holding : max
