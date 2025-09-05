@@ -103,7 +103,7 @@ export class MarketDataWorkerV2 {
             // Remove quotes if present and validate
             const cleanSymbol = symbolYahoo.replace(/['"]/g, '').trim()
             if (cleanSymbol && cleanSymbol !== 'null' && cleanSymbol !== 'undefined') {
-                console.log(`Resolved ISIN ${isin} → ${cleanSymbol}`)
+                console.log(`✅ Resolved ISIN ${isin} → ${cleanSymbol} (OSL prioritized)`)
                 return cleanSymbol
             }
 

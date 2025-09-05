@@ -228,18 +228,82 @@
           <table v-if="portfolioStore.portfolioHoldings.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">{{ $t('portfolioPage.symbol') }}</th>
-                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">{{ $t('portfolioPage.quantity') }}</th>
-                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">{{ $t('portfolioPage.avgPrice') }}</th>
-                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">{{ $t('portfolioPage.cost') }}</th>
-                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">{{ $t('portfolioPage.currentPrice') }}</th>
-                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">{{ $t('portfolioPage.todayChange') }}</th>
-                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-28">{{ $t('portfolioPage.marketValue') }}</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">{{ $t('portfolioPage.gainLoss') }}</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
+                  <button 
+                    class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none"
+                    @click="handleSort('symbol')"
+                  >
+                    <span>{{ $t('portfolioPage.symbol') }}</span>
+                    <component :is="getSortIcon('symbol')" v-if="getSortIcon('symbol')" class="w-4 h-4" />
+                  </button>
+                </th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
+                  <button 
+                    class="flex items-center justify-end space-x-1 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none ml-auto"
+                    @click="handleSort('quantity')"
+                  >
+                    <span>{{ $t('portfolioPage.quantity') }}</span>
+                    <component :is="getSortIcon('quantity')" v-if="getSortIcon('quantity')" class="w-4 h-4" />
+                  </button>
+                </th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
+                  <button 
+                    class="flex items-center justify-end space-x-1 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none ml-auto"
+                    @click="handleSort('avgPrice')"
+                  >
+                    <span>{{ $t('portfolioPage.avgPrice') }}</span>
+                    <component :is="getSortIcon('avgPrice')" v-if="getSortIcon('avgPrice')" class="w-4 h-4" />
+                  </button>
+                </th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
+                  <button 
+                    class="flex items-center justify-end space-x-1 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none ml-auto"
+                    @click="handleSort('cost')"
+                  >
+                    <span>{{ $t('portfolioPage.cost') }}</span>
+                    <component :is="getSortIcon('cost')" v-if="getSortIcon('cost')" class="w-4 h-4" />
+                  </button>
+                </th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
+                  <button 
+                    class="flex items-center justify-end space-x-1 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none ml-auto"
+                    @click="handleSort('currentPrice')"
+                  >
+                    <span>{{ $t('portfolioPage.currentPrice') }}</span>
+                    <component :is="getSortIcon('currentPrice')" v-if="getSortIcon('currentPrice')" class="w-4 h-4" />
+                  </button>
+                </th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
+                  <button 
+                    class="flex items-center justify-end space-x-1 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none ml-auto"
+                    @click="handleSort('todayChange')"
+                  >
+                    <span>{{ $t('portfolioPage.todayChange') }}</span>
+                    <component :is="getSortIcon('todayChange')" v-if="getSortIcon('todayChange')" class="w-4 h-4" />
+                  </button>
+                </th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-28">
+                  <button 
+                    class="flex items-center justify-end space-x-1 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none ml-auto"
+                    @click="handleSort('marketValue')"
+                  >
+                    <span>{{ $t('portfolioPage.marketValue') }}</span>
+                    <component :is="getSortIcon('marketValue')" v-if="getSortIcon('marketValue')" class="w-4 h-4" />
+                  </button>
+                </th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
+                  <button 
+                    class="flex items-center justify-end space-x-1 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none ml-auto"
+                    @click="handleSort('gainLoss')"
+                  >
+                    <span>{{ $t('portfolioPage.gainLoss') }}</span>
+                    <component :is="getSortIcon('gainLoss')" v-if="getSortIcon('gainLoss')" class="w-4 h-4" />
+                  </button>
+                </th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              <tr v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id">
+              <tr v-for="holding in sortedHoldings" :key="holding.id">
                 <td class="px-4 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900 dark:text-white">
                     {{ holding.symbol }}
@@ -447,7 +511,9 @@ import {
   PlusIcon,
   ClockIcon,
   ArrowTrendingUpIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  ChevronUpIcon,
+  ChevronDownIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -457,6 +523,13 @@ const { formatCurrency, formatNumber, formatPercentage } = useCurrency()
 
 const showAddTransaction = ref(false)
 const showImportTransactions = ref(false)
+
+// Sorting state
+const sortColumn = ref<string>('symbol')
+const sortDirection = ref<'asc' | 'desc'>('asc')
+
+// Sort options for different columns
+type SortKey = 'symbol' | 'instrumentName' | 'quantity' | 'avgPrice' | 'cost' | 'currentPrice' | 'todayChange' | 'marketValue' | 'gainLoss' | 'gainLossPercent'
 
 // Initialize store data - only if not already initialized
 onMounted(async () => {
@@ -516,6 +589,93 @@ const topPerformers = computed(() => {
     }))
     .slice(0, 3)
 })
+
+// Sorted holdings based on current sort column and direction
+const sortedHoldings = computed(() => {
+  const holdings = [...portfolioStore.portfolioHoldings]
+  
+  return holdings.sort((a, b) => {
+    let aValue: string | number
+    let bValue: string | number
+    
+    switch (sortColumn.value as SortKey) {
+      case 'symbol':
+        aValue = a.symbol.toLowerCase()
+        bValue = b.symbol.toLowerCase()
+        break
+      case 'instrumentName':
+        aValue = (a.instrumentName || a.symbol).toLowerCase()
+        bValue = (b.instrumentName || b.symbol).toLowerCase()
+        break
+      case 'quantity':
+        aValue = a.quantity
+        bValue = b.quantity
+        break
+      case 'avgPrice':
+        aValue = a.avgPrice
+        bValue = b.avgPrice
+        break
+      case 'cost':
+        aValue = a.quantity * a.avgPrice
+        bValue = b.quantity * b.avgPrice
+        break
+      case 'currentPrice':
+        aValue = a.currentPrice || a.avgPrice
+        bValue = b.currentPrice || b.avgPrice
+        break
+      case 'todayChange':
+        aValue = a.regularMarketChangePercent || 0
+        bValue = b.regularMarketChangePercent || 0
+        break
+      case 'marketValue':
+        aValue = a.quantity * (a.currentPrice || a.avgPrice)
+        bValue = b.quantity * (b.currentPrice || b.avgPrice)
+        break
+      case 'gainLoss':
+        aValue = getHoldingGainLoss(a)
+        bValue = getHoldingGainLoss(b)
+        break
+      case 'gainLossPercent':
+        aValue = getHoldingGainLossPercentage(a)
+        bValue = getHoldingGainLossPercentage(b)
+        break
+      default:
+        aValue = a.symbol.toLowerCase()
+        bValue = b.symbol.toLowerCase()
+    }
+    
+    // Handle null/undefined values
+    if (aValue === null || aValue === undefined) aValue = 0
+    if (bValue === null || bValue === undefined) bValue = 0
+    
+    let result = 0
+    if (typeof aValue === 'string') {
+      result = aValue.localeCompare(bValue)
+    } else {
+      result = aValue - bValue
+    }
+    
+    return sortDirection.value === 'desc' ? -result : result
+  })
+})
+
+// Function to handle column sorting
+function handleSort(column: SortKey) {
+  if (sortColumn.value === column) {
+    // Toggle direction if clicking the same column
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // Set new column and default to ascending
+    sortColumn.value = column
+    sortDirection.value = 'asc'
+  }
+}
+
+// Function to get sort icon for a column
+function getSortIcon(column: SortKey) {
+  if (sortColumn.value !== column) return null
+  return sortDirection.value === 'asc' ? ChevronUpIcon : ChevronDownIcon
+}
 
 const totalPortfolioValue = computed(() => {
   return portfolioStore.portfolioHoldings.reduce((total, holding) => {
