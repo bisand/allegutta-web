@@ -77,11 +77,16 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
       totalCost -= sellQuantity * avgPrice
       totalCost = Math.max(0, totalCost) // Ensure non-negative
       console.log(`  ➖ ${transaction.type}: -${sellQuantity} shares`)
-    } else if (['REFUND', 'LIQUIDATION', 'REDEMPTION'].includes(transaction.type)) {
+    } else if (['LIQUIDATION', 'REDEMPTION'].includes(transaction.type)) {
       // Corporate actions that liquidate entire position (like capital repayment)
       console.log(`  💰 ${transaction.type}: LIQUIDATING ${totalQuantity} shares (corporate action)`)
       totalQuantity = 0
       totalCost = 0
+    } else if (['REFUND'].includes(transaction.type)) {
+      // REFUND/TILBAKEBETALING is a cash payout that doesn't affect stock holdings
+      // This should only affect cash balance, not stock quantity
+      console.log(`  💰 ${transaction.type}: Cash payout of ${quantity * price} NOK (no change to stock holdings)`)
+      // No change to totalQuantity or totalCost for stock holdings
     } else if (['DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
       // Handle decimal adjustments - these typically adjust small quantities
       if (transaction.type === 'DECIMAL_LIQUIDATION') {
