@@ -344,7 +344,8 @@
                     {{ formatCurrency(holding.currentPrice || holding.avgPrice, { decimals: 2 }) }}
                   </td>
                   <td class="px-3 py-4 whitespace-nowrap text-sm text-right">
-                    <span v-if="holding.regularMarketChangePercent !== null && holding.regularMarketChangePercent !== undefined" :class="holding.regularMarketChangePercent >= 0 ? 'text-green-600' : 'text-red-600'">
+                    <span v-if="holding.regularMarketChangePercent !== null && holding.regularMarketChangePercent !== undefined"
+                      :class="holding.regularMarketChangePercent >= 0 ? 'text-green-600' : 'text-red-600'">
                       {{ formatPercentage(holding.regularMarketChangePercent) }}
                     </span>
                     <span v-else class="text-gray-400">N/A</span>
@@ -623,27 +624,27 @@ const fetchEnhancedData = async () => {
 const dynamicRelativeTime = computed(() => {
   const { t } = useI18n()
   const lastUpdate = enhancedData.value.marketDataLastUpdated || enhancedData.value.lastUpdated
-  
+
   if (!lastUpdate) return t('time.justNow')
-  
+
   const now = currentTime.value.getTime()
   const lastUpdateTime = new Date(lastUpdate).getTime()
   const diffMs = now - lastUpdateTime
-  
+
   if (diffMs < 30000) { // Less than 30 seconds
     return t('time.justNow')
   }
-  
+
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
   if (diffMinutes < 60) {
     return t('time.minutesAgo', { count: diffMinutes })
   }
-  
+
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
   if (diffHours < 24) {
     return t('time.hoursAgo', { count: diffHours })
   }
-  
+
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   return t('time.daysAgo', { count: diffDays })
 })
