@@ -583,6 +583,24 @@ const enhancedData = ref({
   marketDataLastUpdated: null as string | null
 })
 
+// Current time for dynamic relative time display
+const currentTime = ref(new Date())
+
+// Update current time every 5 seconds for dynamic relative time
+let timeInterval: NodeJS.Timeout | null = null
+
+onMounted(() => {
+  timeInterval = setInterval(() => {
+    currentTime.value = new Date()
+  }, 5000) // Update every 5 seconds
+})
+
+onUnmounted(() => {
+  if (timeInterval) {
+    clearInterval(timeInterval)
+  }
+})
+
 // Fetch enhanced data when portfolio changes
 const fetchEnhancedData = async () => {
   if (!currentPortfolio.value) return
@@ -594,10 +612,46 @@ const fetchEnhancedData = async () => {
       ...enhancedData.value,
       ...response
     }
+    // Update portfolio store timestamp for real-time updates
+    portfolioStore.updateTimestamp()
   } catch (error) {
     console.error('Failed to fetch enhanced portfolio data:', error)
   }
 }
+
+// Dynamic relative time that updates every 5 seconds
+const dynamicRelativeTime = computed(() => {
+  const { t } = useI18n()
+  const lastUpdate = enhancedData.value.marketDataLastUpdated || enhancedData.value.lastUpdated
+  
+  if (!lastUpdate) return t('time.justNow')
+  
+  const now = currentTime.value.getTime()
+  const lastUpdateTime = new Date(lastUpdate).getTime()
+  const diffMs = now - lastUpdateTime
+  
+  if (diffMs < 30000) { // Less than 30 seconds
+    return t('time.justNow')
+  }
+  
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  if (diffMinutes < 60) {
+    return t('time.minutesAgo', { count: diffMinutes })
+  }
+  
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  if (diffHours < 24) {
+    return t('time.hoursAgo', { count: diffHours })
+  }
+  
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  return t('time.daysAgo', { count: diffDays })
+})
+
+// Market data last updated timestamp
+const marketDataLastUpdated = computed(() => {
+  return enhancedData.value.marketDataLastUpdated || currentPortfolio.value?.updatedAt
+})
 
 // Manual refresh for enhanced data
 const refreshEnhancedData = async () => {
@@ -621,7 +675,7 @@ watch(currentPortfolio, async (newPortfolio) => {
 }, { immediate: true })
 
 // Watch for holdings changes and refresh enhanced data
-watch(() => portfolioStore.holdings, async () => {
+watch(() => portfolioStore.portfolioHoldings, async () => {
   if (currentPortfolio.value) {
     await fetchEnhancedData()
   }
@@ -635,22 +689,22 @@ watch(() => portfolioStore.lastUpdated, async () => {
 })
 
 // Refresh enhanced data when market data is updated
-watch(() => portfolioStore.holdings.map(h => h.currentPrice).join(','), async () => {
+watch(() => portfolioStore.portfolioHoldings.map(h => `${h.id}-${h.currentPrice}-${h.regularMarketChangePercent}`).join(','), async () => {
   if (currentPortfolio.value) {
     await fetchEnhancedData()
   }
 })
 
-// Auto-refresh enhanced data every 5 minutes when page is active
+// Auto-refresh enhanced data every 1 minute when page is active
 let refreshInterval: NodeJS.Timeout | null = null
 
 onMounted(() => {
-  // Set up periodic refresh
+  // Set up periodic refresh - every 1 minute for more responsive updates
   refreshInterval = setInterval(async () => {
     if (currentPortfolio.value && !document.hidden) {
       await fetchEnhancedData()
     }
-  }, 5 * 60 * 1000) // 5 minutes
+  }, 1 * 60 * 1000) // 1 minute
 })
 
 onUnmounted(() => {
@@ -751,66 +805,6 @@ const athData = computed(() => {
     value: formatCurrency(athValue, { decimals: 0 }),
     dateText: formatDate(athDate),
     isAtAth
-  }
-})
-
-// Market data last updated time
-const marketDataLastUpdated = computed(() => {
-  // Use enhanced data if available
-  if (enhancedData.value.marketDataLastUpdated) {
-    return enhancedData.value.marketDataLastUpdated
-  }
-
-  // Fallback to finding latest market data update from holdings
-  const marketDataDates = portfolioStore.portfolioHoldings
-    .map(holding => holding.lastUpdated)
-    .filter((date): date is string => Boolean(date))
-    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-
-  return marketDataDates[0] || currentPortfolio.value?.updatedAt || null
-})
-
-// Dynamic relative time that updates every minute
-const currentTime = ref(Date.now())
-const dynamicRelativeTime = computed(() => {
-  const lastUpdate = marketDataLastUpdated.value || currentPortfolio.value?.updatedAt
-  if (!lastUpdate) return ''
-
-  const { t } = useI18n()
-  const now = currentTime.value
-  const updateTime = new Date(lastUpdate).getTime()
-  const diffMs = now - updateTime
-  const diffMinutes = Math.floor(diffMs / (1000 * 60))
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffMinutes < 1) {
-    return t('time.justNow')
-  } else if (diffMinutes < 60) {
-    return t('time.minutesAgo', { count: diffMinutes }, diffMinutes)
-  } else if (diffHours < 24) {
-    return t('time.hoursAgo', { count: diffHours }, diffHours)
-  } else if (diffDays < 7) {
-    return t('time.daysAgo', { count: diffDays }, diffDays)
-  } else {
-    // For older dates, fall back to formatted date
-    return formatDate(lastUpdate)
-  }
-})
-
-// Update current time every minute for dynamic relative time
-let timeInterval: NodeJS.Timeout | null = null
-
-onMounted(() => {
-  // Update time every minute (60 seconds)
-  timeInterval = setInterval(() => {
-    currentTime.value = Date.now()
-  }, 60 * 1000)
-})
-
-onUnmounted(() => {
-  if (timeInterval) {
-    clearInterval(timeInterval)
   }
 })
 
