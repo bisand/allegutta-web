@@ -231,7 +231,7 @@ export const usePortfolioStore = defineStore('portfolio', {
       try {
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-        
+
         const response = await $fetch<{ data: Portfolio[] }>('/api/portfolios', {
           headers: headers as HeadersInit
         })
@@ -257,7 +257,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         this.loading = true
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-        
+
         const response = await $fetch<{ data: Portfolio }>('/api/portfolios', {
           method: 'POST',
           headers: headers as HeadersInit,
@@ -285,7 +285,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         this.loading = true
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-        
+
         const response = await $fetch<{ data: Portfolio }>(`/api/portfolios/${portfolioId}`, {
           method: 'PUT' as const,
           headers: headers as HeadersInit,
@@ -296,14 +296,14 @@ export const usePortfolioStore = defineStore('portfolio', {
 
         // Update the portfolio in both portfolios and publicPortfolios arrays
         const updatedPortfolio = response.data
-        
+
         // If this portfolio is being set as default, update other portfolios
         if (updatedPortfolio.isDefault) {
           // Set all other portfolios to not default
-          this.portfolios = this.portfolios.map(p => 
+          this.portfolios = this.portfolios.map(p =>
             p.id === portfolioId ? updatedPortfolio : { ...p, isDefault: false }
           )
-          this.publicPortfolios = this.publicPortfolios.map(p => 
+          this.publicPortfolios = this.publicPortfolios.map(p =>
             p.id === portfolioId ? updatedPortfolio : { ...p, isDefault: false }
           )
         } else {
@@ -341,7 +341,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         this.loading = true
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-        
+
         await $fetch(`/api/portfolios/${portfolioId}`, {
           method: 'DELETE' as const,
           headers: headers as HeadersInit
@@ -374,7 +374,7 @@ export const usePortfolioStore = defineStore('portfolio', {
           // Use granular loading states instead of main loading
           this.loadingTransactions = true
           this.loadingHoldings = true
-          
+
           await Promise.all([
             this.fetchTransactions(portfolioId),
             this.fetchHoldings(portfolioId)
@@ -415,14 +415,14 @@ export const usePortfolioStore = defineStore('portfolio', {
       try {
         this.loadingHoldings = true
         // Try authenticated endpoint first, fall back to public endpoint
-        let response
+        let response: { data: { portfolio: { id: string, name: string, cashBalance: number }, holdings: Holding[] } }
         try {
           // Get request headers for SSR authentication
           const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-          response = await $fetch(`/api/portfolios/${portfolioId}/holdings`, {
+          response = await $fetch<{ data: { portfolio: { id: string, name: string, cashBalance: number }, holdings: Holding[] } }>(`/api/portfolios/${portfolioId}/holdings`, {
             headers: headers as HeadersInit
-          }) as { data: { portfolio: { id: string, name: string, cashBalance: number }, holdings: Holding[] } }
-          
+          })
+
           // Update holdings and cash balance if we have portfolio data
           this.holdings = response.data.holdings || []
           if (this.currentPortfolio && response.data.portfolio) {
@@ -432,7 +432,7 @@ export const usePortfolioStore = defineStore('portfolio', {
           console.log(`Holdings updated for portfolio ${portfolioId}:`, this.holdings.length, 'holdings')
         } catch {
           // If authenticated endpoint fails, try public endpoint (legacy structure)
-          const publicResponse = await $fetch(`/api/public/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
+          const publicResponse = await $fetch<{ data: Holding[] }>(`/api/public/portfolios/${portfolioId}/holdings`)
           this.holdings = publicResponse.data || []
           this.updateTimestamp()
           console.log(`Holdings updated (public) for portfolio ${portfolioId}:`, this.holdings.length, 'holdings')
@@ -486,7 +486,7 @@ export const usePortfolioStore = defineStore('portfolio', {
 
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-        
+
         const response = await $fetch(`/api/portfolios/${this.currentPortfolio.id}/transactions/${transactionId}`, {
           method: 'PUT',
           headers: headers as HeadersInit,
@@ -518,7 +518,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         this.loading = true
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-        
+
         await $fetch(`/api/transactions/${transactionId}`, {
           method: 'DELETE',
           headers: headers as HeadersInit

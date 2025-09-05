@@ -31,6 +31,7 @@ export const useDateTime = () => {
   
   /**
    * Formats a date with time (timestamp) with locale-specific formatting
+   * Converts UTC dates to CET (Central European Time)
    */
   const formatDateTime = (date: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions): string => {
     if (!date) return 'N/A'
@@ -44,7 +45,8 @@ export const useDateTime = () => {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Europe/Oslo' // CET/CEST timezone
     }
     
     try {

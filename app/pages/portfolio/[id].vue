@@ -64,12 +64,6 @@
                 :disabled="refreshingEnhanced" :title="$t('portfolioPage.refreshData')" @click="refreshEnhancedData">
                 <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': refreshingEnhanced }" />
               </button>
-              <button v-if="canEdit" type="button"
-                class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-                @click="showAddTransaction = true">
-                <PlusIcon class="w-4 h-4 mr-2" />
-                {{ $t('portfolioPage.addTransaction') }}
-              </button>
             </div>
           </div>
         </div>
@@ -518,7 +512,6 @@ import {
   CurrencyDollarIcon,
   BanknotesIcon,
   ArrowPathIcon,
-  PlusIcon,
   ClockIcon,
   ArrowTrendingUpIcon,
   PencilSquareIcon,
