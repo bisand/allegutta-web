@@ -97,7 +97,7 @@
                   Market Value
                 </dt>
                 <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                  ${{ formatCurrency(portfolioStore.marketValue) }}
+                  {{ formatCurrency(portfolioStore.marketValue, { decimals: 0 }) }}
                 </dd>
               </dl>
             </div>
@@ -115,7 +115,7 @@
                   Cash Balance
                 </dt>
                 <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                  ${{ formatCurrency(currentPortfolio?.cashBalance || 0) }}
+                  {{ formatCurrency(currentPortfolio?.cashBalance || 0, { decimals: 0 }) }}
                 </dd>
               </dl>
             </div>
@@ -133,7 +133,7 @@
                   {{ $t('portfolioPage.totalValue') }}
                 </dt>
                 <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                  ${{ formatCurrency(portfolioStore.totalValue) }}
+                  {{ formatCurrency(portfolioStore.totalValue, { decimals: 0 }) }}
                 </dd>
               </dl>
             </div>
@@ -151,7 +151,7 @@
                   {{ $t('portfolioPage.totalGainLoss') }}
                 </dt>
                 <dd class="text-lg font-semibold" :class="portfolioStore.totalGainLoss >= 0 ? 'text-green-600' : 'text-red-600'">
-                  {{ portfolioStore.totalGainLoss >= 0 ? '+' : '' }}${{ formatCurrency(Math.abs(portfolioStore.totalGainLoss)) }}
+                  {{ portfolioStore.totalGainLoss >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(portfolioStore.totalGainLoss), { decimals: 0 }) }}
                   ({{ formatPercentage(portfolioStore.totalGainLossPercentage) }}%)
                 </dd>
               </dl>
@@ -228,34 +228,50 @@
           <table v-if="portfolioStore.portfolioHoldings.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.symbol') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.quantity') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.avgPrice') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.currentPrice') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.marketValue') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.gainLoss') }}</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">{{ $t('portfolioPage.symbol') }}</th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">{{ $t('portfolioPage.quantity') }}</th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">{{ $t('portfolioPage.avgPrice') }}</th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">{{ $t('portfolioPage.cost') }}</th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">{{ $t('portfolioPage.currentPrice') }}</th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">{{ $t('portfolioPage.todayChange') }}</th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-28">{{ $t('portfolioPage.marketValue') }}</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">{{ $t('portfolioPage.gainLoss') }}</th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <tr v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                  {{ holding.symbol }}
+                <td class="px-4 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900 dark:text-white">
+                    {{ holding.symbol }}
+                  </div>
+                  <div v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {{ holding.instrumentName }}
+                  </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {{ holding.quantity }}
+                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                  {{ formatNumber(holding.quantity, 0) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  ${{ formatCurrency(holding.avgPrice) }}
+                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                  {{ formatCurrency(holding.avgPrice, { decimals: 2 }) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  ${{ formatCurrency(holding.currentPrice || holding.avgPrice) }}
+                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                  {{ formatCurrency(holding.quantity * holding.avgPrice, { decimals: 0 }) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  ${{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice)) }}
+                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                  {{ formatCurrency(holding.currentPrice || holding.avgPrice, { decimals: 2 }) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <td class="px-3 py-4 whitespace-nowrap text-sm text-right">
+                  <span v-if="holding.regularMarketChangePercent !== null" :class="holding.regularMarketChangePercent >= 0 ? 'text-green-600' : 'text-red-600'">
+                    {{ formatPercentage(holding.regularMarketChangePercent) }}
+                  </span>
+                  <span v-else class="text-gray-400">N/A</span>
+                </td>
+                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                  {{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice), { decimals: 0 }) }}
+                </td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-right">
                   <span :class="getGainLossColor(holding)">
-                    {{ getHoldingGainLoss(holding) >= 0 ? '+' : '-' }}${{ formatCurrency(Math.abs(getHoldingGainLoss(holding))) }}
+                    {{ getHoldingGainLoss(holding) >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(getHoldingGainLoss(holding)), { decimals: 0 }) }}
                     ({{ getHoldingGainLoss(holding) >= 0 ? '+' : '-' }}{{ Math.abs(getHoldingGainLossPercentage(holding)).toFixed(2) }}%)
                   </span>
                 </td>
@@ -285,12 +301,13 @@
                 </div>
                 <div>
                   <p class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">${{ formatCurrency(holding.currentPrice || holding.avgPrice) }}</p>
+                  <p v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400">{{ holding.instrumentName }}</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatCurrency(holding.currentPrice || holding.avgPrice, { decimals: 2 }) }}</p>
                 </div>
               </div>
               <div class="text-right">
                 <p class="text-green-600 dark:text-green-400 font-medium">
-                  +${{ formatCurrency(Math.abs(getHoldingGainLoss(holding))) }}
+                  +{{ formatCurrency(Math.abs(getHoldingGainLoss(holding))) }}
                 </p>
                 <p class="text-sm text-green-600 dark:text-green-400">
                   +{{ getHoldingGainLossPercentage(holding).toFixed(2) }}%
@@ -310,11 +327,14 @@
             <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id" class="flex items-center justify-between">
               <div class="flex items-center">
                 <div class="w-3 h-3 rounded-full mr-3" :style="{ backgroundColor: getColorForSymbol(holding.symbol) }" />
-                <span class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</span>
+                <div>
+                  <span class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</span>
+                  <div v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400">{{ holding.instrumentName }}</div>
+                </div>
               </div>
               <div class="text-right">
                 <p class="font-medium text-gray-900 dark:text-white">{{ getAllocationPercentage(holding).toFixed(1) }}%</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">${{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice)) }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice)) }}</p>
               </div>
             </div>
           </div>
@@ -375,13 +395,13 @@
                   {{ transaction.quantity }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  ${{ formatCurrency(transaction.price) }}
+                  {{ formatCurrency(transaction.price) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  ${{ formatCurrency(transaction.fees || 0) }}
+                  {{ formatCurrency(transaction.fees || 0) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  ${{ formatCurrency(calculateTransactionTotal(transaction)) }}
+                  {{ formatCurrency(calculateTransactionTotal(transaction), { decimals: 0 }) }}
                 </td>
                 <td v-if="canEdit" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   <button class="text-primary-600 hover:text-primary-500 mr-2">{{ $t('portfolioPage.edit') }}</button>
@@ -433,6 +453,7 @@ import {
 const route = useRoute()
 const portfolioStore = usePortfolioStore()
 const { loggedIn, user, canManagePortfolios } = useAppAuth()
+const { formatCurrency, formatNumber, formatPercentage } = useCurrency()
 
 const showAddTransaction = ref(false)
 const showImportTransactions = ref(false)
@@ -560,21 +581,7 @@ function getTransactionTypeClass(type: string): string {
 }
 
 // Format currency
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value)
-}
-
-// Format percentage
-function formatPercentage(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    signDisplay: 'exceptZero'
-  }).format(value)
-}
+// Using the useCurrency composable above
 
 // Format date
 function formatDate(date: string): string {

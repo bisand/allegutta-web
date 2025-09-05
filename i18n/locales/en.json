@@ -1,4 +1,9 @@
 {
+  "currency": {
+    "defaultCurrency": "USD",
+    "symbol": "$",
+    "decimals": 2
+  },
   "common": {
     "home": "Home",
     "about": "About",
@@ -228,7 +233,9 @@
     "symbol": "Symbol",
     "quantity": "Quantity",
     "avgPrice": "Avg Price",
+    "cost": "Cost",
     "currentPrice": "Current Price",
+    "todayChange": "Today %",
     "marketValue": "Market Value",
     "gainLoss": "Gain/Loss",
     "noHoldingsFound": "No holdings found",

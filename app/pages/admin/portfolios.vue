@@ -234,10 +234,13 @@
               <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Current Holdings</h4>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div v-for="holding in portfolioHoldings" :key="holding.id" class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</span>
+                  <div>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</span>
+                    <div v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400">{{ holding.instrumentName }}</div>
+                  </div>
                   <div class="text-right">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ holding.quantity }} shares</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-500">${{ formatCurrency(holding.avgPrice) }} avg</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ formatNumber(holding.quantity, 0) }} shares</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">{{ formatCurrency(holding.avgPrice) }} avg</p>
                   </div>
                 </div>
               </div>
@@ -381,13 +384,13 @@
                       {{ transaction.quantity }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      ${{ formatCurrency(transaction.price) }}
+                      {{ formatCurrency(transaction.price) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      ${{ formatCurrency(transaction.fees || 0) }}
+                      {{ formatCurrency(transaction.fees || 0) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      ${{ formatCurrency(calculateTransactionTotal(transaction)) }}
+                      {{ formatCurrency(calculateTransactionTotal(transaction)) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div class="flex items-center space-x-2">
@@ -443,6 +446,8 @@ import type { Portfolio } from '~/stores/portfolio'
 definePageMeta({
   middleware: ['admin-client']
 })
+
+const { formatCurrency, formatNumber } = useCurrency()
 
 interface TransactionData {
   id: string
@@ -727,13 +732,7 @@ function editPortfolio(portfolio: Portfolio): void {
   form.currency = portfolio.currency || 'NOK'
 }
 
-// Format currency
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value)
-}
+// Format currency - using useCurrency composable above
 
 // Calculate transaction total with fees
 function calculateTransactionTotal(transaction: TransactionData): number {

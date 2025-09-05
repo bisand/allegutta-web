@@ -1,4 +1,9 @@
 {
+  "currency": {
+    "defaultCurrency": "NOK",
+    "symbol": "kr",
+    "decimals": 2
+  },
   "common": {
     "home": "Hjem",
     "about": "Om",
@@ -229,9 +234,11 @@
     "holdingsTable": "Beholdninger",
     "symbol": "Symbol",
     "quantity": "Antall",
-    "avgPrice": "Gjennomsnittspris",
-    "currentPrice": "Nåværende pris",
-    "marketValue": "Markedsverdi",
+    "avgPrice": "GAV",
+    "cost": "Kostnad",
+    "currentPrice": "Pris",
+    "todayChange": "I dag %",
+    "marketValue": "Verdi",
     "gainLoss": "Gevinst/tap",
     "noHoldingsFound": "Ingen beholdninger funnet",
     "startByAdding": "Start ved å legge til din første transaksjon",

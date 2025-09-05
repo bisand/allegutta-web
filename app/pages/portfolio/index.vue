@@ -87,7 +87,6 @@ import {
   PlusIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 
 // Initialize portfolios (both public and user portfolios if authenticated) - only if not already initialized
@@ -99,15 +98,15 @@ onMounted(async () => {
 
 // Redirect to default portfolio if user has one and only one portfolio
 watch(() => portfolioStore.portfolios, (portfolios) => {
-  if (loggedIn.value && portfolios.length === 1 && portfolios[0]) {
+  if (portfolios.length === 1 && portfolios[0]) {
     // Auto-redirect to the single portfolio (only for authenticated users)
     navigateTo(`/portfolio/${portfolios[0].id}`)
-  } else if (loggedIn.value && portfolios.length > 1) {
+  } else if (portfolios.length > 1) {
     // Check if there's a default portfolio (only for authenticated users)
     const defaultPortfolio = portfolios.find(p => p.isDefault)
     if (defaultPortfolio) {
       // Could optionally auto-redirect to default portfolio
-      // navigateTo(`/portfolio/${defaultPortfolio.id}`)
+      navigateTo(`/portfolio/${defaultPortfolio.id}`)
     }
   }
 }, { immediate: true })

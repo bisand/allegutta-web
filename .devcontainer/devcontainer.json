@@ -24,7 +24,7 @@
 		"source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig-host,type=bind,consistency=cached"
 	],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sed -i 's/ZSH_THEME=.*/ZSH_THEME=\"bira\"/' ~/.zshrc && cp ~/.gitconfig-host ~/.gitconfig && sudo apt update && sudo apt install iputils-ping",
+	"postCreateCommand": "sed -i 's/ZSH_THEME=.*/ZSH_THEME=\"bira\"/' ~/.zshrc && cp ~/.gitconfig-host ~/.gitconfig && sudo apt update && sudo apt install -y iputils-ping sqlite3",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
