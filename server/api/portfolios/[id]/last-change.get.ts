@@ -15,8 +15,7 @@ export default defineEventHandler(async (event) => {
     const prisma = new PrismaClient()
     
     try {
-      // Simple approach: just get the portfolio's updatedAt for now
-      // This will be sufficient to detect when the portfolio data changes
+      // Get the portfolio to ensure it exists
       const portfolio = await prisma.portfolio.findUnique({
         where: { id: portfolioId },
         select: { updatedAt: true }
@@ -28,9 +27,30 @@ export default defineEventHandler(async (event) => {
           statusMessage: 'Portfolio not found'
         })
       }
+
+      // Get the most recent market data update time for holdings in this portfolio
+      const latestMarketData = await prisma.$queryRaw<Array<{regularMarketTime: string | null}>>`
+        SELECT MAX(md.regularMarketTime) as regularMarketTime
+        FROM market_data md
+        INNER JOIN holdings h ON h.isin = md.isin
+        WHERE h.portfolioId = ${portfolioId}
+        AND md.regularMarketTime IS NOT NULL
+      `
+
+      // Use the most recent between portfolio update and market data update
+      let lastChange = portfolio.updatedAt.toISOString()
+      
+      if (latestMarketData[0]?.regularMarketTime) {
+        const marketDataTime = new Date(latestMarketData[0].regularMarketTime)
+        const portfolioTime = new Date(portfolio.updatedAt)
+        
+        if (marketDataTime > portfolioTime) {
+          lastChange = marketDataTime.toISOString()
+        }
+      }
       
       return {
-        lastChange: portfolio.updatedAt.toISOString(),
+        lastChange,
         timestamp: Date.now()
       }
     } finally {

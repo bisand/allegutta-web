@@ -232,9 +232,9 @@ export const usePortfolioStore = defineStore('portfolio', {
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
         
-        const response = await $fetch('/api/portfolios', {
+        const response = await $fetch<{ data: Portfolio[] }>('/api/portfolios', {
           headers: headers as HeadersInit
-        }) as { data: Portfolio[] }
+        })
         this.portfolios = response.data || []
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch portfolios'
@@ -258,11 +258,11 @@ export const usePortfolioStore = defineStore('portfolio', {
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
         
-        const response = await $fetch('/api/portfolios', {
+        const response = await $fetch<{ data: Portfolio }>('/api/portfolios', {
           method: 'POST',
           headers: headers as HeadersInit,
           body: portfolioData
-        }) as { data: Portfolio }
+        })
 
         this.portfolios.push(response.data)
 
@@ -286,11 +286,11 @@ export const usePortfolioStore = defineStore('portfolio', {
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
         
-        const response = await $fetch(`/api/portfolios/${portfolioId}`, {
+        const response = await $fetch<{ data: Portfolio }>(`/api/portfolios/${portfolioId}`, {
           method: 'PUT' as const,
           headers: headers as HeadersInit,
           body: portfolioData
-        }) as { data: Portfolio }
+        })
 
         console.log('Update portfolio response:', response)
 
@@ -392,16 +392,16 @@ export const usePortfolioStore = defineStore('portfolio', {
     async fetchTransactions(portfolioId: string): Promise<void> {
       try {
         // Try authenticated endpoint first, fall back to public endpoint
-        let response
+        let response: { data: Transaction[] }
         try {
           // Get request headers for SSR authentication
           const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-          response = await $fetch(`/api/portfolios/${portfolioId}/transactions`, {
+          response = await $fetch<{ data: Transaction[] }>(`/api/portfolios/${portfolioId}/transactions`, {
             headers: headers as HeadersInit
-          }) as { data: Transaction[] }
+          })
         } catch {
           // If authenticated endpoint fails, try public endpoint
-          response = await $fetch(`/api/public/portfolios/${portfolioId}/transactions`) as { data: Transaction[] }
+          response = await $fetch<{ data: Transaction[] }>(`/api/public/portfolios/${portfolioId}/transactions`)
         }
         this.transactions = response.data || []
         this.updateTimestamp()
@@ -413,6 +413,7 @@ export const usePortfolioStore = defineStore('portfolio', {
 
     async fetchHoldings(portfolioId: string): Promise<void> {
       try {
+        this.loadingHoldings = true
         // Try authenticated endpoint first, fall back to public endpoint
         let response
         try {
@@ -428,15 +429,20 @@ export const usePortfolioStore = defineStore('portfolio', {
             this.currentPortfolio.cashBalance = response.data.portfolio.cashBalance
           }
           this.updateTimestamp()
+          console.log(`Holdings updated for portfolio ${portfolioId}:`, this.holdings.length, 'holdings')
         } catch {
           // If authenticated endpoint fails, try public endpoint (legacy structure)
           const publicResponse = await $fetch(`/api/public/portfolios/${portfolioId}/holdings`) as { data: Holding[] }
           this.holdings = publicResponse.data || []
           this.updateTimestamp()
+          console.log(`Holdings updated (public) for portfolio ${portfolioId}:`, this.holdings.length, 'holdings')
         }
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch holdings'
+        console.error('Error fetching holdings:', error)
         throw error
+      } finally {
+        this.loadingHoldings = false
       }
     },
 
@@ -542,7 +548,13 @@ export const usePortfolioStore = defineStore('portfolio', {
 
         // Trigger market data update
         await $fetch('/api/market-data/trigger-update', {
-          method: 'POST'
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            portfolioId: this.currentPortfolio.id
+          })
         })
 
         // Refresh holdings after updating prices

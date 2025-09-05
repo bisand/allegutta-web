@@ -531,6 +531,7 @@ const portfolioStore = usePortfolioStore()
 const { loggedIn, user, canManagePortfolios } = useAppAuth()
 const { formatCurrency, formatNumber, formatPercentage, formatPercentageChange, formatCurrencyChange } = useCurrency()
 const { formatDate, formatDateTime } = useDateTime()
+const { t } = useI18n()
 
 const showAddTransaction = ref(false)
 const showImportTransactions = ref(false)
@@ -668,7 +669,6 @@ const stopSmartPolling = () => {
 
 // Dynamic relative time that updates every 5 seconds
 const dynamicRelativeTime = computed(() => {
-  const { t } = useI18n()
   const lastUpdate = enhancedData.value.marketDataLastUpdated || enhancedData.value.lastUpdated
 
   if (!lastUpdate) return t('time.justNow')
@@ -711,6 +711,8 @@ const refreshEnhancedData = async () => {
       fetchEnhancedData(),
       portfolioStore.fetchHoldings(currentPortfolio.value.id)
     ])
+    // Force a timestamp update to trigger reactivity
+    portfolioStore.updateTimestamp()
   } catch (error) {
     console.error('Failed to refresh enhanced data:', error)
   } finally {
@@ -814,7 +816,7 @@ const athData = computed(() => {
   if (enhancedData.value.athValue && enhancedData.value.athDate) {
     return {
       value: formatCurrency(enhancedData.value.athValue, { decimals: 0 }),
-      dateText: formatDate(enhancedData.value.athDate),
+      dateText: formatDateTime(enhancedData.value.athDate),
       isAtAth: enhancedData.value.isAtAth
     }
   }
@@ -844,7 +846,7 @@ const athData = computed(() => {
 
   return {
     value: formatCurrency(athValue, { decimals: 0 }),
-    dateText: formatDate(athDate),
+    dateText: formatDateTime(athDate),
     isAtAth
   }
 })
@@ -1096,9 +1098,14 @@ function getGainLossColor(holding: { quantity: number; currentPrice?: number | n
 // Refresh prices
 async function refreshPrices(): Promise<void> {
   try {
+    console.log('Starting price refresh...')
     await portfolioStore.updatePrices()
+    console.log('Price refresh completed successfully')
+    // Force a timestamp update to ensure reactivity
+    portfolioStore.updateTimestamp()
   } catch (error) {
     console.error('Failed to refresh prices:', error)
+    // You might want to show a toast notification here
   }
 }
 
@@ -1109,8 +1116,6 @@ function handleImportSuccess(): void {
 }
 
 // Page meta
-const { t } = useI18n()
-
 useHead({
   title: computed(() => currentPortfolio.value ? currentPortfolio.value.name : t('portfolio.portfolio')),
   meta: [

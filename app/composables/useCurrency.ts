@@ -10,14 +10,29 @@ export interface CurrencyFormatOptions {
 }
 
 export function useCurrency() {
-  const { locale, t } = useI18n()
+  const { locale } = useI18n()
   
   // Get currency settings from locale configuration
   const getLocaleCurrencyConfig = () => {
-    return {
-      currency: t('currency.defaultCurrency', 'USD'),
-      decimals: parseInt(t('currency.decimals', '2')),
-      symbol: t('currency.symbol', '$')
+    // Locale-specific defaults - no dependency on translation files
+    const localeDefaults: Record<string, { currency: string; decimals: number; symbol: string }> = {
+      'no': {
+        currency: 'NOK',
+        decimals: 2,
+        symbol: 'kr'
+      },
+      'en': {
+        currency: 'USD',
+        decimals: 2,
+        symbol: '$'
+      }
+    }
+    
+    // Get defaults for current locale, fallback to Norwegian
+    return localeDefaults[locale.value] || localeDefaults['no'] || {
+      currency: 'NOK',
+      decimals: 2,
+      symbol: 'kr'
     }
   }
   
