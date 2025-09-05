@@ -46,6 +46,11 @@ COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 
+# Copy database schema and production startup script
+COPY prisma/schema.sql ./prisma/schema.sql
+COPY scripts/start-production.sh ./start-production.sh
+RUN chmod +x ./start-production.sh
+
 # For a Nuxt app, the .output contains everything needed at runtime
 # Prisma client is embedded in the server bundle
 
@@ -65,5 +70,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["node", ".output/server/index.mjs"]
+# Start the application with proper database initialization
+CMD ["./start-production.sh"]

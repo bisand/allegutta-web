@@ -63,7 +63,7 @@ export default defineNuxtConfig({
     kindeRedirectUrl: process.env.NUXT_KINDE_REDIRECT_URL,
     kindeLogoutRedirectUrl: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL,
     public: {
-      baseUrl: process.env.BASE_URL || 'http://localhost:3000',
+      baseUrl: process.env.BASE_URL,
       kindeDomain: process.env.NUXT_KINDE_AUTH_DOMAIN,
       registrationEnabled: process.env.REGISTRATION_ENABLED === 'true'
     }
@@ -72,9 +72,9 @@ export default defineNuxtConfig({
   // Kinde module configuration
   kinde: {
     // The module will automatically use NUXT_KINDE_* environment variables
-    redirectURL: process.env.NUXT_KINDE_REDIRECT_URL || 'http://localhost:3000/api/auth/kinde_callback',
-    logoutRedirectURL: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL || 'http://localhost:3000',
-    postLoginRedirectURL: process.env.NUXT_KINDE_POST_LOGIN_REDIRECT_URL || 'http://localhost:3000/portfolio'
+    redirectURL: process.env.NUXT_KINDE_REDIRECT_URL,
+    logoutRedirectURL: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL,
+    postLoginRedirectURL: process.env.NUXT_KINDE_POST_LOGIN_REDIRECT_URL,
   },
 
   // i18n configuration

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,170 +7,115 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id          String   @id @default(cuid())
-  kindeId     String   @unique
-  email       String   @unique
+model ath_history {
+  id          String     @id
+  portfolioId String
+  athValue    Float
+  athDate     DateTime
+  surpassedAt DateTime   @default(now())
+  newAthValue Float
+  createdAt   DateTime   @default(now())
+  portfolios  portfolios @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+}
+
+model holdings {
+  id          String     @id
+  portfolioId String
+  symbol      String
+  isin        String?
+  quantity    Float
+  avgPrice    Float
+  currency    String     @default("NOK")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime
+  portfolios  portfolios @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, symbol])
+}
+
+model market_data {
+  isin                          String    @id
+  symbol                        String
+  symbolYahoo                   String?
+  longName                      String?
+  shortName                     String?
+  currency                      String?
+  currentPrice                  Float?
+  regularMarketChange           Float?
+  regularMarketChangePercent    Float?
+  regularMarketPreviousClose    Float?
+  regularMarketDayHigh          Float?
+  regularMarketDayLow           Float?
+  regularMarketDayRange         String?
+  regularMarketVolume           Float?
+  regularMarketTime             DateTime?
+  fiftyTwoWeekLow               Float?
+  fiftyTwoWeekHigh              Float?
+  fiftyTwoWeekLowChange         Float?
+  fiftyTwoWeekHighChange        Float?
+  fiftyTwoWeekLowChangePercent  Float?
+  fiftyTwoWeekHighChangePercent Float?
+  fiftyTwoWeekRange             String?
+  exchange                      String?
+  exchangeTimezoneName          String?
+  exchangeTimezoneShortName     String?
+  fullExchangeName              String?
+  marketState                   String?
+  quoteType                     String?
+  typeDisp                      String?
+  firstTradeDateMilliseconds    Float?
+  lastUpdated                   DateTime  @default(now())
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime
+}
+
+model portfolios {
+  id           String         @id
+  name         String
+  description  String?
+  userId       String
+  isDefault    Boolean        @default(false)
+  currency     String         @default("NOK")
+  cashBalance  Float          @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  athDate      DateTime?
+  athValue     Float?
+  ath_history  ath_history[]
+  holdings     holdings[]
+  users        users          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions transactions[]
+}
+
+model transactions {
+  id          String     @id
+  portfolioId String
+  symbol      String
+  isin        String?
+  type        String
+  quantity    Float
+  price       Float
+  fees        Float      @default(0)
+  amount      Float?
+  currency    String     @default("NOK")
+  date        DateTime
+  saldo       Float?
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime
+  portfolios  portfolios @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+}
+
+model users {
+  id          String       @id
+  kindeId     String       @unique
+  email       String       @unique
   firstName   String?
   lastName    String?
   picture     String?
-  roles       String   @default("[]") // JSON array of roles from Kinde
-  permissions String   @default("[]") // JSON array of permissions from Kinde
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  portfolios  Portfolio[]
-  
-  @@map("users")
-}
-
-model Portfolio {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  userId      String
-  isDefault   Boolean  @default(false)
-  currency    String   @default("NOK") // Default currency for the portfolio
-  cashBalance Float    @default(0) // Cash balance for the portfolio
-  
-  // All-Time High tracking
-  athValue    Float?    // All-time high market value
-  athDate     DateTime? // Date when ATH was achieved
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
-  holdings    Holding[]
-  athHistory  AthHistory[]
-  
-  @@map("portfolios")
-}
-
-model Transaction {
-  id          String      @id @default(cuid())
-  portfolioId String
-  symbol      String
-  isin        String?     // International Securities Identification Number
-  type        TransactionType
-  quantity    Float
-  price       Float
-  fees        Float       @default(0)
-  amount      Float?      // Original beløp amount from CSV for accurate calculations
-  currency    String      @default("NOK") // Currency for this transaction
-  date        DateTime
-  saldo       Float?      // Broker's authoritative cash balance after this transaction
-  notes       String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
-  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  
-  @@map("transactions")
-}
-
-model MarketData {
-  isin        String   @id // ISIN as primary key
-  symbol      String   // Original symbol (e.g., NHY)
-  symbolYahoo String?  // Yahoo Finance symbol (e.g., NHY.OL)  
-  
-  // Basic info
-  longName    String?
-  shortName   String?
-  currency    String?
-  
-  // Current market data
-  currentPrice Float?
-  regularMarketChange Float?
-  regularMarketChangePercent Float?
-  regularMarketPreviousClose Float?
-  regularMarketDayHigh Float?
-  regularMarketDayLow Float?
-  regularMarketDayRange String?
-  regularMarketVolume Float?
-  regularMarketTime DateTime?
-  
-  // 52-week data
-  fiftyTwoWeekLow Float?
-  fiftyTwoWeekHigh Float?
-  fiftyTwoWeekLowChange Float?
-  fiftyTwoWeekHighChange Float?
-  fiftyTwoWeekLowChangePercent Float?
-  fiftyTwoWeekHighChangePercent Float?
-  fiftyTwoWeekRange String?
-  
-  // Exchange info
-  exchange String?
-  exchangeTimezoneName String?
-  exchangeTimezoneShortName String?
-  fullExchangeName String?
-  marketState String?
-  
-  // Company info
-  quoteType String?
-  typeDisp String?
-  firstTradeDateMilliseconds Float?
-  
-  // Metadata
-  lastUpdated DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  @@map("market_data")
-}
-
-model Holding {
-  id          String   @id @default(cuid())
-  portfolioId String
-  symbol      String
-  isin        String?  // International Securities Identification Number
-  quantity    Float
-  avgPrice    Float
-  currency    String   @default("NOK") // Currency for this holding
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  
-  @@unique([portfolioId, symbol])
-  @@map("holdings")
-}
-
-enum TransactionType {
-  BUY
-  SELL
-  DIVIDEND
-  SPLIT
-  MERGER
-  DEPOSIT
-  WITHDRAWAL
-  REFUND
-  LIQUIDATION
-  REDEMPTION
-  EXCHANGE_IN
-  EXCHANGE_OUT
-  SPIN_OFF_IN
-  DECIMAL_LIQUIDATION
-  DECIMAL_WITHDRAWAL
-  RIGHTS_ALLOCATION
-  TRANSFER_IN
-  DIVIDEND_REINVEST
-  INTEREST_CHARGE
-  RIGHTS_ISSUE
-  SALDO_ADJUSTMENT
-}
-
-model AthHistory {
-  id          String   @id @default(cuid())
-  portfolioId String
-  athValue    Float    // Previous ATH value that was surpassed
-  athDate     DateTime // Date when this ATH was originally achieved
-  surpassedAt DateTime @default(now()) // Date when this ATH was surpassed by a new one
-  newAthValue Float    // The new ATH value that surpassed this one
-  createdAt   DateTime @default(now())
-  
-  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  
-  @@map("ath_history")
+  roles       String       @default("[]")
+  permissions String       @default("[]")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+  portfolios  portfolios[]
 }

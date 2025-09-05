@@ -274,6 +274,15 @@ export default defineEventHandler(async (event) => {
         const price = parseNorwegianNumber(csvRow.Kurs)
         const amount = parseNorwegianNumber(csvRow.Beløp) // Cash amount from Beløp column
         const fees = parseNorwegianNumber(csvRow['Totale Avgifter']) || parseNorwegianNumber(csvRow.Kurtasje) || 0
+        
+        // For exchange transactions with EXCHANGE_IN type, try to capture Kjøpsverdi for cost basis
+        let notesWithCostBasis = csvRow.Transaksjonstekst || null
+        if (transactionType === 'EXCHANGE_IN' && csvRow.Kjøpsverdi) {
+          const costBasis = parseNorwegianNumber(csvRow.Kjøpsverdi)
+          if (costBasis && costBasis > 0) {
+            notesWithCostBasis = (notesWithCostBasis || '') + ` [Kjøpsverdi: ${costBasis}]`
+          }
+        }
 
         // Handle different transaction types
         let finalQuantity = Math.abs(quantity || 0)
@@ -324,7 +333,7 @@ export default defineEventHandler(async (event) => {
           fees: fees,
           currency: portfolioCurrency,
           date: parseNorwegianDate(csvRow.Bokføringsdag),
-          notes: csvRow.Transaksjonstekst || null,
+          notes: notesWithCostBasis,
           saldo: csvRow.Saldo ? parseNorwegianNumber(csvRow.Saldo) : null,  // Store broker's saldo if available
           amount: amount  // Store the original beløp amount for accurate saldo calculations
         }
