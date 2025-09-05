@@ -178,8 +178,9 @@
         </div>
       </div>
 
-      <!-- Last Updated -->
+      <!-- Enhanced Portfolio Metrics -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Last Updated with timestamp -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="flex items-center">
             <div class="flex-shrink-0">
@@ -191,7 +192,55 @@
                   {{ $t('portfolioPage.lastUpdated') }}
                 </dt>
                 <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                  {{ formatDate(currentPortfolio.updatedAt) }}
+                  {{ formatDateTime(marketDataLastUpdated || currentPortfolio.updatedAt) }}
+                </dd>
+                <dd class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {{ formatRelativeTime(marketDataLastUpdated || currentPortfolio.updatedAt) }}
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Change -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <ArrowTrendingUpIcon class="w-8 h-8" :class="dailyChangeData.isPositive ? 'text-green-500' : dailyChangeData.isNegative ? 'text-red-500' : 'text-gray-500'" />
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                  {{ $t('portfolioPage.changedToday') }}
+                </dt>
+                <dd class="text-lg font-semibold" :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-900 dark:text-white'">
+                  {{ dailyChangeData.currencyValue }}
+                </dd>
+                <dd class="text-sm" :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-600'">
+                  {{ dailyChangeData.percentageValue }}
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <!-- All-Time High (ATH) -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <ChartBarIcon class="w-8 h-8" :class="athData.isAtAth ? 'text-yellow-500' : 'text-blue-500'" />
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                  {{ $t('portfolioPage.allTimeHigh') }}
+                  <span v-if="athData.isAtAth" class="ml-1 text-yellow-500">⭐</span>
+                </dt>
+                <dd class="text-lg font-semibold text-gray-900 dark:text-white">
+                  {{ athData.value }}
+                </dd>
+                <dd class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {{ athData.dateText }}
                 </dd>
               </dl>
             </div>
@@ -519,7 +568,8 @@ import {
 const route = useRoute()
 const portfolioStore = usePortfolioStore()
 const { loggedIn, user, canManagePortfolios } = useAppAuth()
-const { formatCurrency, formatNumber, formatPercentage } = useCurrency()
+const { formatCurrency, formatNumber, formatPercentage, formatPercentageChange, formatCurrencyChange } = useCurrency()
+const { formatDate, formatDateTime, formatRelativeTime } = useDateTime()
 
 const showAddTransaction = ref(false)
 const showImportTransactions = ref(false)
@@ -557,6 +607,142 @@ const canEdit = computed(() => {
 // Check if user is admin (for admin edit button)
 const isAdmin = computed(() => {
   return loggedIn.value && canManagePortfolios.value
+})
+
+// Enhanced portfolio data (including ATH and market data timing)
+const enhancedData = ref({
+  athValue: null as number | null,
+  athDate: null as string | null,
+  athDrawdown: 0,
+  daysSinceAth: null as number | null,
+  isAtAth: false,
+  dailyChangeValue: 0,
+  dailyChangePercentage: 0,
+  lastUpdated: null as string | null,
+  marketDataLastUpdated: null as string | null
+})
+
+// Fetch enhanced data when portfolio changes
+const fetchEnhancedData = async () => {
+  if (!currentPortfolio.value) return
+  
+  try {
+    const response = await $fetch(`/api/portfolios/${currentPortfolio.value.id}/enhanced`)
+    enhancedData.value = response
+  } catch (error) {
+    console.error('Failed to fetch enhanced portfolio data:', error)
+  }
+}
+
+// Watch for portfolio changes and fetch enhanced data
+watch(currentPortfolio, async (newPortfolio) => {
+  if (newPortfolio) {
+    await fetchEnhancedData()
+  }
+}, { immediate: true })
+
+// Calculate daily change data based on holdings
+const dailyChangeData = computed(() => {
+  // Use enhanced data if available, otherwise calculate from holdings
+  if (enhancedData.value.dailyChangeValue !== 0 || enhancedData.value.dailyChangePercentage !== 0) {
+    const currencyChange = formatCurrencyChange(enhancedData.value.dailyChangeValue, 'NOK')
+    const percentageChange = formatPercentageChange(enhancedData.value.dailyChangePercentage)
+    
+    return {
+      value: enhancedData.value.dailyChangeValue,
+      percentage: enhancedData.value.dailyChangePercentage,
+      currencyValue: currencyChange.value,
+      percentageValue: percentageChange.value,
+      isPositive: currencyChange.isPositive,
+      isNegative: currencyChange.isNegative,
+      isZero: currencyChange.isZero
+    }
+  }
+
+  // Fallback calculation from holdings
+  let totalDailyChange = 0
+  let totalMarketValue = 0
+  
+  for (const holding of portfolioStore.portfolioHoldings) {
+    const marketValue = holding.quantity * (holding.currentPrice || holding.avgPrice)
+    const changePercent = holding.regularMarketChangePercent || 0
+    const changeValue = (marketValue * changePercent) / 100
+    
+    totalDailyChange += changeValue
+    totalMarketValue += marketValue
+  }
+  
+  const changePercentage = totalMarketValue > 0 ? (totalDailyChange / totalMarketValue) * 100 : 0
+  
+  const currencyChange = formatCurrencyChange(totalDailyChange, 'NOK')
+  const percentageChange = formatPercentageChange(changePercentage)
+  
+  return {
+    value: totalDailyChange,
+    percentage: changePercentage,
+    currencyValue: currencyChange.value,
+    percentageValue: percentageChange.value,
+    isPositive: currencyChange.isPositive,
+    isNegative: currencyChange.isNegative,
+    isZero: currencyChange.isZero
+  }
+})
+
+// ATH (All-Time High) data
+const athData = computed(() => {
+  // Use enhanced data first
+  if (enhancedData.value.athValue && enhancedData.value.athDate) {
+    return {
+      value: formatCurrency(enhancedData.value.athValue, { decimals: 0 }),
+      dateText: formatDate(enhancedData.value.athDate),
+      isAtAth: enhancedData.value.isAtAth
+    }
+  }
+  
+  // Fallback to portfolio store data
+  if (!currentPortfolio.value) {
+    return {
+      value: 'N/A',
+      dateText: 'N/A',
+      isAtAth: false
+    }
+  }
+  
+  const athValue = currentPortfolio.value.athValue
+  const athDate = currentPortfolio.value.athDate
+  
+  if (!athValue || !athDate) {
+    return {
+      value: 'Not set',
+      dateText: 'Never',
+      isAtAth: false
+    }
+  }
+  
+  const currentValue = portfolioStore.totalValue
+  const isAtAth = Math.abs(currentValue - athValue) / athValue < 0.001 // Within 0.1%
+  
+  return {
+    value: formatCurrency(athValue, { decimals: 0 }),
+    dateText: formatDate(athDate),
+    isAtAth
+  }
+})
+
+// Market data last updated time
+const marketDataLastUpdated = computed(() => {
+  // Use enhanced data if available
+  if (enhancedData.value.marketDataLastUpdated) {
+    return enhancedData.value.marketDataLastUpdated
+  }
+  
+  // Fallback to finding latest market data update from holdings
+  const marketDataDates = portfolioStore.portfolioHoldings
+    .map(holding => holding.lastUpdated)
+    .filter(Boolean)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+  
+  return marketDataDates[0] || currentPortfolio.value?.updatedAt || null
 })
 
 // Load portfolio data when route changes
@@ -738,14 +924,6 @@ function getTransactionTypeClass(type: string): string {
     default:
       return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
   }
-}
-
-// Format currency
-// Using the useCurrency composable above
-
-// Format date
-function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString()
 }
 
 // Calculate transaction total with fees

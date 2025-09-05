@@ -222,6 +222,8 @@
     "totalGainLoss": "Total gevinst/tap",
     "holdings": "Beholdninger",
     "lastUpdated": "Sist oppdatert",
+    "changedToday": "Endret i dag",
+    "allTimeHigh": "All-tids høyde",
     "positions": "posisjoner",
     "topPerformers": "Toppytere",
     "noPositivePerformers": "Ingen positive ytere ennå",

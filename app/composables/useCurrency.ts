@@ -147,12 +147,88 @@ export function useCurrency() {
     return config.currency
   }
 
+  /**
+   * Formats a percentage change with proper styling indicators
+   */
+  function formatPercentageChange(
+    change: number | null | undefined,
+    options?: { showSign?: boolean; decimals?: number }
+  ): { value: string; isPositive: boolean; isNegative: boolean; isZero: boolean } {
+    const { showSign = true, decimals = 2 } = options || {}
+    
+    if (change === null || change === undefined || isNaN(change)) {
+      return { value: 'N/A', isPositive: false, isNegative: false, isZero: false }
+    }
+    
+    const isPositive = change > 0
+    const isNegative = change < 0
+    const isZero = change === 0
+    
+    const localeCode = localeMapping[locale.value] || 'en-US'
+    
+    let value: string
+    try {
+      value = new Intl.NumberFormat(localeCode, {
+        style: 'percent',
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        signDisplay: showSign ? 'always' : 'auto'
+      }).format(change / 100)
+    } catch {
+      // Fallback formatting
+      const sign = showSign && isPositive ? '+' : ''
+      value = `${sign}${change.toFixed(decimals)}%`
+    }
+    
+    return { value, isPositive, isNegative, isZero }
+  }
+  
+  /**
+   * Formats an absolute change in currency with styling indicators
+   */
+  function formatCurrencyChange(
+    change: number | null | undefined,
+    currency: string = 'NOK',
+    options?: { showSign?: boolean; decimals?: number }
+  ): { value: string; isPositive: boolean; isNegative: boolean; isZero: boolean } {
+    const { showSign = true, decimals = 2 } = options || {}
+    
+    if (change === null || change === undefined || isNaN(change)) {
+      return { value: 'N/A', isPositive: false, isNegative: false, isZero: false }
+    }
+    
+    const isPositive = change > 0
+    const isNegative = change < 0
+    const isZero = change === 0
+    
+    const localeCode = localeMapping[locale.value] || 'en-US'
+    
+    let value: string
+    try {
+      value = new Intl.NumberFormat(localeCode, {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        signDisplay: showSign ? 'always' : 'auto'
+      }).format(change)
+    } catch {
+      // Fallback formatting
+      const sign = showSign && isPositive ? '+' : ''
+      value = `${sign}${currency} ${change.toFixed(decimals)}`
+    }
+    
+    return { value, isPositive, isNegative, isZero }
+  }
+
   return {
     formatCurrency,
     formatAmount,
     formatCompactCurrency,
     formatNumber,
     formatPercentage,
+    formatPercentageChange,
+    formatCurrencyChange,
     getCurrencySymbol,
     getDefaultCurrency
   }

@@ -10,6 +10,8 @@ export interface Portfolio {
   userId: string
   createdAt: string
   updatedAt: string
+  athValue?: number | null
+  athDate?: string | null
 }
 
 interface Transaction {

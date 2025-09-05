@@ -35,12 +35,18 @@ model Portfolio {
   isDefault   Boolean  @default(false)
   currency    String   @default("NOK") // Default currency for the portfolio
   cashBalance Float    @default(0) // Cash balance for the portfolio
+  
+  // All-Time High tracking
+  athValue    Float?    // All-time high market value
+  athDate     DateTime? // Date when ATH was achieved
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
   holdings    Holding[]
+  athHistory  AthHistory[]
   
   @@map("portfolios")
 }
@@ -156,4 +162,18 @@ enum TransactionType {
   INTEREST_CHARGE
   RIGHTS_ISSUE
   SALDO_ADJUSTMENT
+}
+
+model AthHistory {
+  id          String   @id @default(cuid())
+  portfolioId String
+  athValue    Float    // Previous ATH value that was surpassed
+  athDate     DateTime // Date when this ATH was originally achieved
+  surpassedAt DateTime @default(now()) // Date when this ATH was surpassed by a new one
+  newAthValue Float    // The new ATH value that surpassed this one
+  createdAt   DateTime @default(now())
+  
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@map("ath_history")
 }

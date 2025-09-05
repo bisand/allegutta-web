@@ -220,6 +220,8 @@
     "totalGainLoss": "Total Gain/Loss",
     "holdings": "Holdings",
     "lastUpdated": "Last Updated",
+    "changedToday": "Changed Today",
+    "allTimeHigh": "All-Time High",
     "positions": "positions",
     "topPerformers": "Top Performers",
     "noPositivePerformers": "No positive performers yet",
