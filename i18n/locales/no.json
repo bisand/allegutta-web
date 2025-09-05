@@ -9,7 +9,7 @@
     "logout": "Logg ut",
     "register": "Registrer",
     "save": "Lagre",
-    "cancel": "Avbryt", 
+    "cancel": "Avbryt",
     "edit": "Rediger",
     "delete": "Slett",
     "add": "Legg til",
@@ -32,6 +32,18 @@
     "managementDescription": "Administrer investeringene dine med presisjon og klarhet.",
     "privacyPolicy": "Personvernerklæring"
   },
+  "privacy": {
+    "title": "Personvernerklæring",
+    "description": "Denne personvernerklæringen beskriver hvordan AlleGutta Portfolio Manager håndterer din personlige informasjon.",
+    "informationWeCollect": "Informasjon vi samler inn",
+    "informationWeCollectDescription": "Vi samler inn informasjon du gir direkte til oss, for eksempel når du oppretter en konto, legger til porteføljedata, eller kontakter oss for støtte.",
+    "howWeUseInfo": "Hvordan vi bruker din informasjon",
+    "howWeUseInfoDescription": "Vi bruker informasjonen vi samler inn til å tilby, vedlikeholde og forbedre våre tjenester, inkludert porteføljesporing og analysefunksjoner.",
+    "dataSecurity": "Datasikkerhet",
+    "dataSecurityDescription": "Vi implementerer passende sikkerhetstiltak for å beskytte din personlige informasjon mot uautorisert tilgang, endring, offentliggjøring eller ødeleggelse.",
+    "contactUs": "Kontakt oss",
+    "contactUsDescription": "Hvis du har spørsmål om denne personvernerklæringen, vennligst kontakt oss."
+  },
   "header": {
     "title": "AlleGutta",
     "portfolios": "Porteføljer",
@@ -39,7 +51,7 @@
     "settings": "Innstillinger",
     "administration": "Administrasjon",
     "portfolioManagement": "Porteføljeadministrasjon",
-    "editCurrentPortfolio": "Rediger aktiv portefølje",
+    "editCurrentPortfolio": "Porteføljeredigering",
     "signOut": "Logg ut"
   },
   "footer": {
@@ -54,6 +66,7 @@
     "noPermissionManagePortfolios": "Du har ikke tillatelse til å administrere porteføljer."
   },
   "portfolio": {
+    "portfolio": "Portefølje",
     "management": "Porteføljeadministrasjon",
     "managementDescription": "Opprett og administrer porteføljer for applikasjonen",
     "createPortfolio": "Opprett portefølje",
@@ -122,7 +135,7 @@
   },
   "messages": {
     "portfolioCreated": "Portefølje opprettet vellykket",
-    "portfolioUpdated": "Portefølje oppdatert vellykket", 
+    "portfolioUpdated": "Portefølje oppdatert vellykket",
     "portfolioDeleted": "Portefølje slettet vellykket",
     "transactionAdded": "Transaksjon lagt til vellykket",
     "transactionUpdated": "Transaksjon oppdatert vellykket",
@@ -137,7 +150,7 @@
     "welcomeTitle": "Velkommen til",
     "subtitle": "Din personlige porteføljeadministrasjonsplattform. Spor investeringene dine, administrer transaksjoner og overvåk din finansielle vekst med presisjon og klarhet.",
     "getStarted": "Kom i gang",
-    "viewPortfolio": "Vis portefølje",
+    "viewPortfolio": "Vis porteføljer",
     "signIn": "Logg inn",
     "featuresTitle": "Kraftige funksjoner",
     "featuresSubtitle": "Alt du trenger for å administrere investeringsporteføljen din effektivt",
@@ -164,7 +177,9 @@
     "startToday": "Start i dag",
     "createPortfolio": "Opprett din portefølje",
     "goToPortfolio": "Gå til portefølje",
-    "registrationDisabled": "Registrering er deaktivert. Kontakt en administrator for tilgang."
+    "registrationDisabled": "Registrering er deaktivert. Kontakt en administrator for tilgang.",
+    "publicPortfolios": "Offentlige porteføljer",
+    "choosePortfolio": "Velg portefølje"
   },
   "about": {
     "pageTitle": "Om AlleGutta",
@@ -192,7 +207,7 @@
     "loading": "Laster portefølje...",
     "notFound": "Portefølje ikke funnet",
     "noAccess": "Den forespurte porteføljen eksisterer ikke eller du har ikke tilgang til den.",
-    "adminEdit": "Admin redigering",
+    "adminEdit": "Redigér Portefølje",
     "updatePrices": "Oppdater priser",
     "addTransaction": "Legg til transaksjon",
     "importTransactions": "Importer transaksjoner",

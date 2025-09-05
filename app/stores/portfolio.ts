@@ -52,6 +52,9 @@ interface PortfolioState {
   transactions: Transaction[]
   holdings: Holding[]
   loading: boolean
+  initializing: boolean
+  loadingTransactions: boolean
+  loadingHoldings: boolean
   error: string | null
 }
 
@@ -82,6 +85,9 @@ export const usePortfolioStore = defineStore('portfolio', {
     transactions: [],
     holdings: [],
     loading: false,
+    initializing: false,
+    loadingTransactions: false,
+    loadingHoldings: false,
     error: null
   }),
 
@@ -167,7 +173,7 @@ export const usePortfolioStore = defineStore('portfolio', {
   actions: {
     async initialize(): Promise<void> {
       try {
-        this.loading = true
+        this.initializing = true
         // Always fetch public portfolios
         await this.fetchPublicPortfolios()
 
@@ -181,7 +187,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred'
         console.error('Failed to initialize:', error)
       } finally {
-        this.loading = false
+        this.initializing = false
       }
     },
 
@@ -233,13 +239,11 @@ export const usePortfolioStore = defineStore('portfolio', {
 
     async loadAllPortfolios(): Promise<void> {
       try {
-        this.loading = true
+        // Don't set main loading state for admin operations to avoid UI flickering
         await this.fetchPortfolios()
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to load portfolios'
         throw error
-      } finally {
-        this.loading = false
       }
     },
 
@@ -358,10 +362,14 @@ export const usePortfolioStore = defineStore('portfolio', {
 
     async setCurrentPortfolio(portfolioId: string): Promise<void> {
       try {
-        this.loading = true
+        // Don't show main loading spinner for portfolio switches
         this.currentPortfolio = this.allPortfolios.find(p => p.id === portfolioId) || null
 
         if (this.currentPortfolio) {
+          // Use granular loading states instead of main loading
+          this.loadingTransactions = true
+          this.loadingHoldings = true
+          
           await Promise.all([
             this.fetchTransactions(portfolioId),
             this.fetchHoldings(portfolioId)
@@ -371,7 +379,8 @@ export const usePortfolioStore = defineStore('portfolio', {
         this.error = error instanceof Error ? error.message : 'Failed to set current portfolio'
         throw error
       } finally {
-        this.loading = false
+        this.loadingTransactions = false
+        this.loadingHoldings = false
       }
     },
 

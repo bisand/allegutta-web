@@ -25,11 +25,13 @@
                 {{ $t('common.home') }}
               </NuxtLink>
             </li>
-            <li v-if="loggedIn">
-              <NuxtLink to="/portfolio" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors">
-                {{ $t('common.portfolio') }}
-              </NuxtLink>
-            </li>
+            <ClientOnly>
+              <li v-if="loggedIn">
+                <NuxtLink to="/portfolio" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors">
+                  {{ $t('common.portfolio') }}
+                </NuxtLink>
+              </li>
+            </ClientOnly>
             <li>
               <NuxtLink to="/about" class="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm transition-colors">
                 {{ $t('common.about') }}
@@ -81,7 +83,7 @@
 <script setup lang="ts">
 import { ChartBarIcon, EnvelopeIcon, GlobeAltIcon } from '@heroicons/vue/24/outline'
 
-const { loggedIn } = useAuth()
+const { loggedIn } = useAppAuth()
 
 const currentYear = new Date().getFullYear()
 </script>

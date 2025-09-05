@@ -13,32 +13,12 @@
           </p>
           
           <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <NuxtLink 
-              v-if="!loggedIn"
-              to="/api/auth/login"
-              external
-              class="flex items-center px-8 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              {{ $t('homepage.getStarted') }}
-              <ArrowRightIcon class="ml-2 w-5 h-5" />
-            </NuxtLink>
-            
             <NuxtLink
-              v-else
               to="/portfolio"
               class="flex items-center px-8 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               {{ $t('homepage.viewPortfolio') }}
               <ChartBarIcon class="ml-2 w-5 h-5" />
-            </NuxtLink>
-            
-            <NuxtLink 
-              v-if="!loggedIn"
-              to="/api/auth/login"
-              external
-              class="flex items-center px-8 py-3 text-lg font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-800 border border-primary-300 dark:border-primary-600 hover:bg-primary-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              {{ $t('homepage.signIn') }}
             </NuxtLink>
           </div>
         </div>

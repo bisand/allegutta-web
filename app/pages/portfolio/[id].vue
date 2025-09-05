@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Loading state -->
-    <div v-if="portfolioStore.loading" class="flex items-center justify-center min-h-screen">
+    <!-- Loading state - only show during initial load, not during portfolio switches -->
+    <div v-if="portfolioStore.initializing || (portfolioStore.loading && !currentPortfolio)" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500 mx-auto mb-4" />
         <p class="text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.loading') }}</p>
@@ -25,7 +25,15 @@
     </div>
 
     <!-- Portfolio content -->
-    <div v-else class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Transition
+      enter-active-class="transition-opacity duration-300 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="currentPortfolio" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
@@ -62,16 +70,6 @@
             >
               <ArrowPathIcon class="w-4 h-4 mr-2" />
               {{ $t('portfolioPage.updatePrices') }}
-            </button>
-            <!-- Import button - also show for demo/testing when portfolio exists -->
-            <button 
-              v-if="canEdit || currentPortfolio"
-              type="button"
-              class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              @click="showImportTransactions = true"
-            >
-              <ArrowUpTrayIcon class="w-4 h-4 mr-2" />
-              {{ $t('portfolioPage.importTransactions') }}
             </button>
             <button 
               v-if="canEdit"
@@ -222,10 +220,11 @@
 
       <!-- Holdings Table -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('portfolioPage.holdingsTable') }}</h3>
+          <div v-if="portfolioStore.loadingHoldings" class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500" />
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto" :class="{ 'opacity-60 pointer-events-none': portfolioStore.loadingHoldings }">
           <table v-if="portfolioStore.portfolioHoldings.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-900">
               <tr>
@@ -328,7 +327,10 @@
       <!-- Recent Transactions -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('portfolioPage.recentTransactions') }}</h3>
+          <div class="flex items-center gap-3">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('portfolioPage.recentTransactions') }}</h3>
+            <div v-if="portfolioStore.loadingTransactions" class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500" />
+          </div>
           <div v-if="canEdit" class="flex gap-2">
             <button
               type="button"
@@ -339,7 +341,7 @@
             </button>
           </div>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto" :class="{ 'opacity-60 pointer-events-none': portfolioStore.loadingTransactions }">
           <table v-if="portfolioStore.portfolioTransactions.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-900">
               <tr>
@@ -394,7 +396,8 @@
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </Transition>
 
     <!-- Add Transaction Modal would go here -->
     <!-- This would be the same modal component used in the current portfolio page -->
@@ -424,8 +427,7 @@ import {
   PlusIcon,
   ClockIcon,
   ArrowTrendingUpIcon,
-  PencilSquareIcon,
-  ArrowUpTrayIcon
+  PencilSquareIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -435,9 +437,11 @@ const { loggedIn, user, canManagePortfolios } = useAppAuth()
 const showAddTransaction = ref(false)
 const showImportTransactions = ref(false)
 
-// Initialize store data
+// Initialize store data - only if not already initialized
 onMounted(async () => {
-  await portfolioStore.initialize()
+  if (portfolioStore.allPortfolios.length === 0) {
+    await portfolioStore.initialize()
+  }
 })
 
 // Get portfolio ID from route
@@ -475,8 +479,20 @@ watch(portfolioId, async (newId) => {
 // Computed properties for enhanced portfolio analytics
 const topPerformers = computed(() => {
   return portfolioStore.portfolioHoldings
-    .filter(holding => getHoldingGainLoss(holding) > 0)
-    .sort((a, b) => getHoldingGainLoss(b) - getHoldingGainLoss(a))
+    .filter(holding => holding.currentPrice != null && getHoldingGainLoss({
+      quantity: holding.quantity,
+      currentPrice: holding.currentPrice,
+      avgPrice: holding.avgPrice
+    }) > 0)
+    .sort((a, b) => getHoldingGainLoss({
+      quantity: b.quantity,
+      currentPrice: b.currentPrice!,
+      avgPrice: b.avgPrice
+    }) - getHoldingGainLoss({
+      quantity: a.quantity,
+      currentPrice: a.currentPrice!,
+      avgPrice: a.avgPrice
+    }))
     .slice(0, 3)
 })
 
@@ -487,7 +503,7 @@ const totalPortfolioValue = computed(() => {
 })
 
 // Get allocation percentage for a holding
-function getAllocationPercentage(holding: { quantity: number; currentPrice?: number; avgPrice: number }): number {
+function getAllocationPercentage(holding: { quantity: number; currentPrice?: number | null; avgPrice: number }): number {
   const holdingValue = holding.quantity * (holding.currentPrice || holding.avgPrice)
   const total = totalPortfolioValue.value
   return total > 0 ? (holdingValue / total) * 100 : 0
@@ -609,21 +625,21 @@ function calculateTransactionTotal(transaction: { type: string; quantity: number
 }
 
 // Get holding gain/loss
-function getHoldingGainLoss(holding: { quantity: number; currentPrice?: number; avgPrice: number }): number {
+function getHoldingGainLoss(holding: { quantity: number; currentPrice?: number | null; avgPrice: number }): number {
   const currentValue = holding.quantity * (holding.currentPrice || holding.avgPrice)
   const costBasis = holding.quantity * holding.avgPrice
   return currentValue - costBasis
 }
 
 // Get holding gain/loss percentage
-function getHoldingGainLossPercentage(holding: { quantity: number; currentPrice?: number; avgPrice: number }): number {
+function getHoldingGainLossPercentage(holding: { quantity: number; currentPrice?: number | null; avgPrice: number }): number {
   const costBasis = holding.quantity * holding.avgPrice
   if (costBasis === 0) return 0
   return (getHoldingGainLoss(holding) / costBasis) * 100
 }
 
 // Get gain/loss color class
-function getGainLossColor(holding: { quantity: number; currentPrice?: number; avgPrice: number }): string {
+function getGainLossColor(holding: { quantity: number; currentPrice?: number | null; avgPrice: number }): string {
   const gainLoss = getHoldingGainLoss(holding)
   return gainLoss >= 0 ? 'text-green-600' : 'text-red-600'
 }

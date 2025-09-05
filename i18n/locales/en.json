@@ -32,6 +32,18 @@
     "managementDescription": "Manage your investments with precision and clarity.",
     "privacyPolicy": "Privacy Policy"
   },
+  "privacy": {
+    "title": "Privacy Policy",
+    "description": "This privacy policy describes how AlleGutta Portfolio Manager handles your personal information.",
+    "informationWeCollect": "Information We Collect",
+    "informationWeCollectDescription": "We collect information you provide directly to us, such as when you create an account, add portfolio data, or contact us for support.",
+    "howWeUseInfo": "How We Use Your Information",
+    "howWeUseInfoDescription": "We use the information we collect to provide, maintain, and improve our services, including portfolio tracking and analysis features.",
+    "dataSecurity": "Data Security",
+    "dataSecurityDescription": "We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.",
+    "contactUs": "Contact Us",
+    "contactUsDescription": "If you have any questions about this privacy policy, please contact us."
+  },
   "header": {
     "title": "AlleGutta",
     "portfolios": "Portfolios",
@@ -54,6 +66,7 @@
     "noPermissionManagePortfolios": "You don't have permission to manage portfolios."
   },
   "portfolio": {
+    "portfolio": "Portfolio",
     "management": "Portfolio Management",
     "managementDescription": "Create and manage portfolios for the application",
     "createPortfolio": "Create Portfolio",
@@ -192,7 +205,7 @@
     "loading": "Loading portfolio...",
     "notFound": "Portfolio Not Found",
     "noAccess": "The requested portfolio doesn't exist or you don't have access to it.",
-    "adminEdit": "Admin Edit",
+    "adminEdit": "Edit Portfolio",
     "updatePrices": "Update Prices",
     "addTransaction": "Add Transaction",
     "importTransactions": "Import Transactions",

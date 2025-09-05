@@ -26,16 +26,16 @@ export const useAppAuth = () => {
     loading: true
   }))
 
-  // Initialize auth state
+  // Initialize auth state with optimized approach
   const initialize = async () => {
     try {
       authState.value.loading = true
 
-      // Try to get user from auth token cookie
-      const { data: user } = await useFetch<AuthUser | null>('/api/auth/me')
+      // Use $fetch for better performance and error handling
+      const user = await $fetch<AuthUser | null>('/api/auth/me').catch(() => null)
 
-      if (user.value) {
-        authState.value.user = user.value
+      if (user) {
+        authState.value.user = user
         authState.value.loggedIn = true
       } else {
         authState.value.user = null

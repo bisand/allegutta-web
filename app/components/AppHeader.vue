@@ -65,20 +65,22 @@
                   </div>
                   
                   <!-- Admin actions - only when logged in and has permissions -->
-                  <div v-if="loggedIn && portfolioStore.canManagePortfolios" class="py-1">
-                    <MenuItem v-slot="{ active }">
-                      <NuxtLink
-                        to="/admin/portfolios"
-                        :class="[
-                          active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                          'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
-                        ]"
-                      >
-                        <PlusIcon class="w-4 h-4 mr-3" />
-                        {{ $t('header.portfolioManagement') }}
-                      </NuxtLink>
-                    </MenuItem>
-                  </div>
+                  <ClientOnly>
+                    <div v-if="loggedIn && portfolioStore.canManagePortfolios" class="py-1">
+                      <MenuItem v-slot="{ active }">
+                        <NuxtLink
+                          to="/admin/portfolios"
+                          :class="[
+                            active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                            'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                          ]"
+                        >
+                          <PlusIcon class="w-4 h-4 mr-3" />
+                          {{ $t('header.portfolioManagement') }}
+                        </NuxtLink>
+                      </MenuItem>
+                    </div>
+                  </ClientOnly>
                 </MenuItems>
               </Transition>
             </Menu>
@@ -133,125 +135,157 @@
           </Menu>
 
           <!-- Dark mode toggle -->
-          <button
-            type="button"
-            class="p-2 text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-            @click="toggleDarkMode"
-          >
-            <SunIcon v-if="isDark" class="w-5 h-5" />
-            <MoonIcon v-else class="w-5 h-5" />
-          </button>
+          <ClientOnly>
+            <button
+              type="button"
+              class="p-2 text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+              @click="toggleDarkMode"
+            >
+              <SunIcon v-if="isDark" class="w-5 h-5" />
+              <MoonIcon v-else class="w-5 h-5" />
+            </button>
+            <template #fallback>
+              <button
+                type="button"
+                class="p-2 text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Toggle theme"
+                @click="toggleDarkMode"
+              >
+                <MoonIcon class="w-5 h-5" />
+              </button>
+            </template>
+          </ClientOnly>
 
           <!-- Authentication buttons -->
-          <div v-if="!loggedIn" class="flex items-center space-x-2">
-            <NuxtLink 
-              to="/api/auth/login"
-              external
-              class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              {{ $t('common.login') }}
-            </NuxtLink>
-            <NuxtLink 
-              v-if="isRegistrationEnabled"
-              to="/api/auth/register"
-              external
-              class="px-3 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-            >
-              {{ $t('common.register') }}
-            </NuxtLink>
-          </div>
-
-          <!-- User menu -->
-          <Menu v-else as="div" class="relative">
-            <MenuButton class="flex items-center p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <img
-                v-if="user?.picture"
-                :src="user.picture"
-                :alt="userDisplayName"
-                class="w-8 h-8 rounded-full"
+          <ClientOnly>
+            <template #default>
+              <Transition
+                enter-active-class="transition-opacity duration-200 ease-out"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition-opacity duration-150 ease-in"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
               >
-              <div v-else class="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
-                <span class="text-sm font-medium text-white">{{ userDisplayName.charAt(0).toUpperCase() }}</span>
-              </div>
-            </MenuButton>
-            
-            <Transition
-              enter-active-class="transition duration-100 ease-out"
-              enter-from-class="transform scale-95 opacity-0"
-              enter-to-class="transform scale-100 opacity-100"
-              leave-active-class="transition duration-75 ease-in"
-              leave-from-class="transform scale-100 opacity-100"
-              leave-to-class="transform scale-95 opacity-0"
-            >
-              <MenuItems class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100 dark:divide-gray-700 z-[60]">
-                <div class="px-4 py-3">
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ userDisplayName }}</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ user?.email }}</p>
-                </div>
-                
-                <div class="py-1">
-                  <MenuItem v-slot="{ active }">
-                    <NuxtLink
-                      to="/portfolio"
-                      :class="[
-                        active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                        'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
-                      ]"
-                    >
-                      <ChartBarIcon class="w-4 h-4 mr-3" />
-                      {{ $t('common.portfolio') }}
-                    </NuxtLink>
-                  </MenuItem>
-                  
-                  <!-- Admin: Edit Current Portfolio - show when admin and on portfolio page -->
-                  <MenuItem 
-                    v-if="canManagePortfolios"
-                    v-slot="{ active }"
+                <div v-if="!loggedIn" class="flex items-center space-x-2">
+                  <NuxtLink 
+                    to="/api/auth/login"
+                    external
+                    class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                   >
-                    <NuxtLink
-                      :to="`/admin/portfolios?edit=${getCurrentPortfolioId()}`"
-                      :class="[
-                        active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                        'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
-                      ]"
+                    {{ $t('common.login') }}
+                  </NuxtLink>
+                  <NuxtLink 
+                    v-if="isRegistrationEnabled"
+                    to="/api/auth/register"
+                    external
+                    class="px-3 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
+                  >
+                    {{ $t('common.register') }}
+                  </NuxtLink>
+                </div>
+
+                <!-- User menu -->
+                <Menu v-else-if="loggedIn" as="div" class="relative">
+                  <MenuButton class="flex items-center p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <img
+                      v-if="user?.picture"
+                      :src="user.picture"
+                      :alt="userDisplayName"
+                      class="w-8 h-8 rounded-full"
                     >
-                      <PencilSquareIcon class="w-4 h-4 mr-3" />
-                      {{ $t('header.editCurrentPortfolio') }}
-                    </NuxtLink>
-                  </MenuItem>
+                    <div v-else class="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center">
+                      <span class="text-sm font-medium text-white">{{ userDisplayName.charAt(0).toUpperCase() }}</span>
+                    </div>
+                  </MenuButton>
                   
-                  <MenuItem v-slot="{ active }">
-                    <NuxtLink
-                      to="/settings"
-                      :class="[
-                        active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                        'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
-                      ]"
-                    >
-                      <Cog6ToothIcon class="w-4 h-4 mr-3" />
-                      {{ $t('header.settings') }}
-                    </NuxtLink>
-                  </MenuItem>
-                </div>
-                
-                <div class="py-1">
-                  <MenuItem v-slot="{ active }">
-                    <button
-                      :class="[
-                        active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                        'flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 text-left'
-                      ]"
-                      @click="logout"
-                    >
-                      <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
-                      {{ $t('header.signOut') }}
-                    </button>
-                  </MenuItem>
-                </div>
-              </MenuItems>
-            </Transition>
-          </Menu>
+                  <Transition
+                    enter-active-class="transition duration-100 ease-out"
+                    enter-from-class="transform scale-95 opacity-0"
+                    enter-to-class="transform scale-100 opacity-100"
+                    leave-active-class="transition duration-75 ease-in"
+                    leave-from-class="transform scale-100 opacity-100"
+                    leave-to-class="transform scale-95 opacity-0"
+                  >
+                    <MenuItems class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100 dark:divide-gray-700 z-[60]">
+                      <div class="px-4 py-3">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ userDisplayName }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ user?.email }}</p>
+                      </div>
+                      
+                      <div class="py-1">
+                        <MenuItem v-slot="{ active }">
+                          <NuxtLink
+                            to="/portfolio"
+                            :class="[
+                              active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                              'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                            ]"
+                          >
+                            <ChartBarIcon class="w-4 h-4 mr-3" />
+                            {{ $t('common.portfolio') }}
+                          </NuxtLink>
+                        </MenuItem>
+                        
+                        <!-- Admin: Edit Current Portfolio - show when admin and on portfolio page -->
+                        <MenuItem 
+                          v-if="canManagePortfolios"
+                          v-slot="{ active }"
+                        >
+                          <NuxtLink
+                            :to="`/admin/portfolios`"
+                            :class="[
+                              active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                              'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                            ]"
+                          >
+                            <PencilSquareIcon class="w-4 h-4 mr-3" />
+                            {{ $t('header.editCurrentPortfolio') }}
+                          </NuxtLink>
+                        </MenuItem>
+                        
+                        <MenuItem v-slot="{ active }">
+                          <NuxtLink
+                            to="/settings"
+                            :class="[
+                              active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                              'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                            ]"
+                          >
+                            <Cog6ToothIcon class="w-4 h-4 mr-3" />
+                            {{ $t('header.settings') }}
+                          </NuxtLink>
+                        </MenuItem>
+                      </div>
+                      
+                      <div class="py-1">
+                        <MenuItem v-slot="{ active }">
+                          <button
+                            :class="[
+                              active ? 'bg-gray-100 dark:bg-gray-700' : '',
+                              'flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 text-left'
+                            ]"
+                            @click="logout"
+                          >
+                            <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
+                            {{ $t('header.signOut') }}
+                          </button>
+                        </MenuItem>
+                      </div>
+                    </MenuItems>
+                  </Transition>
+                </Menu>
+              </Transition>
+            </template>
+            <template #fallback>
+              <!-- Invisible placeholder to maintain layout -->
+              <div class="flex items-center space-x-2 invisible">
+                <div class="px-3 py-2 text-sm font-medium rounded-lg w-16 h-8" />
+                <div class="px-3 py-2 text-sm font-medium rounded-lg w-20 h-8" />
+              </div>
+            </template>
+          </ClientOnly>
 
           <!-- Mobile menu button -->
           <button
@@ -307,35 +341,43 @@
               </div>
               
               <!-- Admin link - only when logged in and has permissions -->
-              <NuxtLink 
-                v-if="loggedIn && portfolioStore.canManagePortfolios"
-                to="/admin/portfolios"
-                class="block text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
-                @click="mobileMenuOpen = false"
-              >
-                {{ $t('header.portfolioManagement') }}
-              </NuxtLink>
+              <ClientOnly>
+                <NuxtLink 
+                  v-if="loggedIn && portfolioStore.canManagePortfolios"
+                  to="/admin/portfolios"
+                  class="block text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('header.portfolioManagement') }}
+                </NuxtLink>
+              </ClientOnly>
             </div>
             
             <!-- Authentication section - only when not logged in -->
-            <div v-if="!loggedIn" class="space-y-1">
-              <div class="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
-                {{ $t('common.account') }}
+            <ClientOnly>
+              <div v-if="!loggedIn" class="space-y-1">
+                <div class="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
+                  {{ $t('common.account') }}
+                </div>
+                <button 
+                  class="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
+                  @click="login(); mobileMenuOpen = false"
+                >
+                  {{ $t('common.login') }}
+                </button>
+                <button 
+                  v-if="isRegistrationEnabled"
+                  class="block w-full text-left text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
+                  @click="register(); mobileMenuOpen = false"
+                >
+                  {{ $t('common.register') }}
+                </button>
               </div>
-              <button 
-                class="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
-                @click="login(); mobileMenuOpen = false"
-              >
-                {{ $t('common.login') }}
-              </button>
-              <button 
-                v-if="isRegistrationEnabled"
-                class="block w-full text-left text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
-                @click="register(); mobileMenuOpen = false"
-              >
-                {{ $t('common.register') }}
-              </button>
-            </div>
+              <template #fallback>
+                <!-- Minimal fallback that doesn't create visual shift -->
+                <div class="h-0 opacity-0" />
+              </template>
+            </ClientOnly>
             
             <NuxtLink 
               to="/about" 
@@ -369,7 +411,6 @@ import {
 const { loggedIn, user, login, register, logout, canManagePortfolios, isRegistrationEnabled } = useAppAuth()
 const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
-const route = useRoute()
 const { locale, locales } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 const mobileMenuOpen = ref(false)
@@ -381,15 +422,6 @@ const userDisplayName = computed(() => {
   if (!user.value) return 'User'
   return user.value.name || user.value.firstName || user.value.email || 'User'
 })
-
-// Get current portfolio ID from route if on portfolio page
-const getCurrentPortfolioId = () => {
-  if (route.path.startsWith('/portfolio/')) {
-    const segments = route.path.split('/')
-    return segments[2] || null
-  }
-  return null
-}
 
 // Ensure portfolio store is initialized
 onMounted(async () => {

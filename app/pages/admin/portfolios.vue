@@ -214,11 +214,19 @@
                   Portfolio: {{ selectedPortfolio?.name }}
                 </p>
               </div>
-              <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-                @click="showAddTransactionForm = true">
-                <PlusIcon class="w-4 h-4 mr-2" />
-                Add Transaction
-              </button>
+              <div class="flex gap-2">
+                <button type="button"
+                  class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  @click="showImportTransactions = true">
+                  <ArrowUpTrayIcon class="w-4 h-4 mr-2" />
+                  Import Transactions
+                </button>
+                <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
+                  @click="showAddTransactionForm = true">
+                  <PlusIcon class="w-4 h-4 mr-2" />
+                  Add Transaction
+                </button>
+              </div>
             </div>
 
             <!-- Portfolio Holdings Summary -->
@@ -291,13 +299,15 @@
                     placeholder="10">
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK' }})</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
+                    }})</label>
                   <input v-model.number="transactionForm.price" type="number" step="0.01" required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="150.00">
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fees ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK' }})</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fees ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
+                    }})</label>
                   <input v-model.number="transactionForm.fees" type="number" step="0.01" min="0"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="9.99">
@@ -412,6 +422,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Import Transactions Modal -->
+    <Teleport to="body">
+      <LazyPortfolioImportTransactionsModal v-if="showImportTransactions && selectedPortfolio" v-model="showImportTransactions" :portfolio-id="selectedPortfolio.id"
+        style="z-index: 60;" @success="handleImportSuccess" />
+    </Teleport>
   </div>
 </template>
 
@@ -419,12 +435,13 @@
 import {
   ChartBarIcon,
   LockClosedIcon,
-  PlusIcon
+  PlusIcon,
+  ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
 import type { Portfolio } from '~/stores/portfolio'
 
 definePageMeta({
-  middleware: 'admin-client'
+  middleware: ['admin-client']
 })
 
 interface TransactionData {
@@ -432,10 +449,10 @@ interface TransactionData {
   portfolioId: string
   symbol: string
   isin?: string
-  type: 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'WITHDRAWAL' | 'REFUND' | 'LIQUIDATION' | 'REDEMPTION' | 
-        'EXCHANGE_IN' | 'EXCHANGE_OUT' | 'SPIN_OFF_IN' | 'DECIMAL_LIQUIDATION' | 'DECIMAL_WITHDRAWAL' | 
-        'RIGHTS_ALLOCATION' | 'TRANSFER_IN' | 'DIVIDEND_REINVEST' | 'INTEREST_CHARGE' | 'RIGHTS_ISSUE' | 
-        'SPLIT' | 'MERGER'
+  type: 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'WITHDRAWAL' | 'REFUND' | 'LIQUIDATION' | 'REDEMPTION' |
+  'EXCHANGE_IN' | 'EXCHANGE_OUT' | 'SPIN_OFF_IN' | 'DECIMAL_LIQUIDATION' | 'DECIMAL_WITHDRAWAL' |
+  'RIGHTS_ALLOCATION' | 'TRANSFER_IN' | 'DIVIDEND_REINVEST' | 'INTEREST_CHARGE' | 'RIGHTS_ISSUE' |
+  'SPLIT' | 'MERGER'
   quantity: number
   price: number
   fees: number
@@ -472,6 +489,7 @@ const submittingTransaction = ref(false)
 const portfolioTransactions = ref<TransactionData[]>([])
 const portfolioHoldings = ref<HoldingData[]>([])
 const editingTransaction = ref<TransactionData | null>(null)
+const showImportTransactions = ref(false)
 
 initialize()
 
@@ -482,7 +500,7 @@ onMounted(async () => {
   if (editId) {
     // Wait for portfolios to load
     await portfolioStore.loadAllPortfolios()
-    
+
     // Find and edit the portfolio
     const portfolioToEdit = portfolioStore.allPortfolios.find(p => p.id === editId)
     if (portfolioToEdit) {
@@ -552,6 +570,7 @@ function closeTransactionModal(): void {
   selectedPortfolio.value = null
   showAddTransactionForm.value = false
   editingTransaction.value = null
+  showImportTransactions.value = false
   resetTransactionForm()
   portfolioTransactions.value = []
   portfolioHoldings.value = []
@@ -561,6 +580,15 @@ function cancelAddTransaction(): void {
   showAddTransactionForm.value = false
   editingTransaction.value = null
   resetTransactionForm()
+}
+
+// Handle import success
+function handleImportSuccess(): void {
+  if (selectedPortfolio.value) {
+    // Reload portfolio data after successful import
+    loadPortfolioData(selectedPortfolio.value.id)
+  }
+  showImportTransactions.value = false
 }
 
 // Load portfolio data (transactions and holdings)
@@ -711,18 +739,18 @@ function formatCurrency(value: number): string {
 function calculateTransactionTotal(transaction: TransactionData): number {
   const amount = transaction.quantity * transaction.price
   const fees = transaction.fees || 0
-  
+
   // For purchases (BUY), total is amount + fees (money going out)
   // For sales (SELL), total is amount - fees (money coming in)
   // For other types, follow the same logic based on cash flow direction
-  
+
   switch (transaction.type) {
     case 'BUY':
     case 'RIGHTS_ALLOCATION':
     case 'RIGHTS_ISSUE':
       // Money going out (amount + fees)
       return amount + fees
-      
+
     case 'SELL':
     case 'DIVIDEND':
     case 'DIVIDEND_REINVEST':
@@ -736,14 +764,14 @@ function calculateTransactionTotal(transaction: TransactionData): number {
     case 'EXCHANGE_IN':
       // Money coming in (amount - fees)
       return amount - fees
-      
+
     case 'WITHDRAWAL':
     case 'DECIMAL_WITHDRAWAL':
     case 'INTEREST_CHARGE':
     case 'EXCHANGE_OUT':
       // Money going out (amount + fees)
       return amount + fees
-      
+
     default:
       // For unknown types, just show amount - fees
       return amount - fees
@@ -763,13 +791,13 @@ async function submitForm(): Promise<void> {
         description: form.description || undefined,
         isDefault: form.isDefault
       })
-      
+
       const result = await portfolioStore.updatePortfolio(editingPortfolio.value.id, {
         name: form.name,
         description: form.description || undefined,
         isDefault: form.isDefault
       })
-      
+
       console.log('Portfolio updated successfully:', result)
     } else {
       // Create new portfolio
@@ -778,13 +806,13 @@ async function submitForm(): Promise<void> {
         description: form.description || undefined,
         isDefault: form.isDefault
       })
-      
+
       const result = await portfolioStore.createPortfolio({
         name: form.name,
         description: form.description || undefined,
         isDefault: form.isDefault
       })
-      
+
       console.log('Portfolio created successfully:', result)
     }
 
