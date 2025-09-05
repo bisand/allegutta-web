@@ -534,7 +534,6 @@ const { formatDate, formatDateTime } = useDateTime()
 
 const showAddTransaction = ref(false)
 const showImportTransactions = ref(false)
-const refreshingEnhanced = ref(false)
 
 // Sorting state
 const sortColumn = ref<string>('symbol')
@@ -584,6 +583,9 @@ const enhancedData = ref({
   marketDataLastUpdated: null as string | null
 })
 
+const refreshingEnhanced = ref(false)
+const lastKnownChange = ref<string | null>(null)
+
 // Current time for dynamic relative time display
 const currentTime = ref(new Date())
 
@@ -604,9 +606,10 @@ onUnmounted(() => {
 
 // Fetch enhanced data when portfolio changes
 const fetchEnhancedData = async () => {
-  if (!currentPortfolio.value) return
+  if (!currentPortfolio.value || refreshingEnhanced.value) return
 
   try {
+    refreshingEnhanced.value = true
     const response = await $fetch(`/api/portfolios/${currentPortfolio.value.id}/enhanced`)
     // Update only the properties that exist in the response
     enhancedData.value = {
@@ -617,6 +620,49 @@ const fetchEnhancedData = async () => {
     portfolioStore.updateTimestamp()
   } catch (error) {
     console.error('Failed to fetch enhanced portfolio data:', error)
+  } finally {
+    refreshingEnhanced.value = false
+  }
+}
+
+// Smart polling: only fetch if data has actually changed
+const checkForUpdates = async () => {
+  if (!currentPortfolio.value || document.hidden || refreshingEnhanced.value) return
+
+  try {
+    const response = await $fetch(`/api/portfolios/${currentPortfolio.value.id}/last-change`)
+    
+    // If this is the first check or data has changed, fetch updates
+    if (!lastKnownChange.value || response.lastChange !== lastKnownChange.value) {
+      console.log('Portfolio data changed, fetching updates...')
+      lastKnownChange.value = response.lastChange
+      
+      // Fetch both enhanced data and holdings in parallel
+      await Promise.all([
+        fetchEnhancedData(),
+        portfolioStore.fetchHoldings(currentPortfolio.value.id)
+      ])
+    }
+  } catch (error) {
+    console.error('Failed to check for updates:', error)
+  }
+}
+
+// Start smart polling
+const startSmartPolling = () => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+  
+  // Check for changes every 30 seconds (much more efficient than fetching data every minute)
+  refreshInterval = setInterval(checkForUpdates, 30 * 1000)
+}
+
+// Stop polling
+const stopSmartPolling = () => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
   }
 }
 
@@ -675,61 +721,43 @@ const refreshEnhancedData = async () => {
 // Watch for portfolio changes and fetch enhanced data
 watch(currentPortfolio, async (newPortfolio) => {
   if (newPortfolio) {
+    // Reset the change tracking for new portfolio
+    lastKnownChange.value = null
+    
+    // Fetch initial data and set baseline
     await fetchEnhancedData()
+    
+    // Set initial change timestamp to prevent immediate re-fetch
+    try {
+      const response = await $fetch(`/api/portfolios/${newPortfolio.id}/last-change`)
+      lastKnownChange.value = response.lastChange
+    } catch (error) {
+      console.error('Failed to set initial change timestamp:', error)
+    }
   }
 }, { immediate: true })
 
-// Watch for holdings changes and refresh enhanced data
-watch(() => portfolioStore.portfolioHoldings, async () => {
-  if (currentPortfolio.value) {
-    await fetchEnhancedData()
-  }
-}, { deep: true })
+// REMOVED: Redundant watchers that were causing feedback loops
+// The smart polling will handle updates more efficiently
 
-// Watch for portfolio store updates (transactions, holdings, etc.)
-watch(() => portfolioStore.lastUpdated, async () => {
-  if (currentPortfolio.value) {
-    await fetchEnhancedData()
-  }
-})
-
-// Refresh enhanced data when market data is updated
-watch(() => portfolioStore.portfolioHoldings.map(h => `${h.id}-${h.currentPrice}-${h.regularMarketChangePercent}`).join(','), async () => {
-  if (currentPortfolio.value) {
-    await fetchEnhancedData()
-  }
-})
-
-// Auto-refresh enhanced data every 1 minute when page is active
+// Smart polling setup - much more efficient than constant fetching
 let refreshInterval: NodeJS.Timeout | null = null
 
 onMounted(() => {
-  // Set up periodic refresh - every 1 minute for more responsive updates
-  refreshInterval = setInterval(async () => {
-    if (currentPortfolio.value && !document.hidden) {
-      // Refresh both enhanced data and holdings to get updated market prices
-      await Promise.all([
-        fetchEnhancedData(),
-        portfolioStore.fetchHoldings(currentPortfolio.value.id)
-      ])
-    }
-  }, 1 * 60 * 1000) // 1 minute
+  // Start smart polling that only fetches when data actually changes
+  startSmartPolling()
 })
 
 onUnmounted(() => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval)
-  }
+  // Clean up polling
+  stopSmartPolling()
 })
 
 // Refresh when tab becomes visible again
 useEventListener(document, 'visibilitychange', async () => {
   if (!document.hidden && currentPortfolio.value) {
-    // Refresh both enhanced data and holdings to get updated market prices
-    await Promise.all([
-      fetchEnhancedData(),
-      portfolioStore.fetchHoldings(currentPortfolio.value.id)
-    ])
+    // Check for updates immediately when tab becomes visible
+    await checkForUpdates()
   }
 })
 
