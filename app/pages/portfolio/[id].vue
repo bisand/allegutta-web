@@ -159,18 +159,23 @@
           </div>
         </div>
 
+        <!-- All-Time High (ATH) -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <ClockIcon class="w-8 h-8 text-purple-500" />
+              <ChartBarIcon class="w-8 h-8" :class="athData.isAtAth ? 'text-yellow-500' : 'text-blue-500'" />
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  {{ $t('portfolioPage.holdings') }}
+                  {{ $t('portfolioPage.allTimeHigh') }}
+                  <span v-if="athData.isAtAth" class="ml-1 text-yellow-500">⭐</span>
                 </dt>
                 <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                  {{ portfolioStore.portfolioHoldings.length }} {{ $t('portfolioPage.positions') }}
+                  {{ athData.value }}
+                </dd>
+                <dd class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {{ athData.dateText }}
                 </dd>
               </dl>
             </div>
@@ -224,23 +229,18 @@
           </div>
         </div>
 
-        <!-- All-Time High (ATH) -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <ChartBarIcon class="w-8 h-8" :class="athData.isAtAth ? 'text-yellow-500' : 'text-blue-500'" />
+              <ClockIcon class="w-8 h-8 text-purple-500" />
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  {{ $t('portfolioPage.allTimeHigh') }}
-                  <span v-if="athData.isAtAth" class="ml-1 text-yellow-500">⭐</span>
+                  {{ $t('portfolioPage.holdings') }}
                 </dt>
                 <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                  {{ athData.value }}
-                </dd>
-                <dd class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {{ athData.dateText }}
+                  {{ portfolioStore.portfolioHoldings.length }} {{ $t('portfolioPage.positions') }}
                 </dd>
               </dl>
             </div>
