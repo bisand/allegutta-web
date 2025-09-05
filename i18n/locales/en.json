@@ -14,7 +14,7 @@
     "logout": "Logout",
     "register": "Register",
     "save": "Save",
-    "cancel": "Cancel", 
+    "cancel": "Cancel",
     "edit": "Edit",
     "delete": "Delete",
     "add": "Add",
@@ -146,7 +146,7 @@
   },
   "messages": {
     "portfolioCreated": "Portfolio created successfully",
-    "portfolioUpdated": "Portfolio updated successfully", 
+    "portfolioUpdated": "Portfolio updated successfully",
     "portfolioDeleted": "Portfolio deleted successfully",
     "transactionAdded": "Transaction added successfully",
     "transactionUpdated": "Transaction updated successfully",
@@ -188,7 +188,9 @@
     "startToday": "Start Today",
     "createPortfolio": "Create Your Portfolio",
     "goToPortfolio": "Go to Portfolio",
-    "registrationDisabled": "Registration is disabled. Contact an administrator for access."
+    "registrationDisabled": "Registration is disabled. Contact an administrator for access.",
+    "choosePortfolio": "Choose portfolio",
+    "publicPortfolios": "Public portfolios"
   },
   "about": {
     "pageTitle": "About AlleGutta",

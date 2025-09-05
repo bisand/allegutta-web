@@ -12,19 +12,26 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# Default Dockerfile
+DOCKERFILE=${1:-"Dockerfile"}
+
 echo -e "${BLUE}🧪 AlleGutta Web - Docker Build Test${NC}"
 echo "==========================================="
+echo -e "${BLUE}Usage: $0 [Dockerfile]${NC}"
+echo -e "${BLUE}Options: Dockerfile (default), Dockerfile.fast, Dockerfile.alpine${NC}"
+echo ""
 
 # Read current version
-VERSION=$(cat VERSION 2>/dev/null || echo "1.0.0")
-TEST_TAG="allegutta-web:test-$VERSION"
+VERSION=$(cat VERSION 2>/dev/null || echo "1.0.0.0")
+TEST_TAG="allegutta-web:test-$VERSION-$(basename $DOCKERFILE .Dockerfile)"
 
 echo -e "${BLUE}📋 Testing build for version: ${YELLOW}$VERSION${NC}"
 echo -e "${BLUE}🏷️  Test tag: ${YELLOW}$TEST_TAG${NC}"
+echo -e "${BLUE}📄 Using Dockerfile: ${YELLOW}$DOCKERFILE${NC}"
 
 # Build test image
 echo -e "${BLUE}🔨 Building test Docker image...${NC}"
-docker build -t "$TEST_TAG" -f Dockerfile .
+docker build -t "$TEST_TAG" -f "$DOCKERFILE" .
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Docker build test completed successfully!${NC}"

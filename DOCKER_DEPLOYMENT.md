@@ -7,26 +7,48 @@ This repository contains a **multi-stage Docker build** setup optimized for mini
 ## Docker Images
 
 ### 1. Production Multi-Stage Build (`Dockerfile`)
-- **Builder stage**: Full development environment with build tools
-- **Production stage**: Minimal runtime environment (Alpine Linux + Node.js 20)
-- **Benefits**: Smallest possible image size, better security
-- **Image size**: ~150MB (estimated)
+- **Builder stage**: Alpine Linux with zero build dependencies
+- **Production stage**: Alpine Linux runtime for minimal size
+- **Benefits**: Smallest possible image size, fastest builds
+- **Image size**: ~120MB (estimated)
+- **Recommended**: Production deployments
 
-### 2. Fast Single-Stage Build (`Dockerfile.fast`)
-- **Purpose**: Development and testing
-- **Benefits**: Faster build times, easier debugging
-- **Image size**: ~400MB (estimated)
+### 2. Alpine-Only Build (`Dockerfile.alpine`)
+- **Purpose**: Pure Alpine Linux approach - optimized and minimal!
+- **Benefits**: Smallest images, fastest builds, zero build dependencies
+- **Build dependencies**: None! (no python3, make, g++ needed)
+- **Runtime dependencies**: Only sqlite, curl, dumb-init
+- **Image size**: ~120MB (estimated) 
+- **Use case**: ✅ **RECOMMENDED** - Production deployments
+
+### 3. Fast Development Build (`Dockerfile.fast`)
+- **Purpose**: Development and testing with Debian slim
+- **Benefits**: Single-stage simplicity, minimal dependencies
+- **Dependencies**: Only sqlite3, curl, dumb-init (no build tools)
+- **Image size**: ~300MB (estimated)
+- **Use case**: Development, CI/CD testing
 
 ## Build Scripts
 
 ### `scripts/build-and-push.sh`
-Automated build and push to Docker Hub with version management:
+Automated build and push to Docker Hub with 4-part version management:
 ```bash
+# Increment build number only (default)
 ./scripts/build-and-push.sh
+
+# Increment patch version (build number always increments)
+./scripts/build-and-push.sh patch
+
+# Increment minor version (resets patch, build always increments)
+./scripts/build-and-push.sh minor
+
+# Increment major version (resets minor and patch, build always increments)
+./scripts/build-and-push.sh major
 ```
-- Increments version number automatically
+- Uses semantic versioning: `MAJOR.MINOR.PATCH.BUILD`
+- **Build number always increments** regardless of increment type
 - Builds production Docker image
-- Pushes to `bisand/allegutta-web:latest` and `bisand/allegutta-web:x.x.x`
+- Pushes to `bisand/allegutta-web:latest` and `bisand/allegutta-web:x.x.x.x`
 - Requires Docker Hub authentication
 
 ### `scripts/test-build.sh`
@@ -59,8 +81,11 @@ Production Docker Swarm configuration:
 
 ### Version Management
 Version information is stored in `VERSION` file:
-- Format: `MAJOR.MINOR.PATCH`
-- Automatically incremented by build script
+- Format: `MAJOR.MINOR.PATCH.BUILD`
+- **BUILD**: Always increments for every Docker build
+- **PATCH**: Bug fixes and small changes (resets to 0, but build continues incrementing)
+- **MINOR**: New features (resets patch to 0, but build continues incrementing)  
+- **MAJOR**: Breaking changes (resets minor and patch to 0, but build continues incrementing)
 - Used for Docker image tagging
 
 ## Quick Start
@@ -128,10 +153,18 @@ The multi-stage build achieves minimal image size through:
 
 ## Troubleshooting
 
+## ✅ **Build Issues Resolved!**
+
+**Problem**: `@nuxt/content` module was causing `better-sqlite3` compilation errors during Docker builds due to Alpine Linux musl/glibc compatibility issues.
+
+**Solution**: Removed `@nuxt/content` dependency since it wasn't being used in the application, eliminating the build-time `better-sqlite3` requirement.
+
 ### Build Issues
-- **better-sqlite3 errors**: Native bindings rebuilt for Alpine
+- **✅ better-sqlite3 compilation errors**: RESOLVED by removing unused `@nuxt/content`
+- **Alpine Linux compatibility**: Now works perfectly with pure Alpine builds
 - **Permission errors**: User/group properly configured
 - **Memory issues**: Multi-stage build reduces memory usage
+- **Clean builds**: Fast, reliable compilation without native module issues
 
 ### Runtime Issues
 - **Database errors**: SQLite file permissions and volume mounting
