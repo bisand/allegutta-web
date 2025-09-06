@@ -14,7 +14,7 @@ export interface Portfolio {
   athDate?: string | null
 }
 
-interface Transaction {
+export interface Transaction {
   id: string
   portfolioId: string
   symbol: string
@@ -30,7 +30,7 @@ interface Transaction {
   updatedAt: string
 }
 
-interface Holding {
+export interface Holding {
   id: string
   portfolioId: string
   symbol: string
@@ -48,7 +48,7 @@ interface Holding {
   updatedAt: string
 }
 
-interface PortfolioState {
+export interface PortfolioState {
   portfolios: Portfolio[]
   publicPortfolios: Portfolio[]
   currentPortfolio: Portfolio | null
@@ -62,14 +62,14 @@ interface PortfolioState {
   lastUpdated: number // Timestamp for reactive updates
 }
 
-interface CreatePortfolioData {
+export interface CreatePortfolioData {
   name: string
   description?: string
   currency?: string
   isDefault?: boolean
 }
 
-interface CreateTransactionData {
+export interface CreateTransactionData {
   symbol: string
   isin?: string
   type: 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'WITHDRAWAL' | 'SPLIT' | 'EXCHANGE_IN' | 'EXCHANGE_OUT'

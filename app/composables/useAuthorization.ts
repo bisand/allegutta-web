@@ -19,7 +19,7 @@ interface AuthComposableState {
   loading: boolean
 }
 
-export const useAppAuth = () => {
+export const useAuthorization = () => {
   const authState = useState<AuthComposableState>('auth', () => ({
     user: null,
     loggedIn: false,

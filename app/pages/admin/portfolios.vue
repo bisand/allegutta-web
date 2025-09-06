@@ -478,7 +478,7 @@ interface HoldingData {
   updatedAt: string
 }
 
-const { canManagePortfolios, initialize } = useAppAuth()
+const { canManagePortfolios, initialize } = useAuthorization()
 const portfolioStore = usePortfolioStore()
 
 // Modal states

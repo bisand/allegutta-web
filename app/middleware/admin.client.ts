@@ -1,5 +1,5 @@
 export default defineNuxtRouteMiddleware(async (_to, _from) => {
-  const { loggedIn, canManagePortfolios, initialize } = useAppAuth()
+  const { loggedIn, canManagePortfolios, initialize } = useAuthorization()
   
   // Ensure auth state is initialized
   await initialize()

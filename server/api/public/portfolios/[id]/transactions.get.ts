@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Verify portfolio exists (no auth required for public portfolios)
-    const portfolio = await prisma.portfolio.findUnique({
+    const portfolio = await prisma.portfolios.findUnique({
       where: { id: portfolioId }
     })
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const transactions = await prisma.transaction.findMany({
+    const transactions = await prisma.transactions.findMany({
       where: { portfolioId },
       orderBy: { date: 'desc' }
     })

@@ -168,21 +168,13 @@
                 leave-from-class="opacity-100"
                 leave-to-class="opacity-0"
               >
-                <div v-if="!loggedIn" class="flex items-center space-x-2">
+                <div v-if="!$auth.loggedIn" class="flex items-center space-x-2">
                   <NuxtLink 
-                    to="/api/auth/login"
+                    to="/api/auth/login?org_code=org_80fb5a68f571"
                     external
                     class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                   >
                     {{ $t('common.login') }}
-                  </NuxtLink>
-                  <NuxtLink 
-                    v-if="isRegistrationEnabled"
-                    to="/api/auth/register"
-                    external
-                    class="px-3 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-                  >
-                    {{ $t('common.register') }}
                   </NuxtLink>
                 </div>
 
@@ -365,13 +357,6 @@
                 >
                   {{ $t('common.login') }}
                 </button>
-                <button 
-                  v-if="isRegistrationEnabled"
-                  class="block w-full text-left text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
-                  @click="register(); mobileMenuOpen = false"
-                >
-                  {{ $t('common.register') }}
-                </button>
               </div>
               <template #fallback>
                 <!-- Minimal fallback that doesn't create visual shift -->
@@ -408,7 +393,8 @@ import {
   PencilSquareIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, user, login, register, logout, canManagePortfolios, isRegistrationEnabled } = useAppAuth()
+const { loggedIn, user } = useAuth()
+const { canManagePortfolios } = useAuthorization()
 const portfolioStore = usePortfolioStore()
 const colorMode = useColorMode()
 const { locale, locales } = useI18n()
@@ -419,9 +405,17 @@ const headerRef = ref()
 const isDark = computed(() => colorMode.value === 'dark')
 
 const userDisplayName = computed(() => {
-  if (!user.value) return 'User'
-  return user.value.name || user.value.firstName || user.value.email || 'User'
+  if (!user) return 'User'
+  return user.given_name || user.email || 'User'
 })
+
+const login = async () => {
+  await navigateTo('/api/auth/login', { external: true })
+}
+
+const logout = async () => {
+  await navigateTo('/api/auth/logout', { external: true })
+}
 
 // Ensure portfolio store is initialized
 onMounted(async () => {

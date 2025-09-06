@@ -54,17 +54,15 @@ export default defineNuxtConfig({
     databaseUrl: process.env.DATABASE_URL,
     // Registration configuration
     registrationEnabled: process.env.REGISTRATION_ENABLED === 'true',
-    // Market data configuration
-    alphaVantageApiKey: process.env.NUXT_ALPHA_VANTAGE_API_KEY,
     // Kinde configuration
-    kindeClientId: process.env.NUXT_KINDE_CLIENT_ID,
-    kindeClientSecret: process.env.NUXT_KINDE_CLIENT_SECRET,
-    kindeDomain: process.env.NUXT_KINDE_AUTH_DOMAIN,
-    kindeRedirectUrl: process.env.NUXT_KINDE_REDIRECT_URL,
-    kindeLogoutRedirectUrl: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL,
+    // kindeClientId: process.env.NUXT_KINDE_CLIENT_ID,
+    // kindeClientSecret: process.env.NUXT_KINDE_CLIENT_SECRET,
+    // kindeDomain: process.env.NUXT_KINDE_AUTH_DOMAIN,
+    // kindeRedirectUrl: process.env.NUXT_KINDE_REDIRECT_URL,
+    // kindeLogoutRedirectUrl: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL,
     public: {
       baseUrl: process.env.BASE_URL,
-      kindeDomain: process.env.NUXT_KINDE_AUTH_DOMAIN,
+      // kindeDomain: process.env.NUXT_KINDE_AUTH_DOMAIN,
       registrationEnabled: process.env.REGISTRATION_ENABLED === 'true'
     }
   },
@@ -72,15 +70,23 @@ export default defineNuxtConfig({
   // Kinde module configuration
   kinde: {
     // The module will automatically use NUXT_KINDE_* environment variables
-    redirectURL: process.env.NUXT_KINDE_REDIRECT_URL,
-    logoutRedirectURL: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL,
-    postLoginRedirectURL: process.env.NUXT_KINDE_POST_LOGIN_REDIRECT_URL,
+    // clientId: process.env.NUXT_KINDE_CLIENT_ID,
+    // clientSecret: process.env.NUXT_KINDE_CLIENT_SECRET,
+    // authDomain: process.env.NUXT_KINDE_AUTH_DOMAIN,
+    // redirectURL: process.env.NUXT_KINDE_REDIRECT_URL,
+    // logoutRedirectURL: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL,
+    // postLoginRedirectURL: process.env.NUXT_KINDE_POST_LOGIN_REDIRECT_URL,
+    endpoints: {
+      callback: '/api/auth/callback',
+      login: '/api/auth/login',
+      logout: '/api/auth/logout'
+    }
   },
 
   // i18n configuration
   i18n: {
     langDir: '../i18n/locales/',
-    strategy: 'prefix_except_default', 
+    strategy: 'prefix_except_default',
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_redirected',

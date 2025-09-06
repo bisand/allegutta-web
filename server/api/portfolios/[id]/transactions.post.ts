@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Verify portfolio belongs to user
-    const portfolio = await prisma.portfolio.findFirst({
+    const portfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
         userId: user.id
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
     // Try to get ISIN from existing market data records
     let isin: string | null = body.isin || null
     if (!isin) {
-      const marketData = await prisma.marketData.findFirst({
+      const marketData = await prisma.market_data.findFirst({
         where: { symbol: body.symbol.toUpperCase() }
       })
       isin = marketData?.isin || null
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get the previous saldo (running balance) from the last transaction
-    const lastTransaction = await prisma.transaction.findFirst({
+    const lastTransaction = await prisma.transactions.findFirst({
       where: {
         portfolioId: portfolioId
       },
@@ -94,8 +94,9 @@ export default defineEventHandler(async (event) => {
     const newSaldo = previousSaldo + transactionAmount
 
     // Create transaction
-    const transaction = await prisma.transaction.create({
+    const transaction = await prisma.transactions.create({
       data: {
+        id: `txn-${portfolioId}-${Date.now()}`, // Unique ID for transaction
         portfolioId: portfolioId,
         symbol: body.symbol.toUpperCase(),
         isin: isin,
@@ -107,7 +108,9 @@ export default defineEventHandler(async (event) => {
         currency: body.currency || portfolio.currency || 'NOK',
         date: new Date(body.date),
         notes: body.notes || null,
-        saldo: newSaldo
+        saldo: newSaldo,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     })
 
@@ -147,7 +150,7 @@ async function updateCashBalance(portfolioId: string): Promise<void> {
   console.log(`💰 Calculated cash balance: ${cashBalance.toFixed(2)} NOK`)
 
   // Update the portfolio's cash balance
-  await prisma.portfolio.update({
+  await prisma.portfolios.update({
     where: { id: portfolioId },
     data: { cashBalance }
   })
@@ -163,8 +166,8 @@ async function updateSecurityHoldings(portfolioId: string, symbol: string): Prom
   }
   
   console.log(`📊 Recalculating security holdings for: ${symbol}`)
-  
-  const transactions = await prisma.transaction.findMany({
+
+  const transactions = await prisma.transactions.findMany({
     where: {
       portfolioId: portfolioId,
       symbol: symbol,
@@ -232,7 +235,7 @@ async function updateSecurityHoldings(portfolioId: string, symbol: string): Prom
     const isin = transactions[0]?.isin || null
     const currency = transactions[0]?.currency || 'NOK'
 
-    await prisma.holding.upsert({
+    await prisma.holdings.upsert({
       where: {
         portfolioId_symbol: {
           portfolioId: portfolioId,
@@ -246,18 +249,21 @@ async function updateSecurityHoldings(portfolioId: string, symbol: string): Prom
         currency: currency
       },
       create: {
+        id: `hold-${portfolioId}-${symbol}`, // Unique ID for holding
         portfolioId: portfolioId,
         symbol: symbol,
         isin: isin,
         quantity: totalQuantity,
         avgPrice: avgPrice,
-        currency: currency
+        currency: currency,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     })
     console.log(`✅ Updated ${symbol} holding: ${totalQuantity} shares @ ${avgPrice.toFixed(2)}`)
   } else {
     // Remove holding if quantity is 0
-    await prisma.holding.deleteMany({
+    await prisma.holdings.deleteMany({
       where: {
         portfolioId: portfolioId,
         symbol: symbol

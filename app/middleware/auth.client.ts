@@ -4,7 +4,7 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
     return
   }
 
-  const { loggedIn, initialize } = useAppAuth()
+  const { loggedIn, initialize } = useAuthorization()
 
   // Ensure auth state is initialized
   await initialize()

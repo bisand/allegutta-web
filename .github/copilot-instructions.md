@@ -10,7 +10,7 @@ This is a **Nuxt 4** portfolio management application with a unique **client/ser
 
 The app uses **dual authentication modes**:
 
-- **Development**: Auto-login as test user via `useAppAuth()` composable
+- **Development**: Auto-login as test user via `useAuthorization()` composable
 - **Production**: Kinde OAuth integration with JWT tokens
 
 ## Key Technical Patterns

@@ -78,7 +78,7 @@ export function analyzeMarketData(data: {
 export async function scanMarketDataForIssues(): Promise<PriceAlert[]> {
   const prisma = (await import('./prisma')).default
   
-  const marketData = await prisma.marketData.findMany({
+  const marketData = await prisma.market_data.findMany({
     select: {
       symbol: true,
       isin: true,
@@ -92,7 +92,14 @@ export async function scanMarketDataForIssues(): Promise<PriceAlert[]> {
   const allAlerts: PriceAlert[] = []
   
   for (const data of marketData) {
-    const alerts = analyzeMarketData(data)
+    const alerts = analyzeMarketData({
+      symbol: data.symbol,
+      isin: data.isin ?? undefined,
+      currentPrice: data.currentPrice ?? undefined,
+      currency: data.currency ?? undefined,
+      exchange: data.exchange ?? undefined,
+      symbolYahoo: data.symbolYahoo ?? undefined
+    })
     allAlerts.push(...alerts)
   }
   
@@ -113,7 +120,7 @@ export async function generateMarketDataHealthReport(): Promise<{
   const criticalIssues = alerts.filter(a => a.severity === 'CRITICAL').length
   
   const prisma = (await import('./prisma')).default
-  const totalRecords = await prisma.marketData.count()
+  const totalRecords = await prisma.market_data.count()
   const healthyRecords = totalRecords - alerts.length
   
   return {

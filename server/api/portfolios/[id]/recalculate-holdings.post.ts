@@ -1,6 +1,5 @@
 import prisma from '../../../lib/prisma'
 import { updateCashBalance, updateSecurityHoldings } from '../../../lib/portfolioCalculations'
-import type { Holding } from '@prisma/client'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -20,7 +19,7 @@ export default defineEventHandler(async (event) => {
     await updateCashBalance(portfolioId)
 
     // Get all unique symbols in the portfolio (excluding cash symbols)
-    const uniqueSymbols = await prisma.transaction.findMany({
+    const uniqueSymbols = await prisma.transactions.findMany({
       where: {
         portfolioId: portfolioId,
         NOT: {
@@ -44,13 +43,13 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get the updated portfolio with cash balance
-    const portfolio = await prisma.portfolio.findUnique({
+    const portfolio = await prisma.portfolios.findUnique({
       where: { id: portfolioId },
       select: { cashBalance: true }
     })
 
     // Get all updated holdings
-    const allHoldings = await prisma.holding.findMany({
+    const allHoldings = await prisma.holdings.findMany({
       where: {
         portfolioId: portfolioId
       },

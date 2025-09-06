@@ -96,6 +96,14 @@ model transactions {
   quantity    Float
   price       Float
   fees        Float      @default(0)
+  // Optional imported cost basis ("Kjøpsverdi") for exchange transactions
+  costBasis    Float?
+  // Optional broker fields from CSV import
+  tradeDate    DateTime?
+  settlementDate DateTime?
+  verificationNumber String?
+  slipNumber   String?
+  cancellationDate DateTime?
   amount      Float?
   currency    String     @default("NOK")
   date        DateTime

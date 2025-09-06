@@ -1,14 +1,8 @@
-import prisma from '../lib/prisma'
-import { requireAuth } from '../lib/auth'
+import prisma from '../../lib/prisma'
+import { requireAuth } from '../../lib/auth'
 
 // POST /api/portfolios - Create new portfolio
 export default defineEventHandler(async (event) => {
-  if (getMethod(event) !== 'POST') {
-    throw createError({
-      statusCode: 405,
-      statusMessage: 'Method not allowed'
-    })
-  }
 
   const user = await requireAuth(event)
   const body = await readBody(event)
@@ -22,7 +16,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const portfolio = await prisma.portfolio.create({
+    const portfolio = await prisma.portfolio?.create({
       data: {
         name: body.name.trim(),
         description: body.description?.trim() || null,

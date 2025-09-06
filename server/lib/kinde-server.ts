@@ -3,26 +3,25 @@ import type { H3Event } from 'h3'
 
 // Create Kinde server client
 function createKindeClient() {
-  const config = useRuntimeConfig()
   
   console.log('Creating Kinde client with config:', {
-    authDomain: config.kindeDomain,
-    clientId: config.kindeClientId,
-    clientSecret: config.kindeClientSecret ? '[REDACTED]' : 'MISSING',
-    redirectURL: config.kindeRedirectUrl,
-    logoutRedirectURL: config.kindeLogoutRedirectUrl,
+    authDomain: process.env.NUXT_KINDE_AUTH_DOMAIN,
+    clientId: process.env.NUXT_KINDE_CLIENT_ID,
+    clientSecret: process.env.NUXT_KINDE_CLIENT_SECRET ? '[REDACTED]' : 'MISSING',
+    redirectURL: process.env.NUXT_KINDE_REDIRECT_URL,
+    logoutRedirectURL: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL,
   })
-  
-  if (!config.kindeDomain || !config.kindeClientId || !config.kindeClientSecret) {
-    throw new Error(`Missing required Kinde configuration: domain=${!!config.kindeDomain}, clientId=${!!config.kindeClientId}, secret=${!!config.kindeClientSecret}`)
+
+  if (!process.env.NUXT_KINDE_AUTH_DOMAIN || !process.env.NUXT_KINDE_CLIENT_ID || !process.env.NUXT_KINDE_CLIENT_SECRET || !process.env.NUXT_KINDE_REDIRECT_URL) {
+    throw new Error(`Missing required Kinde configuration: domain=${!!process.env.NUXT_KINDE_AUTH_DOMAIN}, clientId=${!!process.env.NUXT_KINDE_CLIENT_ID}, secret=${!!process.env.NUXT_KINDE_CLIENT_SECRET}, redirectURL=${!!process.env.NUXT_KINDE_REDIRECT_URL}`)
   }
   
   return createKindeServerClient(GrantType.AUTHORIZATION_CODE, {
-    authDomain: config.kindeDomain,
-    clientId: config.kindeClientId,
-    clientSecret: config.kindeClientSecret,
-    redirectURL: config.kindeRedirectUrl,
-    logoutRedirectURL: config.kindeLogoutRedirectUrl,
+    authDomain: process.env.NUXT_KINDE_AUTH_DOMAIN,
+    clientId: process.env.NUXT_KINDE_CLIENT_ID,
+    clientSecret: process.env.NUXT_KINDE_CLIENT_SECRET,
+    redirectURL: process.env.NUXT_KINDE_REDIRECT_URL,
+    logoutRedirectURL: process.env.NUXT_KINDE_LOGOUT_REDIRECT_URL,
   })
 }
 

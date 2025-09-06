@@ -268,7 +268,7 @@ const handleImport = async (): Promise<void> => {
     }
 
     // Check if user is authenticated
-    const { loggedIn } = useAppAuth()
+    const { loggedIn } = useAuthorization()
     if (!loggedIn.value) {
       throw new Error('Please log in to import transactions')
     }

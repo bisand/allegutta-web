@@ -21,7 +21,7 @@ export interface AthData {
 export async function updatePortfolioAth(portfolioId: string, currentTotalValue: number): Promise<AthData> {
   try {
     // Get current portfolio with ATH data
-    const portfolio = await prisma.portfolio.findUnique({
+    const portfolio = await prisma.portfolios.findUnique({
       where: { id: portfolioId },
       select: {
         athValue: true,
@@ -42,8 +42,9 @@ export async function updatePortfolioAth(portfolioId: string, currentTotalValue:
     if (isNewAth) {
       // Store previous ATH in history if it exists
       if (currentAth && currentAthDate) {
-        await prisma.athHistory.create({
+        await prisma.ath_history.create({
           data: {
+            id: crypto.randomUUID(),
             portfolioId,
             athValue: currentAth,
             athDate: currentAthDate,
@@ -54,7 +55,7 @@ export async function updatePortfolioAth(portfolioId: string, currentTotalValue:
       }
 
       // Update portfolio with new ATH
-      await prisma.portfolio.update({
+      await prisma.portfolios.update({
         where: { id: portfolioId },
         data: {
           athValue: currentTotalValue,
@@ -90,7 +91,7 @@ export async function updatePortfolioAth(portfolioId: string, currentTotalValue:
  * Gets ATH history for a portfolio
  */
 export async function getAthHistory(portfolioId: string, limit: number = 10) {
-  return await prisma.athHistory.findMany({
+  return await prisma.ath_history.findMany({
     where: { portfolioId },
     orderBy: { surpassedAt: 'desc' },
     take: limit,
@@ -108,10 +109,10 @@ export async function getAthHistory(portfolioId: string, limit: number = 10) {
  */
 export async function getPortfolioPerformanceMetrics(portfolioId: string) {
   // Get portfolio with holdings and market data
-  const holdings = await prisma.holding.findMany({
+  const holdings = await prisma.holdings.findMany({
     where: { portfolioId },
     include: {
-      portfolio: {
+      portfolios: {
         select: {
           athValue: true,
           athDate: true
@@ -120,7 +121,7 @@ export async function getPortfolioPerformanceMetrics(portfolioId: string) {
     }
   })
 
-  const portfolio = holdings[0]?.portfolio
+  const portfolio = holdings[0]?.portfolios
 
   if (!portfolio) {
     throw new Error(`Portfolio ${portfolioId} not found`)
@@ -128,7 +129,7 @@ export async function getPortfolioPerformanceMetrics(portfolioId: string) {
 
   // Get market data for current prices
   const symbols = holdings.map((h: { symbol: string }) => h.symbol)
-  const marketData = await prisma.marketData.findMany({
+  const marketData = await prisma.market_data.findMany({
     where: {
       symbol: {
         in: symbols
@@ -165,7 +166,7 @@ export async function getPortfolioPerformanceMetrics(portfolioId: string) {
  * Initializes ATH for existing portfolios (migration helper)
  */
 export async function initializeAthForExistingPortfolios() {
-  const portfolios = await prisma.portfolio.findMany({
+  const portfolios = await prisma.portfolios.findMany({
     where: {
       athValue: null
     },
@@ -184,7 +185,7 @@ export async function initializeAthForExistingPortfolios() {
       }, 0)
 
       if (currentMarketValue > 0) {
-        await prisma.portfolio.update({
+        await prisma.portfolios.update({
           where: { id: portfolio.id },
           data: {
             athValue: currentMarketValue,

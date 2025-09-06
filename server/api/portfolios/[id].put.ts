@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Verify portfolio belongs to user
-    const existingPortfolio = await prisma.portfolio.findFirst({
+    const existingPortfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
         userId: user.id
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
 
     // If setting as default, unset other default portfolios for this user
     if (body.isDefault) {
-      await prisma.portfolio.updateMany({
+      await prisma.portfolios.updateMany({
         where: {
           userId: user.id,
           isDefault: true
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Update the portfolio
-    const updatedPortfolio = await prisma.portfolio.update({
+    const updatedPortfolio = await prisma.portfolios.update({
       where: {
         id: portfolioId
       },

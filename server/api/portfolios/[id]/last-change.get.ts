@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     
     try {
       // Get the portfolio to ensure it exists
-      const portfolio = await prisma.portfolio.findUnique({
+      const portfolio = await prisma.portfolios.findUnique({
         where: { id: portfolioId },
         select: { updatedAt: true }
       })

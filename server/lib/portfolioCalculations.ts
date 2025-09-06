@@ -16,7 +16,7 @@ export async function updateCashBalance(portfolioId: string): Promise<void> {
   console.log(`💰 Calculated cash balance: ${cashBalance.toFixed(2)} NOK`)
 
   // Update the portfolio's cash balance
-  await prisma.portfolio.update({
+  await prisma.portfolios.update({
     where: { id: portfolioId },
     data: { cashBalance }
   })
@@ -33,7 +33,7 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
 
   console.log(`🔄 Recalculating security holdings for: ${symbol}`)
 
-  const transactions = await prisma.transaction.findMany({
+  const transactions = await prisma.transactions.findMany({
     where: {
       portfolioId: portfolioId,
       symbol: symbol,
@@ -55,45 +55,43 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
 
   console.log(`📊 Found ${transactions.length} transactions for ${symbol}`)
 
-  let totalQuantity = 0
-  let totalCost = 0
+  // FIFO lots: each buy (or incoming corporate action) creates a lot { qty, cost }
+  const lots: Array<{ qty: number; cost: number }> = []
 
   for (const transaction of transactions) {
     const quantity = transaction.quantity
-    const price = transaction.price
-    const fees = transaction.fees || 0
+    const price = transaction.price ?? 0
+    const fees = transaction.fees ?? 0
 
     if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(transaction.type)) {
-      // These increase holdings
-      totalQuantity += quantity
+      // Create a new lot for the incoming shares.
+      let lotCost = 0
 
-      // Special handling for EXCHANGE_IN transactions with nominal prices
       if (transaction.type === 'EXCHANGE_IN' && price <= 1.0 && transaction.notes?.includes('Fusjon')) {
-        // For corporate actions/mergers with nominal prices, calculate from cost basis
-        let estimatedExchangePrice = 0 // Will be calculated from the exchanged security
-
-        // First, try to extract Kjøpsverdi from transaction notes (if imported from CSV)
-        const kjøpsverdiMatch = transaction.notes?.match(/\[Kjøpsverdi:\s*([\d,.]+)\]/)
-        let useKjøpsverdi = false
-        if (kjøpsverdiMatch && quantity > 0) {
-          const kjøpsverdi = parseFloat(kjøpsverdiMatch[1].replace(',', '.'))
-          if (kjøpsverdi > 0) {
-            // Kjøpsverdi represents the total historical cost basis being transferred
-            totalCost += kjøpsverdi + fees  // Add the total cost basis plus any current fees
-            useKjøpsverdi = true
-            console.log(`  📊 Using imported Kjøpsverdi ${kjøpsverdi} + fees ${fees || 0} for ${quantity} shares`)
-            console.log(`  💰 Total cost added: ${(kjøpsverdi + (fees || 0)).toFixed(4)} NOK`)
+        // Prefer explicit costBasis field when available (imported Kjøpsverdi)
+  const cb = (transaction as unknown as { costBasis?: number | null }).costBasis
+        let usedKjopsverdi = false
+        if (cb && cb > 0 && quantity > 0) {
+          // costBasis may be either a total cost for the lot or a per-share value.
+          // Heuristic: if costBasis is larger than a plausible per-share (price*qty*0.5), treat as total cost.
+          if (cb >= price * quantity * 0.5) {
+            lotCost = cb + fees
+          } else {
+            // treat cb as per-share
+            lotCost = cb * quantity + fees
           }
+          usedKjopsverdi = true
+          console.log(`  📊 Using explicit costBasis ${cb} (lot total=${(lotCost - fees).toFixed(2)}) + fees ${fees} for ${quantity} shares`)
         }
 
-        // If no Kjøpsverdi available, calculate from the exchanged security cost basis
-        if (!useKjøpsverdi) {
-          const exchangeOutSymbol = transaction.notes?.match(/(\w+)\s+ger\s+\d+\s+(\w+)/)?.[1] // Extract "DNBH" from "Fusjon 1 DNBH ger 1 DNB"
+        if (!usedKjopsverdi) {
+          // Fallback: calculate estimated exchange price from the outgoing security cost basis
+          const exchangeOutSymbol = transaction.notes?.match(/(\w+)\s+ger\s+\d+\s+(\w+)/)?.[1]
+          let estimatedExchangePrice = 0
+
           if (exchangeOutSymbol) {
             console.log(`  🔄 Calculating cost basis from exchanged security: ${exchangeOutSymbol}`)
-            
-            // Calculate the cost basis from the exchanged security at the time of exchange
-            const exchangeOutTransactions = await prisma.transaction.findMany({
+            const exchangeOutTransactions = await prisma.transactions.findMany({
               where: {
                 portfolioId: portfolioId,
                 symbol: exchangeOutSymbol,
@@ -107,93 +105,118 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
               orderBy: { date: 'asc' }
             })
 
-            // Calculate the cost basis of the exchanged security at exchange time using FIFO
-            let exchangedQuantity = 0
-            let exchangedCost = 0
+            // Build FIFO lots for the exchanged security and compute remaining avg price
+            const exchLots: Array<{ qty: number; cost: number }> = []
+            for (const et of exchangeOutTransactions) {
+              const etQty = et.quantity
+              const etPrice = et.price ?? 0
+              const etFees = et.fees ?? 0
 
-            for (const exchTrans of exchangeOutTransactions) {
-              console.log(`    ${exchTrans.type}: ${exchTrans.quantity} @ ${exchTrans.price} (${exchTrans.date.toISOString().split('T')[0]})`)
-              
-              if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(exchTrans.type)) {
-                exchangedQuantity += exchTrans.quantity
-                exchangedCost += exchTrans.quantity * exchTrans.price + (exchTrans.fees || 0)
-              } else if (['SELL', 'EXCHANGE_OUT'].includes(exchTrans.type)) {
-                const sellQty = Math.min(exchTrans.quantity, exchangedQuantity)
-                const avgPrice = exchangedQuantity > 0 ? exchangedCost / exchangedQuantity : 0
-                exchangedQuantity -= sellQty
-                exchangedCost -= sellQty * avgPrice
+              if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(et.type)) {
+                exchLots.push({ qty: etQty, cost: etQty * etPrice + etFees })
+              } else if (['SELL', 'EXCHANGE_OUT'].includes(et.type)) {
+                let remainingSell = etQty
+                while (remainingSell > 0 && exchLots.length > 0) {
+                  const lot = exchLots[0]
+                  const take = Math.min(remainingSell, lot.qty)
+                  const costPerShare = lot.cost / lot.qty
+                  lot.qty -= take
+                  lot.cost -= costPerShare * take
+                  remainingSell -= take
+                  if (lot.qty === 0) exchLots.shift()
+                }
               }
-              
-              console.log(`    Running total: ${exchangedQuantity} shares, cost: ${exchangedCost.toFixed(2)}, avg: ${exchangedQuantity > 0 ? (exchangedCost / exchangedQuantity).toFixed(4) : 0}`)
             }
 
-            // Calculate the average price from the exchanged security
+            // sum remaining exchLots
+            const exchangedQuantity = exchLots.reduce((s, l) => s + l.qty, 0)
+            const exchangedCost = exchLots.reduce((s, l) => s + l.cost, 0)
             if (exchangedQuantity > 0 && exchangedCost > 0) {
               estimatedExchangePrice = exchangedCost / exchangedQuantity
-              console.log(`  📊 Calculated exchange price from ${exchangeOutSymbol} cost basis: ${estimatedExchangePrice.toFixed(6)} NOK/share`)
-              console.log(`  💰 Total cost basis transferred: ${exchangedCost.toFixed(2)} NOK for ${exchangedQuantity} shares`)
+              console.log(`  📊 Calculated exchange price from ${exchangeOutSymbol}: ${estimatedExchangePrice.toFixed(6)} NOK/share`)
             } else {
-              // Fallback if calculation fails
-              estimatedExchangePrice = 100 // Conservative fallback
+              estimatedExchangePrice = 100
               console.log(`  ⚠️  Could not calculate cost basis from ${exchangeOutSymbol}, using fallback: ${estimatedExchangePrice}`)
             }
           } else {
-            // No exchanged symbol found, use fallback
             estimatedExchangePrice = 100
             console.log(`  ⚠️  Could not identify exchanged security, using fallback: ${estimatedExchangePrice}`)
           }
-        }
 
-        // Add to total cost - either from Kjøpsverdi (already added above) or calculated exchange price
-        if (!useKjøpsverdi) {
-          totalCost += quantity * estimatedExchangePrice + fees
-          console.log(`  ➕ ${transaction.type}: +${quantity} shares (merger/exchange, price ${estimatedExchangePrice.toFixed(4)})`)
-        } else {
-          console.log(`  ➕ ${transaction.type}: +${quantity} shares (merger/exchange, using Kjøpsverdi cost basis)`)
+          lotCost = quantity * estimatedExchangePrice + fees
         }
       } else {
-        totalCost += quantity * price + fees
-        console.log(`  ➕ ${transaction.type}: +${quantity} shares`)
+        // Normal buy/spin-off
+        lotCost = quantity * price + fees
       }
-    } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
-      // These decrease holdings
-      const sellQuantity = Math.min(quantity, totalQuantity)
-      const avgPrice = totalQuantity > 0 ? totalCost / totalQuantity : 0
 
-      totalQuantity -= sellQuantity
-      totalCost -= sellQuantity * avgPrice
-      totalCost = Math.max(0, totalCost) // Ensure non-negative
-      console.log(`  ➖ ${transaction.type}: -${sellQuantity} shares`)
+      lots.push({ qty: quantity, cost: lotCost })
+      console.log(`  ➕ ${transaction.type}: +${quantity} shares (lot cost ${lotCost.toFixed(2)})`)
+    } else if (['SELL', 'EXCHANGE_OUT'].includes(transaction.type)) {
+      // Consume lots FIFO
+      let remaining = quantity
+      let soldTotal = 0
+      while (remaining > 0 && lots.length > 0) {
+        const lot = lots[0]
+        const take = Math.min(remaining, lot.qty)
+        const costPerShare = lot.cost / lot.qty
+        const costRemoved = costPerShare * take
+
+        lot.qty -= take
+        lot.cost -= costRemoved
+        soldTotal += costRemoved
+        remaining -= take
+
+        if (lot.qty === 0) lots.shift()
+      }
+
+      if (remaining > 0) {
+        // Selling more than available: log and clamp (no negative lots)
+        console.log(`  ⚠️ Sell exceeds available FIFO lots by ${remaining} shares — clamped to zero`)
+      }
+
+      console.log(`  ➖ ${transaction.type}: -${quantity - remaining} shares (removed cost ${soldTotal.toFixed(2)})`)
     } else if (['LIQUIDATION', 'REDEMPTION'].includes(transaction.type)) {
-      // Corporate actions that liquidate entire position (like capital repayment)
-      console.log(`  💰 ${transaction.type}: LIQUIDATING ${totalQuantity} shares (corporate action)`)
-      totalQuantity = 0
-      totalCost = 0
+      // Remove all lots (corporate action that ends position)
+      console.log(`  💰 ${transaction.type}: LIQUIDATING all lots`)
+      lots.length = 0
     } else if (['REFUND'].includes(transaction.type)) {
-      // REFUND/TILBAKEBETALING is a cash payout that doesn't affect stock holdings
-      // This should only affect cash balance, not stock quantity
-      console.log(`  💰 ${transaction.type}: Cash payout of ${quantity * price} NOK (no change to stock holdings)`)
-      // No change to totalQuantity or totalCost for stock holdings
+      console.log(`  💰 ${transaction.type}: cash-only event, no change to lots`)
     } else if (['DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
-      // Handle decimal adjustments - these typically adjust small quantities
       if (transaction.type === 'DECIMAL_LIQUIDATION') {
-        totalQuantity += quantity  // Add fractional shares
-        console.log(`  🔢 Decimal liquidation: +${quantity} shares`)
+        // Add a small fractional lot; price used as provided
+        const lotCost = quantity * price + fees
+        lots.push({ qty: quantity, cost: lotCost })
+        console.log(`  🔢 Decimal liquidation: +${quantity} shares (lot cost ${lotCost.toFixed(2)})`)
       } else {
-        totalQuantity -= quantity  // Remove fractional shares
+        // Remove fractional shares FIFO
+        let remaining = quantity
+        while (remaining > 0 && lots.length > 0) {
+          const lot = lots[0]
+          const take = Math.min(remaining, lot.qty)
+          const costPerShare = lot.cost / lot.qty
+          lot.qty -= take
+          lot.cost -= costPerShare * take
+          remaining -= take
+          if (lot.qty === 0) lots.shift()
+        }
         console.log(`  🔢 Decimal withdrawal: -${quantity} shares`)
       }
     }
   }
 
-  console.log(`📊 Final calculation for ${symbol}: ${totalQuantity} shares, cost: ${totalCost}`)
+  // Recompute totals from remaining lots
+  const totalQuantity = Math.max(0, Math.round(lots.reduce((s, l) => s + l.qty, 0) * 1000000) / 1000000) // guard rounding
+  const totalCost = Math.max(0, lots.reduce((s, l) => s + l.cost, 0))
+
+  console.log(`📊 Final calculation for ${symbol}: ${totalQuantity} shares, cost: ${totalCost.toFixed(2)}`)
 
   if (totalQuantity > 0) {
     const avgPrice = totalCost / totalQuantity
     const isin = transactions[0]?.isin || null
     const currency = transactions[0]?.currency || 'NOK'
 
-    await prisma.holding.upsert({
+    await prisma.holdings.upsert({
       where: {
         portfolioId_symbol: {
           portfolioId: portfolioId,
@@ -204,22 +227,25 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
         quantity: totalQuantity,
         avgPrice: avgPrice,
         isin: isin,
-        currency: currency
+        currency: currency,
+        updatedAt: new Date()
       },
       create: {
+        id: `${portfolioId}_${symbol}`,
         portfolioId: portfolioId,
         symbol: symbol,
         isin: isin,
         quantity: totalQuantity,
         avgPrice: avgPrice,
-        currency: currency
+        currency: currency,
+        updatedAt: new Date()
       }
     })
 
     console.log(`✅ Updated holding: ${symbol} = ${totalQuantity} shares @ ${avgPrice.toFixed(4)} ${currency}`)
   } else {
     // Remove the holding if quantity is zero
-    await prisma.holding.deleteMany({
+    await prisma.holdings.deleteMany({
       where: {
         portfolioId: portfolioId,
         symbol: symbol
@@ -234,7 +260,7 @@ export async function recalculateAllHoldings(portfolioId: string): Promise<void>
   console.log(`📊 Recalculating all holdings for portfolio: ${portfolioId}`)
 
   // Get all unique symbols in the portfolio (excluding cash symbols)
-  const uniqueSymbols = await prisma.transaction.findMany({
+  const uniqueSymbols = await prisma.transactions.findMany({
     where: {
       portfolioId: portfolioId,
       NOT: {

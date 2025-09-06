@@ -112,7 +112,7 @@ export async function requireAuth(event: H3Event): Promise<AuthUser> {
 
 export async function getUserFromKinde(kindeUser: KindeUser, event?: H3Event): Promise<AuthUser> {
   // Find or create user in our database
-  let user = await prisma.user.findUnique({
+  let user = await prisma.users.findUnique({
     where: { kindeId: kindeUser.id }
   })
 
@@ -142,7 +142,7 @@ export async function getUserFromKinde(kindeUser: KindeUser, event?: H3Event): P
   }
 
   if (!user) {
-    user = await prisma.user.create({
+    user = await prisma.users.create({
       data: {
         kindeId: kindeUser.id,
         email: kindeUser.email,
@@ -155,7 +155,7 @@ export async function getUserFromKinde(kindeUser: KindeUser, event?: H3Event): P
     })
 
     // Create a default portfolio for new users
-    await prisma.portfolio.create({
+    await prisma.portfolios.create({
       data: {
         name: 'My Portfolio',
         description: 'Default portfolio',

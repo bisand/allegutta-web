@@ -1,20 +1,14 @@
-import prisma from '../lib/prisma'
-import { getOptionalAuth } from '../lib/auth'
+import prisma from '../../lib/prisma'
+import { getOptionalAuth } from '../../lib/auth'
 
 // GET /api/portfolios - Get all portfolios (public for all users)
 export default defineEventHandler(async (event) => {
-  if (getMethod(event) !== 'GET') {
-    throw createError({
-      statusCode: 405,
-      statusMessage: 'Method not allowed'
-    })
-  }
 
   const user = await getOptionalAuth(event)
 
   try {
     // Return all portfolios for everyone (read-only for unauthenticated users)
-    const portfolios = await prisma.portfolio.findMany({
+    const portfolios = await prisma.portfolios?.findMany({
       select: {
         id: true,
         name: true,

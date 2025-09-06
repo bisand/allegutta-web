@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const portfolios = await prisma.portfolio.findMany({
+    const portfolios = await prisma.portfolios.findMany({
       select: {
         id: true,
         name: true,

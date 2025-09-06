@@ -176,7 +176,7 @@ import {
   DevicePhoneMobileIcon 
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, register, isRegistrationEnabled } = useAppAuth()
+const { loggedIn, register, isRegistrationEnabled } = useAuthorization()
 const { t } = useI18n()
 
 useHead({

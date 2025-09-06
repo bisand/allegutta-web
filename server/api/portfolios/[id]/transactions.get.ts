@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Verify portfolio belongs to user
-    const portfolio = await prisma.portfolio.findFirst({
+    const portfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
         userId: user.id
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const transactions = await prisma.transaction.findMany({
+    const transactions = await prisma.transactions.findMany({
       where: {
         portfolioId: portfolioId
       },

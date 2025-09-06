@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Verify portfolio belongs to user
-    const portfolio = await prisma.portfolio.findFirst({
+    const portfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
         userId: user.id
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Verify transaction belongs to this portfolio
-    const transaction = await prisma.transaction.findFirst({
+    const transaction = await prisma.transactions.findFirst({
       where: {
         id: transactionId,
         portfolioId: portfolioId
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Delete the transaction
-    await prisma.transaction.delete({
+    await prisma.transactions.delete({
       where: {
         id: transactionId
       }
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
 async function recalculateHoldings(portfolioId: string, symbol: string) {
   if (symbol.startsWith('CASH_')) {
     // Handle cash holdings - sum all direct cash transactions AND stock transaction impacts
-    const allTransactions = await prisma.transaction.findMany({
+    const allTransactions = await prisma.transactions.findMany({
       where: {
         portfolioId: portfolioId
       },
@@ -126,7 +126,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
       // Extract currency from CASH symbol (e.g., CASH_NOK -> NOK)
       const currency = symbol.startsWith('CASH_') ? symbol.substring(5) : 'NOK'
 
-      await prisma.holding.upsert({
+      await prisma.holdings.upsert({
         where: {
           portfolioId_symbol: {
             portfolioId: portfolioId,
@@ -139,16 +139,18 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
           currency: currency
         },
         create: {
+          id: portfolioId,
           portfolioId: portfolioId,
           symbol: symbol,
           quantity: totalCash,
           avgPrice: 1.0,
-          currency: currency
+          currency: currency,
+          updatedAt: new Date()
         }
       })
     } else {
       // Remove cash holding if balance is 0
-      await prisma.holding.deleteMany({
+      await prisma.holdings.deleteMany({
         where: {
           portfolioId: portfolioId,
           symbol: symbol
@@ -160,7 +162,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
 
   // Handle non-cash holdings (stocks, bonds, etc.)
   // Get all transactions for this symbol in this portfolio
-  const transactions = await prisma.transaction.findMany({
+  const transactions = await prisma.transactions.findMany({
     where: {
       portfolioId,
       symbol
@@ -200,7 +202,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
     const avgPrice = totalCostBasis / totalQuantity
 
     // Get currency from the latest transaction for this symbol
-    const latestTransactionWithCurrency = await prisma.transaction.findFirst({
+    const latestTransactionWithCurrency = await prisma.transactions.findFirst({
       where: {
         portfolioId,
         symbol
@@ -215,7 +217,7 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
     const currency = latestTransactionWithCurrency?.currency || 'NOK'
 
     // Update or create holding
-    await prisma.holding.upsert({
+    await prisma.holdings.upsert({
       where: {
         portfolioId_symbol: {
           portfolioId,
@@ -228,16 +230,18 @@ async function recalculateHoldings(portfolioId: string, symbol: string) {
         currency: currency
       },
       create: {
+        id: portfolioId,
         portfolioId,
         symbol,
         quantity: totalQuantity,
         avgPrice,
-        currency: currency
+        currency: currency,
+        updatedAt: new Date()
       }
     })
   } else {
     // Remove holding if quantity is 0
-    await prisma.holding.deleteMany({
+    await prisma.holdings.deleteMany({
       where: {
         portfolioId,
         symbol
@@ -251,7 +255,7 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
   const cashSymbol = `CASH_${portfolioCurrency}`
 
   // Get ALL transactions for this portfolio in chronological order (like saldo progression)
-  const allTransactions = await prisma.transaction.findMany({
+  const allTransactions = await prisma.transactions.findMany({
     where: {
       portfolioId: portfolioId
     },
@@ -343,7 +347,7 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
   }
 
   // Check if we have a recent saldo value to validate against
-  const latestTransactionWithSaldo = await prisma.transaction.findFirst({
+  const latestTransactionWithSaldo = await prisma.transactions.findFirst({
     where: {
       portfolioId: portfolioId,
       saldo: { not: null }
@@ -365,8 +369,9 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
 
       const adjustmentPrice = 1.0
       // Create a SALDO_ADJUSTMENT transaction to align with broker's balance
-      await prisma.transaction.create({
+      await prisma.transactions.create({
         data: {
+          id: `adjustment-${portfolioId}-${Date.now()}`, // Unique ID for adjustment
           portfolioId: portfolioId,
           symbol: cashSymbol,
           type: 'SALDO_ADJUSTMENT',
@@ -377,7 +382,9 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
           currency: portfolioCurrency,
           date: new Date(latestTransactionWithSaldo.date.getTime() + 1000), // 1 second after the reference transaction
           notes: `Automatic adjustment to match broker saldo (${brokerSaldo}). Corrected discrepancy of ${discrepancy}.`,
-          saldo: brokerSaldo
+          saldo: brokerSaldo,
+          createdAt: new Date(),
+          updatedAt: new Date()
         }
       })
 
@@ -388,10 +395,10 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
   }
 
   // Set the final cash balance (like final saldo)
-  if (runningCashBalance !== 0 || await prisma.holding.findUnique({
+  if (runningCashBalance !== 0 || await prisma.holdings.findUnique({
     where: { portfolioId_symbol: { portfolioId, symbol: cashSymbol } }
   })) {
-    await prisma.holding.upsert({
+    await prisma.holdings.upsert({
       where: {
         portfolioId_symbol: {
           portfolioId,
@@ -404,11 +411,13 @@ async function recalculateCashHoldings(portfolioId: string, portfolioCurrency: s
         currency: portfolioCurrency
       },
       create: {
+        id: portfolioId,
         portfolioId,
         symbol: cashSymbol,
         quantity: runningCashBalance,
         avgPrice: 1.0,
-        currency: portfolioCurrency
+        currency: portfolioCurrency,
+        updatedAt: new Date()
       }
     })
 

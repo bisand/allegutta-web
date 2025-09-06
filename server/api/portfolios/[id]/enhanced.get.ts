@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get portfolio with ATH data and cash balance
-    const portfolio = await prisma.portfolio.findUnique({
+    const portfolio = await prisma.portfolios.findUnique({
       where: { id: portfolioId },
       select: {
         id: true,
@@ -53,13 +53,13 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get holdings for the portfolio
-    const holdings = await prisma.holding.findMany({
+    const holdings = await prisma.holdings.findMany({
       where: { portfolioId }
     }) as HoldingData[]
 
     // Get market data for all symbols in holdings
     const symbols = holdings.map((h: HoldingData) => h.symbol)
-    const marketDataList = await prisma.marketData.findMany({
+    const marketDataList = await prisma.market_data.findMany({
       where: {
         symbol: { in: symbols }
       }

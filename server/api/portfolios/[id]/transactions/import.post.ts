@@ -10,11 +10,18 @@ interface TransactionData {
   portfolioId: string
   symbol: string
   isin?: string | null
-  type: string
+  type: 'BUY'|'SELL'|'DIVIDEND'|'DEPOSIT'|'WITHDRAWAL'|'REFUND'|'LIQUIDATION'|'REDEMPTION'|'EXCHANGE_IN'|'EXCHANGE_OUT'|'SPIN_OFF_IN'|'DECIMAL_LIQUIDATION'|'DECIMAL_WITHDRAWAL'|'RIGHTS_ALLOCATION'|'TRANSFER_IN'|'DIVIDEND_REINVEST'|'INTEREST_CHARGE'|'RIGHTS_ISSUE'|'SALDO_ADJUSTMENT'
   quantity: number
   price: number
   fees: number
+  costBasis?: number | null
+  tradeDate?: Date | null
+  settlementDate?: Date | null
+  verificationNumber?: string | null
+  slipNumber?: string | null
+  cancellationDate?: Date | null
   amount?: number | null
+  currency: string
   date: Date
   notes: string | null
   saldo?: number | null
@@ -129,7 +136,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Verify portfolio belongs to user
-    const portfolio = await prisma.portfolio.findFirst({
+    const portfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
         userId: user.id
@@ -202,15 +209,16 @@ export default defineEventHandler(async (event) => {
     for (const { csvRow, lineNumber } of parsedTransactions) {
       try {
         // Map transaction type
-        const mappedTransactionType = mapTransactionType(csvRow.Transaksjonstype)
-        if (!mappedTransactionType) {
+  const mappedTransactionType = mapTransactionType(csvRow.Transaksjonstype)
+  if (!mappedTransactionType) {
           skippedCount++
           continue // Skip unsupported transaction types
         }
 
-        // Handle cash transactions (deposits, withdrawals, dividends, etc.)
-        let symbol = csvRow.Verdipapir ? csvRow.Verdipapir.toUpperCase() : null
-        const transactionType = mappedTransactionType
+  // Handle cash transactions (deposits, withdrawals, dividends, etc.)
+  let symbol = csvRow.Verdipapir ? csvRow.Verdipapir.toUpperCase() : null
+  // Narrow the mapped transaction type to the TransactionData union
+  const transactionType = mappedTransactionType as TransactionData['type']
 
         // Get portfolio currency for dynamic cash holdings
         const portfolioCurrency = portfolio.currency || 'NOK'
@@ -254,7 +262,7 @@ export default defineEventHandler(async (event) => {
           checkPrice = parseNorwegianNumber(csvRow.Kurs)
         }
 
-        const existingTransaction = await prisma.transaction.findFirst({
+        const existingTransaction = await prisma.transactions.findFirst({
           where: {
             portfolioId: portfolioId,
             symbol: symbol,
@@ -275,14 +283,16 @@ export default defineEventHandler(async (event) => {
         const amount = parseNorwegianNumber(csvRow.Beløp) // Cash amount from Beløp column
         const fees = parseNorwegianNumber(csvRow['Totale Avgifter']) || parseNorwegianNumber(csvRow.Kurtasje) || 0
         
-        // For exchange transactions with EXCHANGE_IN type, try to capture Kjøpsverdi for cost basis
-        let notesWithCostBasis = csvRow.Transaksjonstekst || null
-        if (transactionType === 'EXCHANGE_IN' && csvRow.Kjøpsverdi) {
-          const costBasis = parseNorwegianNumber(csvRow.Kjøpsverdi)
-          if (costBasis && costBasis > 0) {
-            notesWithCostBasis = (notesWithCostBasis || '') + ` [Kjøpsverdi: ${costBasis}]`
-          }
-        }
+  // Capture Kjøpsverdi (cost basis) and other broker fields explicitly instead of embedding into notes
+  const notesOriginal = csvRow.Transaksjonstekst || null
+  const parsedCostBasis = csvRow.Kjøpsverdi ? parseNorwegianNumber(csvRow.Kjøpsverdi) : null
+
+  // Parse some additional optional broker fields present in the CSV
+  const parsedTradeDate = csvRow.Handelsdag ? parseNorwegianDate(csvRow.Handelsdag) : null
+  const parsedSettlementDate = csvRow.Oppgjørsdag ? parseNorwegianDate(csvRow.Oppgjørsdag) : null
+  const parsedVerificationNumber = csvRow.Verifikationsnummer ? csvRow.Verifikationsnummer.trim() : null
+  const parsedSlipNumber = csvRow.Sluttseddelnummer ? csvRow.Sluttseddelnummer.trim() : null
+  const parsedCancellationDate = csvRow.Makuleringsdato ? parseNorwegianDate(csvRow.Makuleringsdato) : null
 
         // Handle different transaction types
         let finalQuantity = Math.abs(quantity || 0)
@@ -331,9 +341,15 @@ export default defineEventHandler(async (event) => {
           quantity: finalQuantity,
           price: finalPrice,
           fees: fees,
+          costBasis: parsedCostBasis,
+          tradeDate: parsedTradeDate,
+          settlementDate: parsedSettlementDate,
+          verificationNumber: parsedVerificationNumber,
+          slipNumber: parsedSlipNumber,
+          cancellationDate: parsedCancellationDate,
           currency: portfolioCurrency,
           date: parseNorwegianDate(csvRow.Bokføringsdag),
-          notes: notesWithCostBasis,
+          notes: notesOriginal,
           saldo: csvRow.Saldo ? parseNorwegianNumber(csvRow.Saldo) : null,  // Store broker's saldo if available
           amount: amount  // Store the original beløp amount for accurate saldo calculations
         }
@@ -357,8 +373,12 @@ export default defineEventHandler(async (event) => {
 
       for (const transactionData of transactions) {
         // Create the transaction
-        const createdTransaction = await prisma.transaction.create({
-          data: transactionData
+        const createdTransaction = await prisma.transactions.create({
+          data: {
+            ...transactionData,
+            id: `txn-${portfolioId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, // Generate unique ID
+            updatedAt: new Date()
+          }
         })
 
         successCount++
@@ -381,8 +401,9 @@ export default defineEventHandler(async (event) => {
             console.log(`⚠️  Saldo discrepancy detected: ${discrepancy} ${portfolioCurrency}. Creating immediate adjustment.`)
 
             const adjustmentPrice = 1.0
-            const adjustmentTransaction = await prisma.transaction.create({
+            const adjustmentTransaction = await prisma.transactions.create({
               data: {
+                id: `txn-${portfolioId}-${Date.now()}`, // Unique ID for transaction
                 portfolioId: portfolioId,
                 symbol: cashSymbol,
                 type: 'SALDO_ADJUSTMENT',
@@ -393,7 +414,9 @@ export default defineEventHandler(async (event) => {
                 currency: portfolioCurrency,
                 date: new Date(createdTransaction.date.getTime() + 1000), // 1 second after the reference transaction
                 notes: `Saldo adjustment after ${createdTransaction.type} ${createdTransaction.symbol}. Expected: ${expectedSaldo}, Broker: ${brokerSaldo}, Adjustment: ${-discrepancy}`,
-                saldo: brokerSaldo
+                saldo: brokerSaldo,
+                createdAt: new Date(),
+                updatedAt: new Date()
               }
             })
 
@@ -415,7 +438,7 @@ export default defineEventHandler(async (event) => {
       await updateCashBalance(portfolioId)
 
       // Get all unique symbols to recalculate holdings
-      const uniqueSymbols = await prisma.transaction.findMany({
+      const uniqueSymbols = await prisma.transactions.findMany({
         where: {
           portfolioId: portfolioId,
           NOT: {

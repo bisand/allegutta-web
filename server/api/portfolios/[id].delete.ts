@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Verify portfolio belongs to user
-    const portfolio = await prisma.portfolio.findFirst({
+    const portfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
         userId: user.id
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Delete the portfolio (this will cascade delete transactions and holdings)
-    await prisma.portfolio.delete({
+    await prisma.portfolios.delete({
       where: {
         id: portfolioId
       }

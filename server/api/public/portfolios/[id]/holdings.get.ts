@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Verify portfolio exists (no auth required for public portfolios)
-    const portfolio = await prisma.portfolio.findUnique({
+    const portfolio = await prisma.portfolios.findUnique({
       where: { id: portfolioId }
     })
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const holdings = await prisma.holding.findMany({
+    const holdings = await prisma.holdings.findMany({
       where: { portfolioId },
       orderBy: { symbol: 'asc' }
     })
@@ -36,14 +36,14 @@ export default defineEventHandler(async (event) => {
         
         // Try to find market data by ISIN first, then by symbol
         if (holding.isin) {
-          marketData = await prisma.marketData.findUnique({
+          marketData = await prisma.market_data.findUnique({
             where: { isin: holding.isin }
           })
         }
         
         // If no market data found by ISIN, try by symbol
         if (!marketData) {
-          marketData = await prisma.marketData.findFirst({
+          marketData = await prisma.market_data.findFirst({
             where: { symbol: holding.symbol }
           })
         }

@@ -183,7 +183,7 @@ import {
   PresentationChartLineIcon
 } from '@heroicons/vue/24/outline'
 
-const { loggedIn, register, isRegistrationEnabled } = useAppAuth()
+const { loggedIn, register, isRegistrationEnabled } = useAuthorization()
 
 useHead({
   title: 'Home',

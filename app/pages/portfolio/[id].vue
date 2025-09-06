@@ -525,7 +525,7 @@ import {
 
 const route = useRoute()
 const portfolioStore = usePortfolioStore()
-const { loggedIn, user, canManagePortfolios } = useAppAuth()
+const { loggedIn, user, canManagePortfolios } = useAuthorization()
 const { formatCurrency, formatNumber, formatPercentage, formatPercentageChange, formatCurrencyChange } = useCurrency()
 const { formatDate, formatDateTime } = useDateTime()
 const { t } = useI18n()

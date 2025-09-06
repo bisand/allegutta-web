@@ -83,7 +83,7 @@
 <script setup lang="ts">
 import { ChartBarIcon, EnvelopeIcon, GlobeAltIcon } from '@heroicons/vue/24/outline'
 
-const { loggedIn } = useAppAuth()
+const { loggedIn } = useAuthorization()
 
 const currentYear = new Date().getFullYear()
 </script>

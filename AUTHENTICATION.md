@@ -105,7 +105,7 @@ export default defineEventHandler(async (event) => {
 ### In Client Components
 ```vue
 <script setup>
-const { user, loggedIn, login, logout } = useAppAuth()
+const { user, loggedIn, login, logout } = useAuthorization()
 
 // Reactive authentication state
 console.log(user.value) // Current user or null
@@ -115,7 +115,7 @@ console.log(loggedIn.value) // Boolean authentication status
 
 ### Authentication Methods
 ```typescript
-const auth = useAppAuth()
+const auth = useAuthorization()
 
 // Login (redirects to Kinde)
 await auth.login()
