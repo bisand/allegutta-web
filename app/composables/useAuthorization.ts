@@ -26,6 +26,8 @@ export const useAuthorization = () => {
     loading: true
   }))
 
+  const config = useRuntimeConfig()
+
   // Initialize auth state with optimized approach
   const initialize = async () => {
     try {
@@ -54,21 +56,21 @@ export const useAuthorization = () => {
   const login = async (redirectTo?: string) => {
     if (redirectTo) {
       // Store redirect URL for after login
-      await navigateTo(`/api/auth/login?redirect=${encodeURIComponent(redirectTo)}`)
+      await navigateTo(`/api/auth/login?org_code=${config.public.kindeOrgCode}&redirect=${encodeURIComponent(redirectTo)}`)
     } else {
-      await navigateTo('/api/auth/login')
+      await navigateTo(`/api/auth/login?org_code=${config.public.kindeOrgCode}`)
     }
   }
 
   // Register with Kinde (only if registration is enabled)
   const register = async (redirectTo?: string) => {
     const config = useRuntimeConfig()
-    
+
     if (!config.public.registrationEnabled) {
       console.warn('Registration is disabled')
       return
     }
-    
+
     if (redirectTo) {
       // Store redirect URL for after registration
       await navigateTo(`/api/auth/register?redirect=${encodeURIComponent(redirectTo)}`)

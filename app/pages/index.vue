@@ -150,7 +150,7 @@
             {{ $t('homepage.registrationDisabled') }}
           </p>
           <NuxtLink 
-            to="/api/auth/login"
+            :to="`/api/auth/login?org_code=${config.public.kindeOrgCode}`"
             external
             class="inline-flex items-center px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
           >
@@ -184,6 +184,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const { loggedIn, register, isRegistrationEnabled } = useAuthorization()
+const config = useRuntimeConfig()
 
 useHead({
   title: 'Home',
