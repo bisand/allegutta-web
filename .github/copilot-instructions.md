@@ -10,8 +10,8 @@ This is a **Nuxt 4** portfolio management application with a unique **client/ser
 
 The app uses **dual authentication modes**:
 
-- **Development**: Auto-login as test user via `useAuthorization()` composable
-- **Production**: Kinde OAuth integration with JWT tokens
+- **Development**: Kinde OAuth integration using @nuxtjs/kinde module
+- **Production**: Kinde OAuth integration using @nuxtjs/kinde module
 
 ## Key Technical Patterns
 
@@ -84,7 +84,6 @@ curl -X POST localhost:3000/api/market-data/update    # Manual price update
 
 ## Critical Files to Understand
 
-- `server/lib/auth.ts` - Authentication logic (JWT + Kinde)
 - `server/lib/portfolioCalculations.ts` - Holdings calculation engine
 - `app/stores/portfolio.ts` - Client state management (542 lines)
 - `prisma/schema.prisma` - Complete data model

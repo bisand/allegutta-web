@@ -1,11 +1,5 @@
 // Health check endpoint for container orchestration
-export default defineEventHandler(async (event) => {
-  if (getMethod(event) !== 'GET') {
-    throw createError({
-      statusCode: 405,
-      statusMessage: 'Method not allowed'
-    })
-  }
+export default defineEventHandler(async () => {
 
   try {
     // Test database connection

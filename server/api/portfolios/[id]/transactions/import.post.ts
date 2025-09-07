@@ -1,5 +1,4 @@
 import prisma from '../../../../lib/prisma'
-import { requireAuth } from '../../../../lib/auth'
 import { updateCashBalance, updateSecurityHoldings } from '../../../../lib/portfolioCalculations'
 
 interface CSVRow {
@@ -109,14 +108,15 @@ function parseNorwegianNumber(numberStr: string): number {
 
 // POST /api/portfolios/[id]/transactions/import - Import transactions from CSV
 export default defineEventHandler(async (event) => {
-  if (getMethod(event) !== 'POST') {
+
+  const user = await event.context.kinde.getUser()
+  if (!user) {
     throw createError({
-      statusCode: 405,
-      statusMessage: 'Method not allowed'
+      statusCode: 401,
+      statusMessage: 'Authentication required'
     })
   }
 
-  const user = await requireAuth(event)
   const portfolioId = getRouterParam(event, 'id')
   const body = await readBody(event)
 
@@ -139,7 +139,6 @@ export default defineEventHandler(async (event) => {
     const portfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
-        userId: user.id
       }
     })
 

@@ -2,12 +2,6 @@ import prisma from '../../../../lib/prisma'
 
 // GET /api/public/portfolios/[id]/transactions - Get public portfolio transactions
 export default defineEventHandler(async (event) => {
-  if (getMethod(event) !== 'GET') {
-    throw createError({
-      statusCode: 405,
-      statusMessage: 'Method not allowed'
-    })
-  }
 
   const portfolioId = getRouterParam(event, 'id')
 

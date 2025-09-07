@@ -66,7 +66,7 @@
                   
                   <!-- Admin actions - only when logged in and has permissions -->
                   <ClientOnly>
-                    <div v-if="loggedIn && portfolioStore.canManagePortfolios" class="py-1">
+                    <div v-if="loggedIn && canManagePortfolios" class="py-1">
                       <MenuItem v-slot="{ active }">
                         <NuxtLink
                           to="/admin/portfolios"
@@ -168,7 +168,7 @@
                 leave-from-class="opacity-100"
                 leave-to-class="opacity-0"
               >
-                <div v-if="!$auth.loggedIn" class="flex items-center space-x-2">
+                <div v-if="!loggedIn" class="flex items-center space-x-2">
                   <NuxtLink 
                     to="/api/auth/login?org_code=org_80fb5a68f571"
                     external
@@ -222,7 +222,7 @@
                         
                         <!-- Admin: Edit Current Portfolio - show when admin and on portfolio page -->
                         <MenuItem 
-                          v-if="canManagePortfolios"
+                          v-if="loggedIn && canManagePortfolios"
                           v-slot="{ active }"
                         >
                           <NuxtLink

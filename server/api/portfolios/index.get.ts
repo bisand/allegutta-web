@@ -1,10 +1,15 @@
 import prisma from '../../lib/prisma'
-import { getOptionalAuth } from '../../lib/auth'
 
 // GET /api/portfolios - Get all portfolios (public for all users)
 export default defineEventHandler(async (event) => {
 
-  const user = await getOptionalAuth(event)
+  const user = await event.context.kinde.getUser()
+  if (!user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Authentication required'
+    })
+  }
 
   try {
     // Return all portfolios for everyone (read-only for unauthenticated users)

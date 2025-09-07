@@ -101,17 +101,20 @@ export const useAuthorization = () => {
 
   // Check if user has a specific role
   const hasRole = (role: string): boolean => {
-    return authState.value.user?.roles?.includes(role) || false
+    const userRoles = authState.value.user?.roles
+    return Array.isArray(userRoles) ? userRoles.includes(role) : false
   }
 
   // Check if user has any of the specified roles
   const hasAnyRole = (roles: string[]): boolean => {
-    return roles.some(role => hasRole(role))
+    const result = roles.some(role => hasRole(role))
+    return result
   }
 
   // Check if user has a specific permission
   const hasPermission = (permission: string): boolean => {
-    return authState.value.user?.permissions?.includes(permission) || false
+    const userPermissions = authState.value.user?.permissions
+    return Array.isArray(userPermissions) ? userPermissions.includes(permission) : false
   }
 
   // Check if user has any of the specified permissions
@@ -125,7 +128,7 @@ export const useAuthorization = () => {
   // Check if user can manage portfolios
   const canManagePortfolios = computed(() =>
     hasAnyRole(['admin', 'portfolio_admin']) ||
-    hasAnyPermission(['admin', 'portfolio_admin', 'admin:manage', 'write:portfolios'])
+    hasAnyPermission(['write:portfolio'])
   )
 
   // Check if registration is enabled
