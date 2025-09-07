@@ -97,7 +97,7 @@ KINDE_LOGOUT_REDIRECT_URL=http://localhost:3000
 REGISTRATION_ENABLED=false  # Set to true to allow new user registration
 
 # Database
-DATABASE_URL="file:./dev.db"
+NUXT_DATABASE_URL="file:./dev.db"
 
 # Security
 JWT_SECRET=your-super-secret-jwt-key

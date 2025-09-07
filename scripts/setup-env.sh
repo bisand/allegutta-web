@@ -44,7 +44,7 @@ NUXT_KINDE_CALLBACK_URL=https://your-domain.com/api/auth/kinde_callback
 NUXT_KINDE_POST_LOGOUT_REDIRECT_URL=https://your-domain.com
 
 # Database (automatically configured for SQLite in container)
-DATABASE_URL=file:/app/data/production.db
+NUXT_DATABASE_URL=file:/app/data/production.db
 EOF
 
 echo -e "${GREEN}✅ Created .env template file${NC}"

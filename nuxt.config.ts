@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+  compatibilityDate: 'latest',
   devtools: { enabled: true },
 
   sourcemap: {
@@ -50,12 +50,13 @@ export default defineNuxtConfig({
 
   // Runtime config
   runtimeConfig: {
-    databaseUrl: process.env.DATABASE_URL,
-    registrationEnabled: process.env.REGISTRATION_ENABLED === 'true',
+    databaseUrl: process.env.NUXT_DATABASE_URL,
+    enableMarketDataWorker: process.env.NUXT_ENABLE_MARKET_DATA_WORKER === 'true',
+    marketDataWorkerInterval: parseInt(process.env.NUXT_MARKET_DATA_WORKER_INTERVAL || '15', 10),
     public: {
-      baseUrl: process.env.BASE_URL,
-      registrationEnabled: process.env.REGISTRATION_ENABLED === 'true',
-      kindeOrgCode: process.env.NUXT_KINDE_ORG_CODE
+      baseUrl: process.env.NUXT_PUBLIC_BASE_URL,
+      registrationEnabled: process.env.NUXT_PUBLIC_REGISTRATION_ENABLED === 'true',
+      kindeOrgCode: process.env.NUXT_PUBLIC_KINDE_ORG_CODE
     }
   },
 

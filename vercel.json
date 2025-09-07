@@ -14,11 +14,11 @@
     "NUXT_KINDE_PASSWORD": "@nuxt_kinde_password",
     "JWT_SECRET": "@jwt_secret",
     "NUXT_SESSION_PASSWORD": "@nuxt_session_password",
-    "DATABASE_URL": "@database_url"
+    "NUXT_DATABASE_URL": "@database_url"
   },
   "build": {
     "env": {
-      "DATABASE_URL": "file:./prisma/dev.db"
+      "NUXT_DATABASE_URL": "file:./prisma/dev.db"
     }
   }
 }

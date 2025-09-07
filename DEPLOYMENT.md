@@ -112,7 +112,7 @@ turso db show allegutta-production
 
 2. **Set environment variables in Vercel:**
 ```bash
-DATABASE_URL="libsql://your-database-url.turso.io?authToken=your-auth-token"
+NUXT_DATABASE_URL="libsql://your-database-url.turso.io?authToken=your-auth-token"
 ```
 
 ### Option B: PlanetScale (MySQL)
@@ -121,14 +121,14 @@ DATABASE_URL="libsql://your-database-url.turso.io?authToken=your-auth-token"
 ```prisma
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  url      = env("NUXT_DATABASE_URL")
   relationMode = "prisma"
 }
 ```
 
 2. **Set environment variables:**
 ```bash
-DATABASE_URL="mysql://username:password@host:port/database?sslaccept=strict"
+NUXT_DATABASE_URL="mysql://username:password@host:port/database?sslaccept=strict"
 ```
 
 ### Option C: Neon (PostgreSQL)
@@ -137,13 +137,13 @@ DATABASE_URL="mysql://username:password@host:port/database?sslaccept=strict"
 ```prisma
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("NUXT_DATABASE_URL")
 }
 ```
 
 2. **Set environment variables:**
 ```bash
-DATABASE_URL="postgresql://username:password@host:port/database?sslmode=require"
+NUXT_DATABASE_URL="postgresql://username:password@host:port/database?sslmode=require"
 ```
 
 ---
