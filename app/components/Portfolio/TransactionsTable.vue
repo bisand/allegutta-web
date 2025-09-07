@@ -83,21 +83,20 @@
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             <div class="flex items-center space-x-2">
-              <UButton 
-                variant="ghost" 
-                size="sm"
+              <button 
+                type="button"
+                class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 @click="$emit('edit', transaction)"
               >
-                <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
-              </UButton>
-              <UButton 
-                variant="ghost" 
-                size="sm" 
-                color="red"
+                <PencilIcon class="w-4 h-4" />
+              </button>
+              <button 
+                type="button"
+                class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                 @click="$emit('delete', transaction)"
               >
-                <UIcon name="i-heroicons-trash" class="w-4 h-4" />
-              </UButton>
+                <TrashIcon class="w-4 h-4" />
+              </button>
             </div>
           </td>
         </tr>
@@ -107,6 +106,8 @@
 </template>
 
 <script setup lang="ts">
+import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+
 interface Transaction {
   id: string
   symbol: string

@@ -18,9 +18,13 @@
         <div class="px-6 py-4 space-y-6">
           <!-- File Upload -->
           <div v-if="!importResult">
-            <UFormGroup label="CSV File" name="file" required>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="file-upload">
+                CSV File <span class="text-red-500">*</span>
+              </label>
               <div class="space-y-3">
                 <input
+                  id="file-upload"
                   ref="fileInput"
                   type="file"
                   accept=".csv,.txt"
@@ -44,7 +48,7 @@
                   </ul>
                 </div>
               </div>
-            </UFormGroup>
+            </div>
 
             <!-- Preview -->
             <div v-if="previewData.length > 0" class="mt-6">
@@ -126,17 +130,26 @@
 
         <!-- Footer -->
         <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
-          <UButton variant="ghost" @click="handleCancel">
+          <button 
+            type="button"
+            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            @click="handleCancel"
+          >
             {{ importResult ? 'Close' : 'Cancel' }}
-          </UButton>
-          <UButton 
+          </button>
+          <button 
             v-if="!importResult && csvData"
             type="button" 
-            :loading="loading"
+            :disabled="loading"
+            class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed border border-transparent rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 flex items-center space-x-2"
             @click="handleImport"
           >
-            Import Transactions
-          </UButton>
+            <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span>{{ loading ? 'Importing...' : 'Import Transactions' }}</span>
+          </button>
         </div>
       </div>
     </div>
