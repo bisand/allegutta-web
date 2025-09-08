@@ -1,14 +1,9 @@
 import prisma from '../../lib/prisma'
+import { getRequiredAuth } from '../../lib/auth'
 
 // PUT /api/portfolios/[id] - Update portfolio
 export default defineEventHandler(async (event) => {
-  const user = await event.context.kinde.getUser();
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Authentication required'
-    })
-  }
+  const { dbUser } = await getRequiredAuth(event)
 
   const portfolioId = getRouterParam(event, 'id')
   const body = await readBody(event)
@@ -33,7 +28,7 @@ export default defineEventHandler(async (event) => {
     const existingPortfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
-        userId: user.id
+        userId: dbUser.id // Use database user ID
       }
     })
 
@@ -48,7 +43,7 @@ export default defineEventHandler(async (event) => {
     if (body.isDefault) {
       await prisma.portfolios.updateMany({
         where: {
-          userId: user.id,
+          userId: dbUser.id, // Use database user ID
           isDefault: true
         },
         data: {

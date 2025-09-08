@@ -1,5 +1,5 @@
-import prisma from '../../../lib/prisma'
-import { getRequiredAuth } from '../../../lib/auth'
+import prisma from '../../../../lib/prisma'
+import { getRequiredAuth } from '../../../../lib/auth'
 
 // POST /api/portfolios/[id]/transactions - Add new transaction
 export default defineEventHandler(async (event) => {
@@ -68,39 +68,23 @@ export default defineEventHandler(async (event) => {
     })
 
     const previousSaldo = lastTransaction?.saldo || 0
+    const baseAmount = parseFloat(body.amount) || (parseFloat(body.quantity) * parseFloat(body.price)) + (parseFloat(body.fees) || 0)
     
-    // Calculate transaction amount based on type
-    const quantity = parseFloat(body.quantity)
-    const price = parseFloat(body.price)
-    const fees = parseFloat(body.fees) || 0
+    // Determine cash impact based on transaction type
+    let transactionAmount = baseAmount
     const transactionType = body.type as string
     
-    let transactionAmount: number
+    // Transaction types that subtract cash (negative impact)
+    const cashOutTypes = ['BUY', 'WITHDRAWAL', 'EXCHANGE_OUT', 'INTEREST_CHARGE', 'DECIMAL_WITHDRAWAL']
+    // Transaction types that add cash (positive impact)
+    const cashInTypes = ['SELL', 'DIVIDEND', 'DEPOSIT', 'EXCHANGE_IN', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'SPIN_OFF_IN', 'DECIMAL_LIQUIDATION', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'TRANSFER_IN', 'SALDO_ADJUSTMENT']
     
-    if (body.amount) {
-      // If amount is explicitly provided, use it directly
-      transactionAmount = parseFloat(body.amount)
-    } else {
-      // Calculate amount based on transaction type
-      const grossAmount = quantity * price
-      
-      if (transactionType === 'BUY') {
-        // BUY: negative cash impact (outgoing cash + fees)
-        transactionAmount = -(grossAmount + fees)
-      } else if (transactionType === 'SELL') {
-        // SELL: positive cash impact (incoming cash - fees)
-        transactionAmount = grossAmount - fees
-      } else if (['WITHDRAWAL', 'EXCHANGE_OUT', 'INTEREST_CHARGE', 'DECIMAL_WITHDRAWAL'].includes(transactionType)) {
-        // Other cash outflow types
-        transactionAmount = -(grossAmount + fees)
-      } else if (['DIVIDEND', 'DEPOSIT', 'EXCHANGE_IN', 'REFUND', 'LIQUIDATION', 'REDEMPTION', 'SPIN_OFF_IN', 'DECIMAL_LIQUIDATION', 'DIVIDEND_REINVEST', 'RIGHTS_ALLOCATION', 'TRANSFER_IN', 'SALDO_ADJUSTMENT'].includes(transactionType)) {
-        // Cash inflow types (typically no fees, but handle if provided)
-        transactionAmount = grossAmount - (fees || 0)
-      } else {
-        // Default: use gross amount for other transaction types
-        transactionAmount = grossAmount
-      }
+    if (cashOutTypes.includes(transactionType)) {
+      transactionAmount = -Math.abs(baseAmount) // Ensure negative for cash out
+    } else if (cashInTypes.includes(transactionType)) {
+      transactionAmount = Math.abs(baseAmount) // Ensure positive for cash in
     }
+    // For other types like SPLIT, MERGER, RIGHTS_ISSUE, keep the amount as provided
     
     const newSaldo = previousSaldo + transactionAmount
 
@@ -112,9 +96,9 @@ export default defineEventHandler(async (event) => {
         symbol: body.symbol.toUpperCase(),
         isin: isin,
         type: body.type,
-        quantity: quantity,
-        price: price,
-        fees: fees,
+        quantity: parseFloat(body.quantity),
+        price: parseFloat(body.price),
+        fees: parseFloat(body.fees) || 0,
         amount: transactionAmount,
         currency: body.currency || portfolio.currency || 'NOK',
         date: new Date(body.date),

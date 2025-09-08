@@ -1,4 +1,5 @@
 import prisma from '../../../../lib/prisma'
+import { getRequiredAuth } from '../../../../lib/auth'
 import { updateCashBalance, updateSecurityHoldings } from '../../../../lib/portfolioCalculations'
 
 interface CSVRow {
@@ -109,13 +110,7 @@ function parseNorwegianNumber(numberStr: string): number {
 // POST /api/portfolios/[id]/transactions/import - Import transactions from CSV
 export default defineEventHandler(async (event) => {
 
-  const user = await event.context.kinde.getUser()
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Authentication required'
-    })
-  }
+  const { dbUser } = await getRequiredAuth(event)
 
   const portfolioId = getRouterParam(event, 'id')
   const body = await readBody(event)
@@ -139,6 +134,7 @@ export default defineEventHandler(async (event) => {
     const portfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
+        userId: dbUser.id // Use database user ID
       }
     })
 
@@ -345,7 +341,8 @@ export default defineEventHandler(async (event) => {
           settlementDate: parsedSettlementDate,
           verificationNumber: parsedVerificationNumber,
           slipNumber: parsedSlipNumber,
-          cancellationDate: parsedCancellationDate,
+          // Only include cancellationDate if it's not null to avoid DB errors
+          ...(parsedCancellationDate && { cancellationDate: parsedCancellationDate }),
           currency: portfolioCurrency,
           date: parseNorwegianDate(csvRow.Bokføringsdag),
           notes: notesOriginal,

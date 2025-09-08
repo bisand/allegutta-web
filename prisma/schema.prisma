@@ -88,30 +88,28 @@ model portfolios {
 }
 
 model transactions {
-  id          String     @id
-  portfolioId String
-  symbol      String
-  isin        String?
-  type        String
-  quantity    Float
-  price       Float
-  fees        Float      @default(0)
-  // Optional imported cost basis ("Kjøpsverdi") for exchange transactions
-  costBasis    Float?
-  // Optional broker fields from CSV import
-  tradeDate    DateTime?
-  settlementDate DateTime?
+  id                 String     @id
+  portfolioId        String
+  symbol             String
+  isin               String?
+  type               String
+  quantity           Float
+  price              Float
+  fees               Float      @default(0)
+  amount             Float?
+  currency           String     @default("NOK")
+  date               DateTime
+  saldo              Float?
+  notes              String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime
+  cancellationDate   DateTime?
+  costBasis          Float?
+  settlementDate     DateTime?
+  slipNumber         String?
+  tradeDate          DateTime?
   verificationNumber String?
-  slipNumber   String?
-  cancellationDate DateTime?
-  amount      Float?
-  currency    String     @default("NOK")
-  date        DateTime
-  saldo       Float?
-  notes       String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime
-  portfolios  portfolios @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  portfolios         portfolios @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
 }
 
 model users {

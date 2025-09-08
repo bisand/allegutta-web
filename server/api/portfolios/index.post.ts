@@ -1,17 +1,12 @@
 import prisma from '../../lib/prisma'
+import { getRequiredAuth } from '../../lib/auth'
 
 // POST /api/portfolios - Create new portfolio
 export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  const user = await event.context.kinde.getUser()
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Authentication required'
-    })
-  }
+  const { dbUser } = await getRequiredAuth(event)
 
   // Validate input
   if (!body.name || body.name.trim().length === 0) {
@@ -28,7 +23,7 @@ export default defineEventHandler(async (event) => {
         name: body.name.trim(),
         description: body.description?.trim() || null,
         currency: body.currency || 'NOK',
-        userId: user.id,
+        userId: dbUser.id, // Use the database user ID
         isDefault: body.isDefault || false,
         updatedAt: new Date()
       }
@@ -38,10 +33,11 @@ export default defineEventHandler(async (event) => {
       success: true,
       data: portfolio
     }
-  } catch {
+  } catch (error) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to create portfolio'
+      statusMessage: 'Failed to create portfolio',
+      data: error
     })
   }
 })

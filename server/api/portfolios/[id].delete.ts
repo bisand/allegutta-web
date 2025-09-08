@@ -1,17 +1,11 @@
 import prisma from '../../lib/prisma'
+import { getRequiredAuth } from '../../lib/auth'
 
 // DELETE /api/portfolios/[id] - Delete portfolio
 export default defineEventHandler(async (event) => {
+  const { dbUser } = await getRequiredAuth(event)
 
   const portfolioId = getRouterParam(event, 'id')
-
-  const user = await event.context.kinde.getUser()
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Authentication required'
-    })
-  }
 
   if (!portfolioId) {
     throw createError({
@@ -25,7 +19,7 @@ export default defineEventHandler(async (event) => {
     const portfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
-        userId: user.id
+        userId: dbUser.id // Use database user ID
       }
     })
 

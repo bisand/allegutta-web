@@ -1,23 +1,19 @@
 import prisma from '../../../lib/prisma'
+import { getRequiredAuth } from '../../../lib/auth'
 
 // GET /api/portfolios/[id]/holdings - Get portfolio holdings
 export default defineEventHandler(async (event) => {
 
   const portfolioId = getRouterParam(event, 'id')
 
-  const user = await event.context.kinde.getUser()
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Authentication required'
-    })
-  }
+  const { dbUser } = await getRequiredAuth(event)
 
   try {
     // Verify portfolio belongs to user
     const portfolio = await prisma.portfolios.findFirst({
       where: {
         id: portfolioId,
+        userId: dbUser.id // Use database user ID
       }
     })
 

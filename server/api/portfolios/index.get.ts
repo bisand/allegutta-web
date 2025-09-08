@@ -1,24 +1,24 @@
 import prisma from '../../lib/prisma'
+import { getRequiredAuth } from '../../lib/auth'
 
-// GET /api/portfolios - Get all portfolios (public for all users)
+// GET /api/portfolios - Get portfolios for authenticated user
 export default defineEventHandler(async (event) => {
 
-  const user = await event.context.kinde.getUser()
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Authentication required'
-    })
-  }
+  const { dbUser } = await getRequiredAuth(event)
 
   try {
-    // Return all portfolios for everyone (read-only for unauthenticated users)
+    // Return only portfolios that belong to the authenticated user
     const portfolios = await prisma.portfolios?.findMany({
+      where: {
+        userId: dbUser.id // Filter by authenticated user
+      },
       select: {
         id: true,
         name: true,
         description: true,
         isDefault: true,
+        currency: true,
+        cashBalance: true,
         createdAt: true,
         updatedAt: true,
         // Don't include userId for privacy
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: portfolios,
-      isAuthenticated: !!user
+      isAuthenticated: true
     }
   } catch (error) {
     console.error('Failed to fetch portfolios:', error)
