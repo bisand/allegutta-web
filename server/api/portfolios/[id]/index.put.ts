@@ -1,5 +1,5 @@
-import prisma from '../../lib/prisma'
-import { getRequiredAuth } from '../../lib/auth'
+import prisma from '../../../lib/prisma'
+import { getRequiredAuth } from '../../../lib/auth'
 
 // PUT /api/portfolios/[id] - Update portfolio
 export default defineEventHandler(async (event) => {

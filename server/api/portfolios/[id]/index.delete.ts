@@ -1,5 +1,5 @@
-import prisma from '../../lib/prisma'
-import { getRequiredAuth } from '../../lib/auth'
+import prisma from '../../../lib/prisma'
+import { getRequiredAuth } from '../../../lib/auth'
 
 // DELETE /api/portfolios/[id] - Delete portfolio
 export default defineEventHandler(async (event) => {
