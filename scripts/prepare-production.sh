@@ -25,12 +25,12 @@ BACKUP_DIR=$(find prisma -name "migrations_backup_*" -type d 2>/dev/null | head 
 if [ -n "$BACKUP_DIR" ]; then
     echo "📁 Found backed up migrations: $BACKUP_DIR"
     echo "🔄 Restoring backed up migrations..."
-    
+
     mv "$BACKUP_DIR" prisma/migrations
     echo "✅ Migrations restored from backup"
 else
     echo "🔄 Creating initial migration from current schema..."
-    
+
     # Create initial migration
     if npx prisma migrate dev --name init --skip-generate; then
         echo "✅ Initial migration created successfully"
