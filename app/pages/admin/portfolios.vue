@@ -450,9 +450,9 @@
     </div>
 
     <!-- Positions Management Modal -->
-    <div v-if="showPositionModal && selectedPortfolio && portfolioHoldings.length > 0" class="fixed inset-0 z-50 overflow-y-auto">
+    <div v-if="showPositionsListModal && selectedPortfolio && portfolioHoldings.length > 0" class="fixed inset-0 z-60 overflow-y-auto">
       <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="selectedPortfolio = null" />
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closePositionsListModal" />
 
         <div
           class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
@@ -467,7 +467,7 @@
                   Portfolio: {{ selectedPortfolio?.name }}
                 </p>
               </div>
-              <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="selectedPortfolio = null">
+              <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="closePositionsListModal">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -548,11 +548,11 @@
     </div>
 
     <!-- Edit Position Modal -->
-    <PortfolioEditPositionModal :show="showPositionModal" :holding="selectedPosition" :portfolio-id="selectedPortfolio?.id || ''" @close="closePositionModal"
+    <PortfolioEditPositionModal :show="showPositionModal" :holding="selectedPosition" :portfolio-id="selectedPortfolio?.id || ''" style="z-index: 70;" @close="closePositionModal"
       @success="handlePositionUpdate" />
 
     <!-- Edit Market Data Modal -->
-    <PortfolioEditMarketDataModal :show="showMarketDataModal" :holding="selectedPosition" :portfolio-id="selectedPortfolio?.id || ''" @close="closeMarketDataModal"
+    <PortfolioEditMarketDataModal :show="showMarketDataModal" :holding="selectedPosition" :portfolio-id="selectedPortfolio?.id || ''" style="z-index: 70;" @close="closeMarketDataModal"
       @success="handleMarketDataUpdate" />
 
     <!-- Import Transactions Modal -->
@@ -636,6 +636,7 @@ const editingTransaction = ref<TransactionData | null>(null)
 const showImportTransactions = ref(false)
 
 // Position management states
+const showPositionsListModal = ref(false)
 const showPositionModal = ref(false)
 const selectedPosition = ref<HoldingData | null>(null)
 const showMarketDataModal = ref(false)
@@ -755,18 +756,25 @@ function handleImportSuccess(): void {
 function managePositions(portfolio: Portfolio): void {
   console.log('managePositions called with portfolio:', portfolio)
   selectedPortfolio.value = portfolio
-  showPositionModal.value = true
+  showPositionsListModal.value = true
   loadPortfolioHoldings(portfolio.id)
 }
 
 function editPosition(holding: HoldingData): void {
   selectedPosition.value = holding
   showPositionModal.value = true
+  // Don't close the positions list modal, let them stack
+}
+
+function closePositionsListModal(): void {
+  showPositionsListModal.value = false
+  // Keep selectedPortfolio and portfolioHoldings since they might be used by edit modals
 }
 
 function closePositionModal(): void {
   showPositionModal.value = false
   selectedPosition.value = null
+  // Don't clear selectedPortfolio here since it might be used by other modals
 }
 
 function editMarketData(holding: HoldingData): void {

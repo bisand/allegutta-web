@@ -40,17 +40,19 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Try to get ISIN from existing market data records
+    // Try to get ISIN from existing market data records (not needed for cash transactions)
     let isin: string | null = body.isin || null
-    if (!isin) {
+    const isSymbolCash = body.symbol.toUpperCase().startsWith('CASH_')
+    
+    if (!isin && !isSymbolCash) {
       const marketData = await prisma.market_data.findFirst({
         where: { symbol: body.symbol.toUpperCase() }
       })
       isin = marketData?.isin || null
     }
 
-    if (!isin) {
-      // Return error if ISIN is still not found
+    if (!isin && !isSymbolCash) {
+      // Return error if ISIN is still not found for securities (not cash)
       throw createError({
         statusCode: 400,
         statusMessage: 'ISIN is required for securities transactions'
