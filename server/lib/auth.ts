@@ -9,33 +9,33 @@ export async function getRequiredAuth(event: H3Event) {
   // Check if dev auth mode is enabled
   if (process.env.NUXT_DEV_AUTH === 'true') {
     console.log('🔧 Dev auth mode enabled - using test user')
-    
+
     // Return the existing test user from the database
     const testUser = await prisma.users.findFirst({
       where: { email: 'andre@biseth.net' }
     })
-    
+
     if (!testUser) {
       throw createError({
         statusCode: 500,
         statusMessage: 'Test user not found in dev mode'
       })
     }
-    
-    return { 
-      kindeUser: { 
+
+    return {
+      kindeUser: {
         id: testUser.kindeId,
         email: testUser.email,
         given_name: testUser.firstName,
         family_name: testUser.lastName,
-        picture: testUser.picture 
-      }, 
-      dbUser: testUser 
+        picture: testUser.picture
+      },
+      dbUser: testUser
     }
   }
-  
+
   const user = await event.context.kinde.getUser()
-  
+
   if (!user) {
     throw createError({
       statusCode: 401,
@@ -76,30 +76,28 @@ export async function getOptionalAuth(event: H3Event) {
   // Check if dev auth mode is enabled
   if (process.env.NUXT_DEV_AUTH === 'true') {
     console.log('🔧 Dev auth mode enabled - using test user')
-    
+
     // Return the existing test user from the database
-    const testUser = await prisma.users.findFirst({
-      where: { email: 'andre@biseth.net' }
-    })
-    
+    const testUser = await prisma.users.findFirst()
+
     if (!testUser) {
       return null
     }
-    
-    return { 
-      kindeUser: { 
+
+    return {
+      kindeUser: {
         id: testUser.kindeId,
         email: testUser.email,
         given_name: testUser.firstName,
         family_name: testUser.lastName,
-        picture: testUser.picture 
-      }, 
-      dbUser: testUser 
+        picture: testUser.picture
+      },
+      dbUser: testUser
     }
   }
-  
+
   const user = await event.context.kinde.getUser()
-  
+
   if (!user) {
     return null
   }

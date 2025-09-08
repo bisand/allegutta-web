@@ -35,6 +35,9 @@ RUN apk add --no-cache \
     curl \
     dumb-init
 
+# Install pnpm and minimal node dependencies for Prisma CLI
+RUN npm install -g pnpm
+
 # Set working directory
 WORKDIR /app
 
@@ -46,10 +49,11 @@ COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 
-# Copy database schema and production startup script
+# Copy database schema and migration scripts
 COPY prisma/schema.sql ./prisma/schema.sql
+COPY scripts/migrate-db.sh ./scripts/migrate-db.sh
 COPY scripts/start-production.sh ./start-production.sh
-RUN chmod +x ./start-production.sh
+RUN chmod +x ./scripts/migrate-db.sh ./start-production.sh
 
 # For a Nuxt app, the .output contains everything needed at runtime
 # Prisma client is embedded in the server bundle

@@ -8,12 +8,22 @@ export default defineEventHandler(async () => {
     
     // Simple query to test database connectivity
     await prisma.$queryRaw`SELECT 1 as health`
+    
+    // Test essential tables exist
+    const userCount = await prisma.users.count()
+    const portfolioCount = await prisma.portfolios.count()
+    
     await prisma.$disconnect()
 
     return {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       database: 'connected',
+      schema: 'valid',
+      stats: {
+        users: userCount,
+        portfolios: portfolioCount
+      },
       version: process.env.npm_package_version || 'unknown'
     }
   } catch (error) {
