@@ -3,6 +3,7 @@
  */
 
 import prisma from '../../../lib/prisma'
+import { updatePortfolioAth } from '../../../lib/athTracker'
 
 interface HoldingData {
   id: string
@@ -87,9 +88,16 @@ export default defineEventHandler(async (event) => {
     // Calculate total portfolio value (market value + cash balance)
     const currentTotalValue = currentMarketValue + (portfolio.cashBalance || 0)
 
-    if (portfolio.athValue && portfolio.athDate) {
-      athDrawdown = ((portfolio.athValue - currentTotalValue) / portfolio.athValue) * 100
-      daysSinceAth = Math.floor((Date.now() - portfolio.athDate.getTime()) / (1000 * 60 * 60 * 24))
+    // Update ATH if current value exceeds previous high
+    const athData = await updatePortfolioAth(portfolioId, currentTotalValue)
+    
+    // Use updated ATH data
+    const athValue = athData.athValue
+    const athDate = athData.athDate
+
+    if (athValue && athDate) {
+      athDrawdown = ((athValue - currentTotalValue) / athValue) * 100
+      daysSinceAth = Math.floor((Date.now() - athDate.getTime()) / (1000 * 60 * 60 * 24))
       isAtAth = Math.abs(athDrawdown) < 0.1 // Within 0.1%
     }
 
@@ -128,8 +136,8 @@ export default defineEventHandler(async (event) => {
     // Enhanced portfolio data
     const enhancedData = {
       // ATH tracking
-      athValue: portfolio.athValue,
-      athDate: portfolio.athDate,
+      athValue: athValue,
+      athDate: athDate,
       athDrawdown,
       daysSinceAth,
       isAtAth,

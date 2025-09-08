@@ -1,5 +1,6 @@
 import prisma from '../../../lib/prisma'
 import { updateCashBalance, updateSecurityHoldings } from '../../../lib/portfolioCalculations'
+import { updatePortfolioAth } from '../../../lib/athTracker'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -58,13 +59,32 @@ export default defineEventHandler(async (event) => {
       }
     })
 
+    // Calculate current portfolio value for ATH tracking
+    let currentMarketValue = 0
+    for (const holding of allHoldings) {
+      // Get current market price or use average price as fallback
+      const marketData = await prisma.market_data.findFirst({
+        where: { symbol: holding.symbol }
+      })
+      const currentPrice = marketData?.currentPrice || holding.avgPrice
+      currentMarketValue += holding.quantity * currentPrice
+    }
+
+    // Calculate total portfolio value (market value + cash balance)
+    const currentTotalValue = currentMarketValue + (portfolio?.cashBalance || 0)
+    
+    // Update ATH if current value exceeds previous high
+    const athData = await updatePortfolioAth(portfolioId, currentTotalValue)
+    
+    console.log(`💰 Portfolio ${portfolioId} current value: ${currentTotalValue.toFixed(0)} NOK${athData.isNewAth ? ' (New ATH!)' : ''}`)
+
     return {
       success: true,
       message: 'Holdings and cash balance recalculated successfully',
       portfolioId,
       symbolsProcessed: uniqueSymbols.length,
       cashBalance: portfolio?.cashBalance || 0,
-      holdings: allHoldings.map((h: Holding) => ({
+      holdings: allHoldings.map((h) => ({
         symbol: h.symbol,
         quantity: h.quantity,
         avgPrice: h.avgPrice,
