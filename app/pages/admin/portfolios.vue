@@ -70,7 +70,7 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   {{ portfolio.description || 'No description' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -90,60 +90,55 @@
                   {{ formatDate(portfolio.createdAt) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div class="flex items-center space-x-2">
+                  <div class="flex items-center gap-1">
                     <!-- View Portfolio -->
                     <NuxtLink 
                       :to="`/portfolio/${portfolio.id}`" 
-                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-primary-600 hover:text-primary-500 bg-primary-50 hover:bg-primary-100 rounded-md transition-colors"
-                      title="View Portfolio"
+                      class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700"
+                      title="View portfolio details"
                     >
-                      <EyeIcon class="w-4 h-4 mr-1" />
-                      View
+                      <EyeIcon class="w-4 h-4" />
                     </NuxtLink>
                     
                     <!-- Edit Portfolio -->
                     <button 
                       type="button" 
-                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors" 
-                      title="Edit Portfolio"
+                      class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700" 
+                      title="Edit portfolio settings"
                       @click="editPortfolio(portfolio)"
                     >
-                      <PencilIcon class="w-4 h-4 mr-1" />
-                      Edit
+                      <PencilIcon class="w-4 h-4" />
                     </button>
                     
                     <!-- Manage Positions -->
                     <button 
                       type="button" 
-                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-600 hover:text-green-500 bg-green-50 hover:bg-green-100 rounded-md transition-colors" 
-                      title="Manage Positions"
+                      class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700" 
+                      title="Manage portfolio positions"
                       @click="managePositions(portfolio)"
                     >
-                      <ChartPieIcon class="w-4 h-4 mr-1" />
-                      Positions
+                      <ChartPieIcon class="w-4 h-4" />
                     </button>
                     
                     <!-- Manage Transactions -->
                     <button 
                       type="button" 
-                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors" 
-                      title="Manage Transactions"
+                      class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700" 
+                      title="Manage portfolio transactions"
                       @click="manageTransactions(portfolio)"
                     >
-                      <DocumentTextIcon class="w-4 h-4 mr-1" />
-                      Transactions
+                      <DocumentTextIcon class="w-4 h-4" />
                     </button>
                     
                     <!-- Delete Portfolio -->
                     <button 
                       v-if="!portfolio.isDefault" 
                       type="button" 
-                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 hover:text-red-500 bg-red-50 hover:bg-red-100 rounded-md transition-colors" 
-                      title="Delete Portfolio"
+                      class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700" 
+                      title="Delete portfolio"
                       @click="deletePortfolio(portfolio)"
                     >
-                      <TrashIcon class="w-4 h-4 mr-1" />
-                      Delete
+                      <TrashIcon class="w-4 h-4" />
                     </button>
                   </div>
                 </td>
@@ -551,24 +546,22 @@
                       <span v-else class="text-gray-500">N/A</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div class="flex items-center space-x-2">
+                      <div class="flex items-center gap-1">
                         <button
                           type="button"
-                          class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
-                          title="Edit position details"
+                          class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700"
+                          title="Edit position details (ISIN, symbol, currency)"
                           @click="editPosition(holding)"
                         >
-                          <PencilIcon class="w-3 h-3 mr-1" />
-                          Edit Position
+                          <PencilIcon class="w-4 h-4" />
                         </button>
                         <button
                           type="button"
-                          class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
-                          title="Edit market data (Yahoo symbol)"
+                          class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700"
+                          title="Edit market data (Yahoo Finance symbol and company info)"
                           @click="editMarketData(holding)"
                         >
-                          <ChartBarIcon class="w-3 h-3 mr-1" />
-                          Market Data
+                          <ChartBarIcon class="w-4 h-4" />
                         </button>
                       </div>
                     </td>
