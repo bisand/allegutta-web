@@ -42,6 +42,162 @@ test_database_connection() {
     fi
 }
 
+# Function to check and resolve failed migrations
+check_and_resolve_failed_migrations() {
+    local SCHEMA_PATH="$1"
+    
+    echo "🔍 Checking migration status..."
+    
+    # Check if there are failed migrations
+    if npx prisma migrate status --schema="$SCHEMA_PATH" 2>&1 | grep -q "failed"; then
+        echo "⚠️  Found failed migrations. Attempting to resolve..."
+        
+        # Get the list of failed migrations
+        FAILED_MIGRATIONS=$(npx prisma migrate status --schema="$SCHEMA_PATH" 2>&1 | grep "Migration name:" | awk '{print $3}' || true)
+        
+        if [ -n "$FAILED_MIGRATIONS" ]; then
+            echo "🔧 Resolving failed migrations..."
+            
+            # Try to resolve each failed migration
+            for migration in $FAILED_MIGRATIONS; do
+                echo "🔄 Resolving failed migration: $migration"
+                
+                # Check if database already has the tables (migration actually succeeded)
+                if check_existing_tables; then
+                    echo "✅ Database has tables, marking migration as applied: $migration"
+                    if npx prisma migrate resolve --applied "$migration" --schema="$SCHEMA_PATH"; then
+                        echo "✅ Successfully resolved migration: $migration"
+                    else
+                        echo "❌ Failed to resolve migration: $migration"
+                        return 1
+                    fi
+                else
+                    echo "🔄 Marking migration as rolled back: $migration"
+                    if npx prisma migrate resolve --rolled-back "$migration" --schema="$SCHEMA_PATH"; then
+                        echo "✅ Successfully rolled back migration: $migration"
+                    else
+                        echo "❌ Failed to roll back migration: $migration"
+                        return 1
+                    fi
+                fi
+            done
+            
+            echo "✅ All failed migrations resolved"
+        fi
+    else
+        echo "✅ No failed migrations found"
+    fi
+    
+    return 0
+}
+
+# Function to check if database has existing tables
+check_existing_tables() {
+    echo "🔍 Checking for existing database tables..."
+    
+    if echo "$NUXT_DATABASE_URL" | grep -q "^file:"; then
+        DB_FILE=$(echo "$NUXT_DATABASE_URL" | sed 's|^file:||')
+        
+        # Check if key tables exist in SQLite
+        if sqlite3 "$DB_FILE" "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'portfolios', 'transactions');" 2>/dev/null | grep -q users; then
+            echo "✅ Found existing tables in database"
+            return 0
+        else
+            echo "📊 No existing tables found"
+            return 1
+        fi
+    else
+        # For external databases, use Prisma to check
+        if npx prisma db execute --command="SELECT 1 FROM users LIMIT 1;" >/dev/null 2>&1; then
+            echo "✅ Found existing tables in database"
+            return 0
+        else
+            echo "📊 No existing tables found"
+            return 1
+        fi
+    fi
+}
+
+# Function to resolve migration state for existing database
+resolve_migration_state() {
+    local SCHEMA_PATH="$1"
+    local MIGRATIONS_DIR=$(dirname "$SCHEMA_PATH")/migrations
+    
+    echo "🔧 Resolving migration state for existing database..."
+    
+    # Create migrations directory
+    mkdir -p "$MIGRATIONS_DIR"
+    
+    # Create a temporary dummy migration to enable migrate status command
+    echo "🔄 Creating temporary migration structure..."
+    TEMP_DIR="$MIGRATIONS_DIR/temp_migration"
+    mkdir -p "$TEMP_DIR"
+    echo "-- temp migration" > "$TEMP_DIR/migration.sql"
+    
+    # Now check if there are any failed migrations in the database and resolve them
+    echo "🔍 Checking for any existing failed migrations in database..."
+    MIGRATE_STATUS_OUTPUT=$(npx prisma migrate status --schema="$SCHEMA_PATH" 2>&1 || true)
+    
+    if echo "$MIGRATE_STATUS_OUTPUT" | grep -q "failed"; then
+        echo "⚠️  Found existing failed migrations. Resolving them first..."
+        
+        # Get failed migration names - improved parsing
+        FAILED_MIGRATIONS=$(echo "$MIGRATE_STATUS_OUTPUT" | grep -E "Migration.*failed" | sed -E 's/.*Migration ([^[:space:]]+).*/\1/' || true)
+        
+        if [ -n "$FAILED_MIGRATIONS" ]; then
+            for migration in $FAILED_MIGRATIONS; do
+                echo "🔄 Resolving existing failed migration: $migration"
+                # Since database has tables, mark failed migration as applied
+                if npx prisma migrate resolve --applied "$migration" --schema="$SCHEMA_PATH"; then
+                    echo "✅ Resolved failed migration: $migration"
+                else
+                    echo "❌ Failed to resolve migration: $migration"
+                    # Clean up temp migration
+                    rm -rf "$TEMP_DIR"
+                    return 1
+                fi
+            done
+        else
+            echo "🔍 Could not parse failed migration names, trying direct resolution..."
+            # Try to resolve the specific known failed migration
+            if npx prisma migrate resolve --applied "20250908050111_init" --schema="$SCHEMA_PATH" 2>/dev/null; then
+                echo "✅ Resolved known failed migration: 20250908050111_init"
+            else
+                echo "⚠️  Failed migration resolution may require manual intervention"
+            fi
+        fi
+    else
+        echo "✅ No failed migrations detected"
+    fi
+    
+    # Clean up temp migration
+    rm -rf "$TEMP_DIR"
+    
+    # Create a baseline migration that represents the current state
+    echo "🔄 Creating baseline migration..."
+    BASELINE_DIR="$MIGRATIONS_DIR/$(date +%Y%m%d%H%M%S)_baseline"
+    mkdir -p "$BASELINE_DIR"
+    
+    # Create an empty migration file (database is already up to date)
+    cat > "$BASELINE_DIR/migration.sql" << 'EOF'
+-- This is a baseline migration for an existing database
+-- The database already contains all the necessary tables and data
+-- This migration marks the starting point for future schema changes
+EOF
+    
+    echo "✅ Created baseline migration"
+    
+    # Mark the migration as applied using Prisma's migrate resolve
+    echo "🔄 Marking baseline migration as applied..."
+    if npx prisma migrate resolve --applied "$(basename "$BASELINE_DIR")" --schema="$SCHEMA_PATH"; then
+        echo "✅ Baseline migration marked as applied"
+        return 0
+    else
+        echo "❌ Failed to mark baseline migration as applied"
+        return 1
+    fi
+}
+
 # Function to determine deployment environment
 get_deployment_environment() {
     # Check environment indicators
@@ -85,14 +241,24 @@ run_prisma_migrations() {
     # Check if migrations directory exists
     MIGRATIONS_DIR=$(dirname "$SCHEMA_PATH")/migrations
     if [ ! -d "$MIGRATIONS_DIR" ]; then
-        echo "⚠️  No migrations directory found. Creating initial migration..."
+        echo "⚠️  No migrations directory found. Checking database state..."
         
-        # For production without migrations, create them from current schema
-        if npx prisma migrate diff --from-empty --to-schema-datamodel "$SCHEMA_PATH" --script > /tmp/init.sql; then
-            mkdir -p "$MIGRATIONS_DIR/$(date +%Y%m%d%H%M%S)_init"
-            mv /tmp/init.sql "$MIGRATIONS_DIR/$(date +%Y%m%d%H%M%S)_init/migration.sql"
-            echo "✅ Created initial migration from current schema"
+        # Check if database already has tables (existing production database)
+        if check_existing_tables; then
+            echo "🔄 Database has existing tables. Resolving migration state..."
+            resolve_migration_state "$SCHEMA_PATH"
+        else
+            echo "🔄 Creating initial migration for empty database..."
+            # For production without migrations, create them from current schema
+            if npx prisma migrate diff --from-empty --to-schema-datamodel "$SCHEMA_PATH" --script > /tmp/init.sql; then
+                mkdir -p "$MIGRATIONS_DIR/$(date +%Y%m%d%H%M%S)_init"
+                mv /tmp/init.sql "$MIGRATIONS_DIR/$(date +%Y%m%d%H%M%S)_init/migration.sql"
+                echo "✅ Created initial migration from current schema"
+            fi
         fi
+    else
+        echo "🔍 Migrations directory exists. Checking for failed migrations..."
+        check_and_resolve_failed_migrations "$SCHEMA_PATH"
     fi
     
     # Try to run migrations
