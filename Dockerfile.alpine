@@ -2,7 +2,7 @@
 # Minimal dependencies - no native compilation needed!
 
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Set working directory (no additional packages needed for build!)
 WORKDIR /app
@@ -27,7 +27,7 @@ COPY . .
 RUN pnpm run build
 
 # Production stage - minimal Alpine
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Install only runtime dependencies
 RUN apk add --no-cache \
