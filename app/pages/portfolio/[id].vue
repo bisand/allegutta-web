@@ -629,15 +629,53 @@ const sortDirection = ref<'asc' | 'desc'>('asc')
 // Sort options for different columns
 type SortKey = 'symbol' | 'instrumentName' | 'quantity' | 'avgPrice' | 'cost' | 'currentPrice' | 'todayChange' | 'marketValue' | 'gainLoss' | 'gainLossPercent'
 
+// Get portfolio ID from route
+const portfolioId = computed(() => route.params.id as string)
+
+// Function to try fetching a specific portfolio when store initialization fails
+async function tryFetchSpecificPortfolio() {
+  try {
+    await portfolioStore.fetchSpecificPortfolio(portfolioId.value)
+  } catch (error) {
+    console.error('Failed to fetch specific portfolio:', error)
+  }
+}
+
 // Initialize store data - only if not already initialized
 onMounted(async () => {
-  if (portfolioStore.allPortfolios.length === 0) {
-    await portfolioStore.initialize()
+  try {
+    if (portfolioStore.allPortfolios.length === 0) {
+      await portfolioStore.initialize()
+    }
+  } catch (error) {
+    console.warn('Store initialization failed (likely authentication issue), will try to fetch specific portfolio:', error)
+    // Fallback: try to fetch the specific portfolio from public portfolios
+    try {
+      await portfolioStore.fetchPublicPortfolios()
+    } catch (publicError) {
+      console.error('Failed to fetch public portfolios:', publicError)
+    }
+  }
+  
+  // If we still don't have the portfolio data, try to set it directly
+  if (!currentPortfolio.value && portfolioId.value) {
+    await tryFetchSpecificPortfolio()
   }
 })
 
-// Get portfolio ID from route
-const portfolioId = computed(() => route.params.id as string)
+// Server-side: Try to initialize portfolios during SSR
+if (import.meta.server) {
+  try {
+    // Try to fetch public portfolios during SSR
+    await portfolioStore.fetchPublicPortfolios()
+    // If the specific portfolio isn't in public portfolios, try to fetch it
+    if (!portfolioStore.publicPortfolios.find(p => p.id === portfolioId.value)) {
+      await portfolioStore.fetchSpecificPortfolio(portfolioId.value)
+    }
+  } catch (error) {
+    console.error('SSR portfolio initialization failed:', error)
+  }
+}
 
 // Get current portfolio
 const currentPortfolio = computed(() => {

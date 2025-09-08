@@ -1,16 +1,19 @@
 export default defineEventHandler(async (event) => {
   try {
+    // Check if we have Kinde context and authentication available
+    if (!event.context.kinde) {
+      return null
+    }
+
     // Use the proper Kinde server-side API
     const profile = await event.context.kinde.getUser()
-    const permissions = event.context.kinde.getPermissions ? (await event.context.kinde.getPermissions())?.permissions : []
-
-    // Return user data, or null if not authenticated
+    
+    // Return null if no profile is found instead of throwing
     if (!profile) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Not authenticated'
-      })
+      return null
     }
+
+    const permissions = event.context.kinde.getPermissions ? (await event.context.kinde.getPermissions())?.permissions : []
 
     return {
       id: profile.id,
@@ -27,11 +30,14 @@ export default defineEventHandler(async (event) => {
       updatedAt: new Date()
     }
   } catch (error: unknown) {
-    // Return null for unauthenticated users instead of throwing
-    if (error && typeof error === 'object' && 'statusCode' in error && error.statusCode === 401) {
-      return null
+    // Silently return null for authentication errors to avoid console spam
+    // Only log non-authentication errors
+    if (error && typeof error === 'object' && 'message' in error) {
+      const message = error.message as string
+      if (!message.includes('authentication credential') && !message.includes('Not authenticated')) {
+        console.error('Error in /api/auth/me:', error)
+      }
     }
-    console.error('Error in /api/auth/me:', error)
     return null
   }
 })

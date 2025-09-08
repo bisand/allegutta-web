@@ -209,6 +209,12 @@ export const usePortfolioStore = defineStore('portfolio', {
           }
         }
       } catch (error) {
+        // Check if it's an authentication error
+        if (error && typeof error === 'object' && 'statusCode' in error && (error as Error & { statusCode: number }).statusCode === 401) {
+          console.log('Authentication failed, user not logged in')
+          this.portfolios = []
+          return
+        }
         this.error = error instanceof Error ? error.message : 'Unknown error occurred'
         console.error('Failed to initialize user:', error)
         throw error
@@ -227,15 +233,53 @@ export const usePortfolioStore = defineStore('portfolio', {
       }
     },
 
+    async fetchSpecificPortfolio(portfolioId: string): Promise<Portfolio | null> {
+      try {
+        const response = await $fetch<{ data: Portfolio }>(`/api/public/portfolios/${portfolioId}`)
+        if (response.data) {
+          // Check if it's already in public portfolios
+          const existingIndex = this.publicPortfolios.findIndex(p => p.id === portfolioId)
+          if (existingIndex >= 0) {
+            // Update existing
+            this.publicPortfolios[existingIndex] = response.data
+          } else {
+            // Add new
+            this.publicPortfolios.push(response.data)
+          }
+          return response.data
+        }
+        return null
+      } catch (error) {
+        console.error('Failed to fetch specific portfolio:', error)
+        return null
+      }
+    },
+
     async fetchPortfolios(): Promise<void> {
       try {
         // Get request headers for SSR authentication
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
 
-        const response = await $fetch<{ data: Portfolio[] }>('/api/portfolios', {
-          headers: headers as HeadersInit
-        })
-        this.portfolios = response.data || []
+        // Try to fetch authenticated portfolios first
+        try {
+          const response = await $fetch<{ data: Portfolio[] }>('/api/portfolios', {
+            headers: headers as HeadersInit
+          })
+          this.portfolios = response.data || []
+          return
+        } catch (authError) {
+          // If it's a 401 error, fall back to public portfolios
+          if (authError && typeof authError === 'object' && 'statusCode' in authError && (authError as Error & { statusCode: number }).statusCode === 401) {
+            console.log('Not authenticated, fetching public portfolios instead')
+            // Fetch public portfolios and populate the main portfolios array for fallback
+            const publicResponse = await $fetch<{ data: Portfolio[] }>('/api/public/portfolios')
+            this.portfolios = publicResponse.data || []
+            this.publicPortfolios = publicResponse.data || []
+            return
+          }
+          // Re-throw non-authentication errors
+          throw authError
+        }
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch portfolios'
         throw error
