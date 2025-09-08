@@ -34,38 +34,49 @@ export async function getRequiredAuth(event: H3Event) {
     }
   }
 
-  const user = await event.context.kinde.getUser()
+  try {
+    const user = await event.context.kinde.getUser()
 
-  if (!user) {
+    if (!user) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Authentication required'
+      })
+    }
+
+    // Ensure the user exists in our database
+    const dbUser = await prisma.users.upsert({
+      where: { kindeId: user.id },
+      update: {
+        email: user.email || '',
+        firstName: user.given_name || null,
+        lastName: user.family_name || null,
+        picture: user.picture || null,
+        updatedAt: new Date()
+      },
+      create: {
+        id: crypto.randomUUID(),
+        kindeId: user.id,
+        email: user.email || '',
+        firstName: user.given_name || null,
+        lastName: user.family_name || null,
+        picture: user.picture || null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    })
+
+    return { kindeUser: user, dbUser }
+  } catch (error) {
+    // If Kinde authentication fails, throw a proper 401 error
+    if (error && typeof error === 'object' && 'statusCode' in error) {
+      throw error
+    }
     throw createError({
       statusCode: 401,
       statusMessage: 'Authentication required'
     })
   }
-
-  // Ensure the user exists in our database
-  const dbUser = await prisma.users.upsert({
-    where: { kindeId: user.id },
-    update: {
-      email: user.email || '',
-      firstName: user.given_name || null,
-      lastName: user.family_name || null,
-      picture: user.picture || null,
-      updatedAt: new Date()
-    },
-    create: {
-      id: crypto.randomUUID(),
-      kindeId: user.id,
-      email: user.email || '',
-      firstName: user.given_name || null,
-      lastName: user.family_name || null,
-      picture: user.picture || null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  })
-
-  return { kindeUser: user, dbUser }
 }
 
 /**

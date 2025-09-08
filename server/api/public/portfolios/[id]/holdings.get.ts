@@ -27,14 +27,14 @@ export default defineEventHandler(async (event) => {
     const holdingsWithMarketData = await Promise.all(
       holdings.map(async (holding: { id: string; portfolioId: string; symbol: string; isin: string | null; quantity: number; avgPrice: number; currency: string; createdAt: Date; updatedAt: Date }) => {
         let marketData = null
-        
+
         // Try to find market data by ISIN first, then by symbol
         if (holding.isin) {
           marketData = await prisma.market_data.findUnique({
             where: { isin: holding.isin }
           })
         }
-        
+
         // If no market data found by ISIN, try by symbol
         if (!marketData) {
           marketData = await prisma.market_data.findFirst({

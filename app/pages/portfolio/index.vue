@@ -9,14 +9,8 @@
     </div>
 
     <!-- Portfolio selector -->
-    <Transition
-      enter-active-class="transition-opacity duration-300 ease-out"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-200 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
+    <Transition enter-active-class="transition-opacity duration-300 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="!portfolioStore.initializing" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="text-center mb-8">
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -31,12 +25,8 @@
         <div v-if="portfolioStore.publicPortfolios.length > 0">
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{ $t('homepage.publicPortfolios') }}</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" :class="{ 'opacity-60': portfolioStore.loading }">
-            <NuxtLink
-              v-for="portfolio in portfolioStore.publicPortfolios"
-              :key="portfolio.id"
-              :to="`/portfolio/${portfolio.id}`"
-              class="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-2 border-transparent hover:border-primary-500"
-            >
+            <NuxtLink v-for="portfolio in portfolioStore.publicPortfolios" :key="portfolio.id" :to="`/portfolio/${portfolio.id}`"
+              class="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-2 border-transparent hover:border-primary-500">
               <div class="flex items-center mb-4">
                 <ChartBarIcon class="w-8 h-8 text-blue-500 mr-3" />
                 <div>
@@ -67,10 +57,8 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">
               As an admin, you can create portfolios for users to view.
             </p>
-            <NuxtLink 
-              to="/admin/portfolios" 
-              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-            >
+            <NuxtLink to="/admin/portfolios"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors">
               <PlusIcon class="w-4 h-4 mr-2" />
               Manage Portfolios
             </NuxtLink>
@@ -97,16 +85,33 @@ onMounted(async () => {
 })
 
 // Redirect to default portfolio if user has one and only one portfolio
-watch(() => portfolioStore.portfolios, (portfolios) => {
-  if (portfolios.length === 1 && portfolios[0]) {
+watch(() => [portfolioStore.portfolios, portfolioStore.publicPortfolios], ([userPortfolios, publicPortfolios]) => {
+  // Ensure arrays are not undefined
+  const userPorts = userPortfolios || []
+  const publicPorts = publicPortfolios || []
+
+  // For authenticated users, check their personal portfolios
+  if (userPorts.length === 1 && userPorts[0]) {
     // Auto-redirect to the single portfolio (only for authenticated users)
-    navigateTo(`/portfolio/${portfolios[0].id}`)
-  } else if (portfolios.length > 1) {
+    navigateTo(`/portfolio/${userPorts[0].id}`)
+  } else if (userPorts.length > 1) {
     // Check if there's a default portfolio (only for authenticated users)
-    const defaultPortfolio = portfolios.find(p => p.isDefault)
+    const defaultPortfolio = userPorts.find(p => p.isDefault)
     if (defaultPortfolio) {
       // Could optionally auto-redirect to default portfolio
       navigateTo(`/portfolio/${defaultPortfolio.id}`)
+    }
+  }
+  // For unauthenticated users, check public portfolios
+  else if (userPorts.length === 0 && publicPorts.length === 1 && publicPorts[0]) {
+    // Auto-redirect to the single public portfolio
+    navigateTo(`/portfolio/${publicPorts[0].id}`)
+  } else if (userPorts.length === 0 && publicPorts.length > 1) {
+    // Check if there's a default public portfolio
+    const defaultPublicPortfolio = publicPorts.find(p => p.isDefault)
+    if (defaultPublicPortfolio) {
+      // Auto-redirect to default public portfolio
+      navigateTo(`/portfolio/${defaultPublicPortfolio.id}`)
     }
   }
 }, { immediate: true })

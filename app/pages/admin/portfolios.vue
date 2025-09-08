@@ -819,17 +819,17 @@ async function loadPortfolioData(portfolioId: string): Promise<void> {
     const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
 
     // Load transactions
-    const transactionsResponse = await $fetch(`/api/portfolios/${portfolioId}/transactions`, {
+    const transactionsResponse = await $fetch<{ data: TransactionData[] }>(`/api/portfolios/${portfolioId}/transactions`, {
       headers: headers as HeadersInit
-    }) as { data: TransactionData[] }
+    })
     console.log('Transactions response:', transactionsResponse)
     portfolioTransactions.value = transactionsResponse.data || []
     console.log('Portfolio transactions set to:', portfolioTransactions.value)
 
     // Load holdings - note the different response structure
-    const holdingsResponse = await $fetch(`/api/portfolios/${portfolioId}/holdings`, {
+    const holdingsResponse = await $fetch<{ data: { holdings: HoldingData[] } }>(`/api/portfolios/${portfolioId}/holdings`, {
       headers: headers as HeadersInit
-    }) as { data: { holdings: HoldingData[] } }
+    })
     console.log('Holdings response:', holdingsResponse)
     portfolioHoldings.value = holdingsResponse.data?.holdings || []
     console.log('Portfolio holdings set to:', portfolioHoldings.value)

@@ -1,20 +1,14 @@
 import prisma from '../../../../lib/prisma'
-import { getRequiredAuth } from '../../../../lib/auth'
 
 // GET /api/portfolios/[id]/transactions - Get portfolio transactions
 export default defineEventHandler(async (event) => {
 
   const portfolioId = getRouterParam(event, 'id')
-  const { dbUser } = await getRequiredAuth(event)
-
 
   try {
-    // Verify portfolio belongs to user
-    const portfolio = await prisma.portfolios.findFirst({
-      where: {
-        id: portfolioId,
-        userId: dbUser.id // Use database user ID
-      }
+    // Verify portfolio exists
+    const portfolio = await prisma.portfolios.findUnique({
+      where: { id: portfolioId }
     })
 
     if (!portfolio) {
@@ -37,7 +31,11 @@ export default defineEventHandler(async (event) => {
       success: true,
       data: transactions
     }
-  } catch {
+  } catch (error) {
+    // Preserve the original error (e.g., 401 for authentication)
+    if (error && typeof error === 'object' && 'statusCode' in error) {
+      throw error
+    }
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to fetch transactions'
