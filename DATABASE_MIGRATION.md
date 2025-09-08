@@ -1,25 +1,58 @@
-# AlleGutta Database Migration Guide
+# AlleGutta Database Setup Guide (Environment-Aware)
 
 ## Overview
 
-This guide explains how to ensure proper database migration when deploying AlleGutta to production. The migration system has been designed to handle both fresh deployments and updates to existing databases.
+This guide explains the **environment-aware** database setup for AlleGutta. The system automatically detects whether you're in development or production and uses the appropriate database strategy:
 
-## Migration System Components
+- **🧪 Development**: Uses `prisma db push` for fast iteration
+- **🏭 Production**: Uses `prisma migrate deploy` for data safety
 
-### 1. Core Migration Script (`scripts/migrate-db.sh`)
-- **Purpose**: Handles database initialization and migration using Prisma
+## Environment Detection
+
+The system automatically detects your environment based on:
+
+```bash
+# Production indicators:
+NODE_ENV=production
+ENVIRONMENT=production  
+RAILWAY_ENVIRONMENT=production
+VERCEL_ENV=production
+
+# Or production database URLs containing:
+# amazonaws, planetscale, railway, render, fly, vercel
+```
+
+## Environment-Specific Behavior
+
+### 🧪 **Development Mode (Default)**
+- **Method**: `prisma db push --accept-data-loss`
+- **Safety**: ⚠️ Can lose data (OK for development)
+- **Speed**: ⚡ Very fast
+- **Use Case**: Rapid development, testing, staging
+
+### 🏭 **Production Mode**
+- **Method**: `prisma migrate deploy`
+- **Safety**: ✅ Preserves all data
+- **Speed**: Slower (applies migration history)
+- **Use Case**: Live production with real user data
+
+## Database Setup Components
+
+### 1. Core Setup Script (`scripts/migrate-db.sh`)
+- **Purpose**: Handles database initialization using Schema Push
+- **Method**: `npx prisma db push --accept-data-loss`
 - **Features**: 
   - Auto-detects SQLite vs external databases
-  - Runs Prisma migrations with fallback to schema.sql
-  - Validates database connectivity and schema
   - Creates directories as needed
+  - Validates schema after setup
+  - Fallback to schema.sql if needed
 
 ### 2. Production Startup Script (`scripts/start-production.sh`)
-- **Purpose**: Production container entrypoint with migration
+- **Purpose**: Container entrypoint with schema setup
+- **Method**: Schema push before app start
 - **Features**:
   - Environment validation
-  - Database migration before app start
-  - Comprehensive logging
+  - Schema setup with logging
   - Error handling with graceful degradation
 
 ### 3. Enhanced Dockerfile
@@ -28,48 +61,47 @@ This guide explains how to ensure proper database migration when deploying AlleG
 - **Security**: Non-root user execution
 - **Volumes**: Persistent data storage
 
-## Quick Start - Production Deployment
+## Quick Start - Environment-Aware Deployment
 
-### For SQLite (Recommended for small-medium deployments)
-
+### Development/Staging (Default)
 ```bash
-# 1. Build the Docker image
+# Build and run (automatically uses schema push)
+docker build -t allegutta-dev .
+docker run -d \
+  --name allegutta-dev \
+  -p 3000:3000 \
+  -e "NUXT_DATABASE_URL=file:/app/data/development.db" \
+  -v /path/to/data:/app/data \
+  allegutta-dev
+```
+
+### Production (Automatic Migration Detection)
+```bash
+# Prepare for production (creates migrations)
+./scripts/prepare-production.sh
+
+# Build and run with production environment
 docker build -t allegutta-prod .
-
-# 2. Create data directory with proper permissions
-mkdir -p /path/to/data
-chmod 755 /path/to/data
-
-# 3. Run container with persistent storage
 docker run -d \
   --name allegutta-prod \
   -p 3000:3000 \
-  -e "NUXT_DATABASE_URL=file:/app/data/production.db" \
-  -e "NUXT_KINDE_CLIENT_ID=your-kinde-client-id" \
-  -e "NUXT_KINDE_CLIENT_SECRET=your-kinde-client-secret" \
-  -e "NUXT_KINDE_ISSUER_URL=https://your-domain.kinde.com" \
-  -e "NUXT_KINDE_SITE_URL=https://your-domain.com" \
-  -e "NUXT_KINDE_POST_LOGOUT_REDIRECT_URL=https://your-domain.com" \
-  -e "NUXT_KINDE_POST_LOGIN_REDIRECT_URL=https://your-domain.com" \
-  -v /path/to/data:/app/data \
+  -e "NODE_ENV=production" \
+  -e "NUXT_DATABASE_URL=postgresql://prod-database-url" \
   allegutta-prod
 ```
 
-### For External Database (PostgreSQL/MySQL)
+## Schema Setup Process Flow
 
-```bash
-# Run with external database connection
-docker run -d \
-  --name allegutta-prod \
-  -p 3000:3000 \
-  -e "NUXT_DATABASE_URL=postgresql://user:password@host:5432/database" \
-  -e "NUXT_KINDE_CLIENT_ID=your-kinde-client-id" \
-  -e "NUXT_KINDE_CLIENT_SECRET=your-kinde-client-secret" \
-  -e "NUXT_KINDE_ISSUER_URL=https://your-domain.kinde.com" \
-  -e "NUXT_KINDE_SITE_URL=https://your-domain.com" \
-  -e "NUXT_KINDE_POST_LOGOUT_REDIRECT_URL=https://your-domain.com" \
-  -e "NUXT_KINDE_POST_LOGIN_REDIRECT_URL=https://your-domain.com" \
-  allegutta-prod
+### Development Mode (Current)
+```
+🚀 Container starts
+├── ✅ Validate NUXT_DATABASE_URL
+├── 🔄 Run database schema setup script
+│   ├── 🔍 Test database connectivity
+│   ├── 🔄 Run prisma db push --accept-data-loss
+│   ├── 🔧 Fallback to schema.sql (SQLite only)
+│   └── ✅ Verify schema
+└── 🚀 Start application server
 ```
 
 ```bash
@@ -299,11 +331,69 @@ export NUXT_DATABASE_URL="libsql://your-db.turso.io?authToken=your-token"
 npx prisma migrate deploy
 ```
 
-## Migration History
+## Transitioning to Production (When Ready)
 
+When you're ready to deploy to production with persistent data that needs migration support:
+
+### 1. Enable Migrations
+```bash
+# Create initial migration from current schema
+npx prisma migrate dev --name init
+
+# This creates:
+# - prisma/migrations/[timestamp]_init/migration.sql
+# - Updates prisma/migrations/migration_lock.toml
+```
+
+### 2. Update Deployment Scripts
+```bash
+# Update scripts to use migrations instead of schema push
+sed -i 's/db push --accept-data-loss/migrate deploy/g' scripts/migrate-db.sh
+sed -i 's/Schema push/Migration/g' scripts/migrate-db.sh
+```
+
+### 3. Update .gitignore
+```bash
+# Remove migrations from .gitignore
+sed -i '/prisma\/migrations\//d' .gitignore
+```
+
+### 4. Commit Migration Files
+```bash
+git add prisma/migrations/
+git commit -m "feat: add initial production migration"
+```
+
+### 5. Deploy to Production
+```bash
+# Build production image
+docker build -t allegutta-prod .
+
+# Deploy with migration support
+docker run -d \
+  --name allegutta-prod \
+  -e "NUXT_DATABASE_URL=postgresql://prod-db" \
+  allegutta-prod
+```
+
+## Development vs Production Comparison
+
+| Aspect | Development (Current) | Production (Future) |
+|--------|----------------------|-------------------|
+| **Schema Changes** | `prisma db push` | `prisma migrate deploy` |
+| **Data Persistence** | ⚠️ Can lose data | ✅ Data preserved |
+| **Schema History** | ❌ No history | ✅ Migration history |
+| **Rollbacks** | Redeploy | Specific migration rollback |
+| **Team Sync** | Schema file only | Migration files in git |
+| **Speed** | ⚡ Very fast | Slower (applies migrations) |
+| **Safety** | ⚠️ Destructive OK | 🛡️ Non-destructive only |
+
+## Previous Migration History (Backed Up)
+
+The following migrations were removed during development mode transition:
 - `20250902192932_add_amount_field`: Added amount field to transactions
 - `20250903141014_add_market_data_fields`: Enhanced market data fields
 - `20250903151501_create_market_data_table`: Created market data table
 - `20250903185842_add_cash_balance_to_portfolio`: Added cash balance tracking
 
-Each migration is automatically applied in the correct order during deployment.
+These are backed up in `prisma/migrations_backup_*` and will be recreated when transitioning to production.

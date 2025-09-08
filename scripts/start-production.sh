@@ -30,21 +30,21 @@ echo "========================="
 # Create data directory if it doesn't exist
 mkdir -p /app/data
 
-echo "📊 Checking database status and running migrations..."
+echo "📊 Checking database status and setting up schema..."
 
-# Run database migration script
+# Run database schema setup script
 if [ -f "/app/scripts/migrate-db.sh" ]; then
-    echo "🔄 Running database migration script..."
+    echo "🔄 Running database schema setup script..."
     if /app/scripts/migrate-db.sh; then
-        echo "✅ Database migration completed successfully"
+        echo "✅ Database schema setup completed successfully"
     else
-        echo "❌ Database migration failed"
+        echo "❌ Database schema setup failed"
         exit 1
     fi
 else
-    echo "⚠️  Migration script not found, using legacy migration..."
+    echo "⚠️  Schema setup script not found, using legacy approach..."
 
-    # Legacy fallback migration logic
+    # Legacy fallback schema setup logic
     if echo "$NUXT_DATABASE_URL" | grep -q "^file:"; then
         DB_FILE=$(echo "$NUXT_DATABASE_URL" | sed 's|^file:||')
         echo "📊 SQLite database detected: $DB_FILE"
@@ -52,28 +52,28 @@ else
         # Create database directory if it doesn't exist
         mkdir -p "$(dirname "$DB_FILE")"
 
-        # Try Prisma migrations first
-        echo "🔄 Running Prisma database migrations..."
-        if npx prisma migrate deploy; then
-            echo "✅ Database migrations completed successfully"
+        # Try Prisma schema push first (development approach)
+        echo "🔄 Running Prisma schema push..."
+        if npx prisma db push --accept-data-loss; then
+            echo "✅ Database schema push completed successfully"
         else
-            echo "❌ Database migration failed, attempting fallback to schema.sql..."
+            echo "❌ Database schema push failed, attempting fallback to schema.sql..."
 
-            # Fallback: use schema.sql if migrations fail
+            # Fallback: use schema.sql if schema push fails
             if [ -f "/app/prisma/schema.sql" ]; then
                 sqlite3 "$DB_FILE" < /app/prisma/schema.sql
                 echo "⚠️  Database initialized with schema.sql (fallback method)"
             else
-                echo "❌ FATAL: No schema.sql fallback found and migrations failed"
+                echo "❌ FATAL: No schema.sql fallback found and schema push failed"
                 exit 1
             fi
         fi
     else
-        echo "📊 External database detected, running migrations..."
-        if npx prisma migrate deploy; then
-            echo "✅ Database migrations completed successfully"
+        echo "📊 External database detected, running schema push..."
+        if npx prisma db push --accept-data-loss; then
+            echo "✅ Database schema push completed successfully"
         else
-            echo "❌ Database migration failed for external database"
+            echo "❌ Database schema push failed for external database"
             exit 1
         fi
     fi
