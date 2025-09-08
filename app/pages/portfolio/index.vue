@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
     <!-- Loading state - only show during initial load -->
     <div v-if="portfolioStore.initializing || (portfolioStore.loading && portfolioStore.allPortfolios.length === 0)" class="flex items-center justify-center min-h-screen">
       <div class="text-center">

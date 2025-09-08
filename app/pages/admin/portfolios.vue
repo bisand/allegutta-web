@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
     <!-- Access denied -->
     <div v-if="!canManagePortfolios" class="flex items-center justify-center min-h-screen">
       <div class="text-center">

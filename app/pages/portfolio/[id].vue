@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
     <!-- Loading state - only show during initial load, not during portfolio switches -->
     <div v-if="portfolioStore.initializing || (portfolioStore.loading && !currentPortfolio)" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
@@ -238,7 +238,7 @@
         </div>
 
         <!-- Quick Insights -->
-        <div v-if="portfolioStore.portfolioHoldings.length > 0" class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg p-6 mb-8">
+        <div v-if="portfolioStore.portfolioHoldings.length > 0" class="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-6 mb-8">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioInsights') }}</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="text-center">
