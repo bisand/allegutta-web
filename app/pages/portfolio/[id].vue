@@ -475,22 +475,41 @@
         <!-- Portfolio Allocation -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioAllocation') }}</h3>
-          <div v-if="portfolioStore.portfolioHoldings.length > 0" class="space-y-3">
-            <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id" class="flex items-center justify-between">
-              <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full mr-3" :style="{ backgroundColor: getColorForSymbol(holding.symbol) }" />
-                <div>
-                  <span class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</span>
-                  <div v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400">{{ holding.instrumentName }}</div>
+          <div v-if="portfolioStore.portfolioHoldings.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id" 
+                 class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center min-w-0 flex-1">
+                  <div class="w-4 h-4 rounded-full mr-3 flex-shrink-0" :style="{ backgroundColor: getColorForSymbol(holding.symbol) }" />
+                  <div class="min-w-0 flex-1">
+                    <div class="font-medium text-gray-900 dark:text-white truncate">{{ holding.symbol }}</div>
+                    <div v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ holding.instrumentName }}</div>
+                  </div>
+                </div>
+                <div class="text-right ml-3 flex-shrink-0">
+                  <div class="font-bold text-lg text-gray-900 dark:text-white">{{ getAllocationPercentage(holding).toFixed(1) }}%</div>
                 </div>
               </div>
-              <div class="text-right">
-                <p class="font-medium text-gray-900 dark:text-white">{{ getAllocationPercentage(holding).toFixed(1) }}%</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice)) }}</p>
+              
+              <!-- Progress bar -->
+              <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-2">
+                <div class="h-2 rounded-full transition-all duration-300" 
+                     :style="{ 
+                       backgroundColor: getColorForSymbol(holding.symbol), 
+                       width: getAllocationPercentage(holding) + '%' 
+                     }" />
+              </div>
+              
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600 dark:text-gray-400">{{ formatNumber(holding.quantity, 0) }} shares</span>
+                <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice), { decimals: 0 }) }}</span>
               </div>
             </div>
           </div>
-          <div v-else class="text-center py-4">
+          <div v-else class="text-center py-8">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ChartBarIcon class="w-8 h-8 text-gray-400" />
+            </div>
             <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noHoldingsToDisplay') }}</p>
           </div>
         </div>
