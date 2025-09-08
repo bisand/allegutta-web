@@ -92,52 +92,37 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div class="flex items-center gap-1">
                     <!-- View Portfolio -->
-                    <NuxtLink 
-                      :to="`/portfolio/${portfolio.id}`" 
+                    <NuxtLink :to="`/portfolio/${portfolio.id}`"
                       class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700"
-                      title="View portfolio details"
-                    >
+                      title="View portfolio details">
                       <EyeIcon class="w-4 h-4" />
                     </NuxtLink>
-                    
+
                     <!-- Edit Portfolio -->
-                    <button 
-                      type="button" 
-                      class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700" 
-                      title="Edit portfolio settings"
-                      @click="editPortfolio(portfolio)"
-                    >
+                    <button type="button"
+                      class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700"
+                      title="Edit portfolio settings" @click="editPortfolio(portfolio)">
                       <PencilIcon class="w-4 h-4" />
                     </button>
-                    
+
                     <!-- Manage Positions -->
-                    <button 
-                      type="button" 
-                      class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700" 
-                      title="Manage portfolio positions"
-                      @click="managePositions(portfolio)"
-                    >
+                    <button type="button"
+                      class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700"
+                      title="Manage portfolio positions" @click="managePositions(portfolio)">
                       <ChartPieIcon class="w-4 h-4" />
                     </button>
-                    
+
                     <!-- Manage Transactions -->
-                    <button 
-                      type="button" 
-                      class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700" 
-                      title="Manage portfolio transactions"
-                      @click="manageTransactions(portfolio)"
-                    >
+                    <button type="button"
+                      class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700"
+                      title="Manage portfolio transactions" @click="manageTransactions(portfolio)">
                       <DocumentTextIcon class="w-4 h-4" />
                     </button>
-                    
+
                     <!-- Delete Portfolio -->
-                    <button 
-                      v-if="!portfolio.isDefault" 
-                      type="button" 
-                      class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700" 
-                      title="Delete portfolio"
-                      @click="deletePortfolio(portfolio)"
-                    >
+                    <button v-if="!portfolio.isDefault" type="button"
+                      class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700"
+                      title="Delete portfolio" @click="deletePortfolio(portfolio)">
                       <TrashIcon class="w-4 h-4" />
                     </button>
                   </div>
@@ -259,7 +244,7 @@
                   Import Transactions
                 </button>
                 <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-                  @click="showAddTransactionForm = true">
+                  @click="() => { console.log('Add Transaction clicked, selectedPortfolio:', selectedPortfolio); showAddTransactionForm = true; }">
                   <PlusIcon class="w-4 h-4 mr-2" />
                   Add Transaction
                 </button>
@@ -334,20 +319,20 @@
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
-                  <input v-model.number="transactionForm.quantity" type="number" step="0.0001" required
+                  <input v-model.number="transactionForm.quantity" type="number" step="0.0001" min="0.0001"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="10">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
-                    }})</label>
-                  <input v-model.number="transactionForm.price" type="number" step="0.01" required
+                  }})</label>
+                  <input v-model.number="transactionForm.price" type="number" step="0.01" min="0.01"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="150.00">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fees ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
-                    }})</label>
+                  }})</label>
                   <input v-model.number="transactionForm.fees" type="number" step="0.01" min="0"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="9.99">
@@ -382,7 +367,8 @@
                     Cancel
                   </button>
                   <button type="submit" :disabled="submittingTransaction"
-                    class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50">
+                    class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50"
+                    @click="handleSubmitClick">
                     {{ submittingTransaction ? (editingTransaction ? 'Updating...' : 'Adding...') : (editingTransaction ? 'Update Transaction' : 'Add Transaction') }}
                   </button>
                 </div>
@@ -464,7 +450,7 @@
     </div>
 
     <!-- Positions Management Modal -->
-    <div v-if="selectedPortfolio && portfolioHoldings.length > 0" class="fixed inset-0 z-50 overflow-y-auto">
+    <div v-if="showPositionModal && selectedPortfolio && portfolioHoldings.length > 0" class="fixed inset-0 z-50 overflow-y-auto">
       <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="selectedPortfolio = null" />
 
@@ -481,11 +467,7 @@
                   Portfolio: {{ selectedPortfolio?.name }}
                 </p>
               </div>
-              <button
-                type="button"
-                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                @click="selectedPortfolio = null"
-              >
+              <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="selectedPortfolio = null">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -533,34 +515,25 @@
                       {{ formatCurrency((holding.currentPrice || holding.avgPrice) * holding.quantity) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                      <span
-                        v-if="holding.currentPrice"
-                        :class="{
-                          'text-green-600': (holding.currentPrice - holding.avgPrice) * holding.quantity > 0,
-                          'text-red-600': (holding.currentPrice - holding.avgPrice) * holding.quantity < 0,
-                          'text-gray-500': (holding.currentPrice - holding.avgPrice) * holding.quantity === 0
-                        }"
-                      >
+                      <span v-if="holding.currentPrice" :class="{
+                        'text-green-600': (holding.currentPrice - holding.avgPrice) * holding.quantity > 0,
+                        'text-red-600': (holding.currentPrice - holding.avgPrice) * holding.quantity < 0,
+                        'text-gray-500': (holding.currentPrice - holding.avgPrice) * holding.quantity === 0
+                      }">
                         {{ formatCurrency((holding.currentPrice - holding.avgPrice) * holding.quantity) }}
                       </span>
                       <span v-else class="text-gray-500">N/A</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div class="flex items-center gap-1">
-                        <button
-                          type="button"
+                        <button type="button"
                           class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700"
-                          title="Edit position details (ISIN, symbol, currency)"
-                          @click="editPosition(holding)"
-                        >
+                          title="Edit position details (ISIN, symbol, currency)" @click="editPosition(holding)">
                           <PencilIcon class="w-4 h-4" />
                         </button>
-                        <button
-                          type="button"
+                        <button type="button"
                           class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700"
-                          title="Edit market data (Yahoo Finance symbol and company info)"
-                          @click="editMarketData(holding)"
-                        >
+                          title="Edit market data (Yahoo Finance symbol and company info)" @click="editMarketData(holding)">
                           <ChartBarIcon class="w-4 h-4" />
                         </button>
                       </div>
@@ -575,22 +548,12 @@
     </div>
 
     <!-- Edit Position Modal -->
-    <PortfolioEditPositionModal
-      :show="showPositionModal"
-      :holding="selectedPosition"
-      :portfolio-id="selectedPortfolio?.id || ''"
-      @close="closePositionModal"
-      @success="handlePositionUpdate"
-    />
+    <PortfolioEditPositionModal :show="showPositionModal" :holding="selectedPosition" :portfolio-id="selectedPortfolio?.id || ''" @close="closePositionModal"
+      @success="handlePositionUpdate" />
 
     <!-- Edit Market Data Modal -->
-    <PortfolioEditMarketDataModal
-      :show="showMarketDataModal"
-      :holding="selectedPosition"
-      :portfolio-id="selectedPortfolio?.id || ''"
-      @close="closeMarketDataModal"
-      @success="handleMarketDataUpdate"
-    />
+    <PortfolioEditMarketDataModal :show="showMarketDataModal" :holding="selectedPosition" :portfolio-id="selectedPortfolio?.id || ''" @close="closeMarketDataModal"
+      @success="handleMarketDataUpdate" />
 
     <!-- Import Transactions Modal -->
     <Teleport to="body">
@@ -679,6 +642,14 @@ const showMarketDataModal = ref(false)
 
 initialize()
 
+// Watch for changes to selectedPortfolio
+watch(selectedPortfolio, (newValue, oldValue) => {
+  console.log('selectedPortfolio changed from:', oldValue, 'to:', newValue)
+  if (newValue === null && oldValue !== null) {
+    console.trace('selectedPortfolio was set to null - stack trace:')
+  }
+}, { deep: true })
+
 // Check if there's a portfolio to edit from query params
 const route = useRoute()
 onMounted(async () => {
@@ -726,6 +697,7 @@ function resetForm(): void {
 
 // Reset transaction form
 function resetTransactionForm(): void {
+  console.log('resetTransactionForm called, selectedPortfolio:', selectedPortfolio.value)
   transactionForm.symbol = ''
   transactionForm.isin = ''
   transactionForm.type = 'BUY'
@@ -746,8 +718,10 @@ function closeModal(): void {
 
 // Transaction modal functions
 function manageTransactions(portfolio: Portfolio): void {
+  console.log('manageTransactions called with portfolio:', portfolio)
   selectedPortfolio.value = portfolio
   showTransactionModal.value = true
+  console.log('selectedPortfolio set to:', selectedPortfolio.value)
   loadPortfolioData(portfolio.id)
 }
 
@@ -779,7 +753,9 @@ function handleImportSuccess(): void {
 
 // Position management functions
 function managePositions(portfolio: Portfolio): void {
+  console.log('managePositions called with portfolio:', portfolio)
   selectedPortfolio.value = portfolio
+  showPositionModal.value = true
   loadPortfolioHoldings(portfolio.id)
 }
 
@@ -856,10 +832,38 @@ async function loadPortfolioData(portfolioId: string): Promise<void> {
 
 // Submit new transaction
 async function submitTransaction(): Promise<void> {
-  if (!selectedPortfolio.value) return
+  console.log('=== submitTransaction called ===')
+  console.log('selectedPortfolio:', selectedPortfolio.value)
+  console.log('transactionForm:', transactionForm)
+  
+  if (!selectedPortfolio.value) {
+    console.error('No selected portfolio')
+    alert('No portfolio selected')
+    return
+  }
+
+  // Basic form validation
+  if (!transactionForm.symbol || !transactionForm.symbol.trim()) {
+    console.error('Invalid symbol:', transactionForm.symbol)
+    alert('Please enter a valid symbol')
+    return
+  }
+
+  if (transactionForm.quantity <= 0) {
+    console.error('Invalid quantity:', transactionForm.quantity)
+    alert('Please enter a valid quantity greater than 0')
+    return
+  }
+
+  if (transactionForm.price <= 0) {
+    console.error('Invalid price:', transactionForm.price)
+    alert('Please enter a valid price greater than 0')
+    return
+  }
 
   try {
     submittingTransaction.value = true
+    console.log('Starting transaction submission...')
 
     // Get request headers for both SSR and client-side authentication
     const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
@@ -875,8 +879,11 @@ async function submitTransaction(): Promise<void> {
       notes: transactionForm.notes || undefined
     }
 
+    console.log('Transaction data to submit:', transactionData)
+
     if (editingTransaction.value) {
       // Update existing transaction
+      console.log('Updating transaction with ID:', editingTransaction.value.id)
       await $fetch(`/api/portfolios/${selectedPortfolio.value.id}/transactions/${editingTransaction.value.id}`, {
         method: 'PUT' as const,
         headers: headers as HeadersInit,
@@ -884,12 +891,15 @@ async function submitTransaction(): Promise<void> {
       })
     } else {
       // Create new transaction
+      console.log('Creating new transaction for portfolio:', selectedPortfolio.value.id)
       await $fetch(`/api/portfolios/${selectedPortfolio.value.id}/transactions`, {
         method: 'POST' as const,
         headers: headers as HeadersInit,
         body: transactionData
       })
     }
+
+    console.log('Transaction submitted successfully')
 
     // Reload portfolio data
     await loadPortfolioData(selectedPortfolio.value.id)
@@ -902,6 +912,22 @@ async function submitTransaction(): Promise<void> {
   } finally {
     submittingTransaction.value = false
   }
+}
+
+// Debug function to handle submit button click
+function handleSubmitClick(event: Event): void {
+  console.log('Submit button clicked!', event)
+  console.log('selectedPortfolio at button click:', selectedPortfolio.value)
+  console.log('showTransactionModal:', showTransactionModal.value)
+  console.log('showAddTransactionForm:', showAddTransactionForm.value)
+  console.log('Form data:', {
+    symbol: transactionForm.symbol,
+    quantity: transactionForm.quantity,
+    price: transactionForm.price,
+    submittingTransaction: submittingTransaction.value
+  })
+  
+  // Don't prevent default since we want the form submission to happen
 }
 
 // Edit transaction
