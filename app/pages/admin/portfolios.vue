@@ -91,16 +91,58 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div class="flex items-center space-x-2">
-                    <NuxtLink :to="`/portfolio/${portfolio.id}`" class="text-primary-600 hover:text-primary-500">
+                    <!-- View Portfolio -->
+                    <NuxtLink 
+                      :to="`/portfolio/${portfolio.id}`" 
+                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-primary-600 hover:text-primary-500 bg-primary-50 hover:bg-primary-100 rounded-md transition-colors"
+                      title="View Portfolio"
+                    >
+                      <EyeIcon class="w-4 h-4 mr-1" />
                       View
                     </NuxtLink>
-                    <button type="button" class="text-indigo-600 hover:text-indigo-500" @click="editPortfolio(portfolio)">
+                    
+                    <!-- Edit Portfolio -->
+                    <button 
+                      type="button" 
+                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors" 
+                      title="Edit Portfolio"
+                      @click="editPortfolio(portfolio)"
+                    >
+                      <PencilIcon class="w-4 h-4 mr-1" />
                       Edit
                     </button>
-                    <button type="button" class="text-blue-600 hover:text-blue-500" @click="manageTransactions(portfolio)">
+                    
+                    <!-- Manage Positions -->
+                    <button 
+                      type="button" 
+                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-600 hover:text-green-500 bg-green-50 hover:bg-green-100 rounded-md transition-colors" 
+                      title="Manage Positions"
+                      @click="managePositions(portfolio)"
+                    >
+                      <ChartPieIcon class="w-4 h-4 mr-1" />
+                      Positions
+                    </button>
+                    
+                    <!-- Manage Transactions -->
+                    <button 
+                      type="button" 
+                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors" 
+                      title="Manage Transactions"
+                      @click="manageTransactions(portfolio)"
+                    >
+                      <DocumentTextIcon class="w-4 h-4 mr-1" />
                       Transactions
                     </button>
-                    <button v-if="!portfolio.isDefault" type="button" class="text-red-600 hover:text-red-500" @click="deletePortfolio(portfolio)">
+                    
+                    <!-- Delete Portfolio -->
+                    <button 
+                      v-if="!portfolio.isDefault" 
+                      type="button" 
+                      class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 hover:text-red-500 bg-red-50 hover:bg-red-100 rounded-md transition-colors" 
+                      title="Delete Portfolio"
+                      @click="deletePortfolio(portfolio)"
+                    >
+                      <TrashIcon class="w-4 h-4 mr-1" />
                       Delete
                     </button>
                   </div>
@@ -426,6 +468,110 @@
       </div>
     </div>
 
+    <!-- Positions Management Modal -->
+    <div v-if="selectedPortfolio && portfolioHoldings.length > 0" class="fixed inset-0 z-50 overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="selectedPortfolio = null" />
+
+        <div
+          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+          <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                  Manage Positions
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Portfolio: {{ selectedPortfolio?.name }}
+                </p>
+              </div>
+              <button
+                type="button"
+                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                @click="selectedPortfolio = null"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Positions List -->
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-900">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Symbol</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ISIN</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Avg Price</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Current Price</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market Value</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">P&L</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  <tr v-for="holding in portfolioHoldings" :key="holding.id">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                      {{ holding.symbol }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {{ holding.isin || 'N/A' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {{ formatNumber(holding.quantity, 4) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {{ formatCurrency(holding.avgPrice) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {{ holding.currentPrice ? formatCurrency(holding.currentPrice) : 'N/A' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {{ formatCurrency((holding.currentPrice || holding.avgPrice) * holding.quantity) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <span
+                        v-if="holding.currentPrice"
+                        :class="{
+                          'text-green-600': (holding.currentPrice - holding.avgPrice) * holding.quantity > 0,
+                          'text-red-600': (holding.currentPrice - holding.avgPrice) * holding.quantity < 0,
+                          'text-gray-500': (holding.currentPrice - holding.avgPrice) * holding.quantity === 0
+                        }"
+                      >
+                        {{ formatCurrency((holding.currentPrice - holding.avgPrice) * holding.quantity) }}
+                      </span>
+                      <span v-else class="text-gray-500">N/A</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        type="button"
+                        class="text-indigo-600 hover:text-indigo-500"
+                        @click="editPosition(holding)"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Position Modal -->
+    <PortfolioEditPositionModal
+      :show="showPositionModal"
+      :holding="selectedPosition"
+      :portfolio-id="selectedPortfolio?.id || ''"
+      @close="closePositionModal"
+      @success="handlePositionUpdate"
+    />
+
     <!-- Import Transactions Modal -->
     <Teleport to="body">
       <LazyPortfolioImportTransactionsModal v-if="showImportTransactions && selectedPortfolio" v-model="showImportTransactions" :portfolio-id="selectedPortfolio.id"
@@ -439,7 +585,12 @@ import {
   ChartBarIcon,
   LockClosedIcon,
   PlusIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  EyeIcon,
+  PencilIcon,
+  ChartPieIcon,
+  DocumentTextIcon,
+  TrashIcon
 } from '@heroicons/vue/24/outline'
 import type { Portfolio } from '~/stores/portfolio'
 
@@ -472,10 +623,14 @@ interface HoldingData {
   id: string
   portfolioId: string
   symbol: string
+  isin: string | null
   quantity: number
   avgPrice: number
+  currency: string
   currentPrice?: number
-  updatedAt: string
+  instrumentName?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 const { canManagePortfolios, initialize } = useAuthorization()
@@ -495,6 +650,10 @@ const portfolioTransactions = ref<TransactionData[]>([])
 const portfolioHoldings = ref<HoldingData[]>([])
 const editingTransaction = ref<TransactionData | null>(null)
 const showImportTransactions = ref(false)
+
+// Position management states
+const showPositionModal = ref(false)
+const selectedPosition = ref<HoldingData | null>(null)
 
 initialize()
 
@@ -594,6 +753,40 @@ function handleImportSuccess(): void {
     loadPortfolioData(selectedPortfolio.value.id)
   }
   showImportTransactions.value = false
+}
+
+// Position management functions
+function managePositions(portfolio: Portfolio): void {
+  selectedPortfolio.value = portfolio
+  loadPortfolioHoldings(portfolio.id)
+}
+
+function editPosition(holding: HoldingData): void {
+  selectedPosition.value = holding
+  showPositionModal.value = true
+}
+
+function closePositionModal(): void {
+  showPositionModal.value = false
+  selectedPosition.value = null
+}
+
+function handlePositionUpdate(): void {
+  // Reload holdings after successful update
+  if (selectedPortfolio.value) {
+    loadPortfolioHoldings(selectedPortfolio.value.id)
+  }
+}
+
+// Load portfolio holdings for position management
+async function loadPortfolioHoldings(portfolioId: string): Promise<void> {
+  try {
+    const response = await $fetch<{ success: boolean; data: { holdings: HoldingData[] } }>(`/api/portfolios/${portfolioId}/holdings`)
+    portfolioHoldings.value = response.data.holdings
+  } catch (error) {
+    console.error('Error loading portfolio holdings:', error)
+    portfolioHoldings.value = []
+  }
 }
 
 // Load portfolio data (transactions and holdings)
