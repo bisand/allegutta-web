@@ -49,6 +49,7 @@ export default defineEventHandler(async (event) => {
           regularMarketChangePercent: marketData?.regularMarketChangePercent || null,
           regularMarketPreviousClose: marketData?.regularMarketPreviousClose || null,
           regularMarketTime: marketData?.regularMarketTime || null,
+          regularMarketVolume: marketData?.regularMarketVolume || null,
           lastUpdated: marketData?.lastUpdated || null
         }
       })

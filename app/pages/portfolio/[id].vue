@@ -371,12 +371,15 @@
         </div>
 
         <!-- Portfolio Overview Cards -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <!-- Top Performers -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <!-- Winners -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.topPerformers') }}</h3>
-            <div v-if="topPerformers.length > 0" class="space-y-3">
-              <div v-for="holding in topPerformers" :key="holding.id" class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+              <ArrowTrendingUpIcon class="w-5 h-5 text-green-500 mr-2" />
+              {{ $t('portfolioPage.winners') }}
+            </h3>
+            <div v-if="winners.length > 0" class="space-y-3">
+              <div v-for="holding in winners" :key="holding.id" class="flex items-center justify-between">
                 <div class="flex items-center">
                   <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-3">
                     <ArrowTrendingUpIcon class="w-4 h-4 text-green-600 dark:text-green-400" />
@@ -389,10 +392,10 @@
                 </div>
                 <div class="text-right">
                   <p class="text-green-600 dark:text-green-400 font-medium">
-                    +{{ formatCurrency(Math.abs(getHoldingGainLoss(holding))) }}
+                    {{ formatPercentage(holding.regularMarketChangePercent) }}
                   </p>
-                  <p class="text-sm text-green-600 dark:text-green-400">
-                    +{{ getHoldingGainLossPercentage(holding).toFixed(2) }}%
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ $t('portfolioPage.todayChange') }}
                   </p>
                 </div>
               </div>
@@ -402,27 +405,93 @@
             </div>
           </div>
 
-          <!-- Portfolio Allocation -->
+          <!-- Losers -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioAllocation') }}</h3>
-            <div v-if="portfolioStore.portfolioHoldings.length > 0" class="space-y-3">
-              <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id" class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+              <ArrowTrendingDownIcon class="w-5 h-5 text-red-500 mr-2" />
+              {{ $t('portfolioPage.losers') }}
+            </h3>
+            <div v-if="losers.length > 0" class="space-y-3">
+              <div v-for="holding in losers" :key="holding.id" class="flex items-center justify-between">
                 <div class="flex items-center">
-                  <div class="w-3 h-3 rounded-full mr-3" :style="{ backgroundColor: getColorForSymbol(holding.symbol) }" />
+                  <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mr-3">
+                    <ArrowTrendingDownIcon class="w-4 h-4 text-red-600 dark:text-red-400" />
+                  </div>
                   <div>
-                    <span class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</span>
-                    <div v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400">{{ holding.instrumentName }}</div>
+                    <p class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</p>
+                    <p v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400">{{ holding.instrumentName }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatCurrency(holding.currentPrice || holding.avgPrice, { decimals: 2 }) }}</p>
                   </div>
                 </div>
                 <div class="text-right">
-                  <p class="font-medium text-gray-900 dark:text-white">{{ getAllocationPercentage(holding).toFixed(1) }}%</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice)) }}</p>
+                  <p class="text-red-600 dark:text-red-400 font-medium">
+                    {{ formatPercentage(holding.regularMarketChangePercent) }}
+                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ $t('portfolioPage.todayChange') }}
+                  </p>
                 </div>
               </div>
             </div>
             <div v-else class="text-center py-4">
-              <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noHoldingsToDisplay') }}</p>
+              <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noNegativePerformers') }}</p>
             </div>
+          </div>
+
+          <!-- Most Traded -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+              <ChartBarIcon class="w-5 h-5 text-blue-500 mr-2" />
+              {{ $t('portfolioPage.mostTraded') }}
+            </h3>
+            <div v-if="mostTraded.length > 0" class="space-y-3">
+              <div v-for="holding in mostTraded" :key="holding.id" class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-3">
+                    <ChartBarIcon class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</p>
+                    <p v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400">{{ holding.instrumentName }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatCurrency(holding.currentPrice || holding.avgPrice, { decimals: 2 }) }}</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="font-medium text-gray-900 dark:text-white">
+                    {{ formatVolume((holding as unknown as Record<string, unknown>)['regularMarketVolume'] as number) }}
+                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ $t('portfolioPage.volume') }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-4">
+              <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noTradingVolume') }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Portfolio Allocation -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioAllocation') }}</h3>
+          <div v-if="portfolioStore.portfolioHoldings.length > 0" class="space-y-3">
+            <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id" class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full mr-3" :style="{ backgroundColor: getColorForSymbol(holding.symbol) }" />
+                <div>
+                  <span class="font-medium text-gray-900 dark:text-white">{{ holding.symbol }}</span>
+                  <div v-if="holding.instrumentName" class="text-xs text-gray-500 dark:text-gray-400">{{ holding.instrumentName }}</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-medium text-gray-900 dark:text-white">{{ getAllocationPercentage(holding).toFixed(1) }}%</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice)) }}</p>
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-center py-4">
+            <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noHoldingsToDisplay') }}</p>
           </div>
         </div>
 
@@ -518,6 +587,7 @@ import {
   ArrowPathIcon,
   ClockIcon,
   ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
   PencilSquareIcon,
   ChevronUpIcon,
   ChevronDownIcon
@@ -612,7 +682,8 @@ const fetchEnhancedData = async () => {
     // Update only the properties that exist in the response
     enhancedData.value = {
       ...enhancedData.value,
-      ...response
+      ...response,
+      marketDataLastUpdated: response.marketDataLastUpdated || null
     }
     // Update portfolio store timestamp for real-time updates
     portfolioStore.updateTimestamp()
@@ -854,7 +925,7 @@ const athData = computed(() => {
 })
 
 // Load portfolio data when route changes
-watch(portfolioId, async (newId: unknown) => {
+watch(portfolioId, async (newId: string) => {
   if (newId && currentPortfolio.value) {
     try {
       await portfolioStore.setCurrentPortfolio(newId)
@@ -867,21 +938,48 @@ watch(portfolioId, async (newId: unknown) => {
 // Computed properties for enhanced portfolio analytics
 const topPerformers = computed(() => {
   return portfolioStore.portfolioHoldings
-    .filter((holding: { currentPrice: null; quantity: number; avgPrice: number }) => holding.currentPrice != null && getHoldingGainLoss({
-      quantity: holding.quantity,
-      currentPrice: holding.currentPrice,
-      avgPrice: holding.avgPrice
-    }) > 0)
-    .sort((a: { quantity: number; currentPrice: number | null | undefined; avgPrice: number }, b: { quantity: number; currentPrice: number | null | undefined; avgPrice: number }) => getHoldingGainLoss({
-      quantity: b.quantity,
-      currentPrice: b.currentPrice!,
-      avgPrice: b.avgPrice
-    }) - getHoldingGainLoss({
-      quantity: a.quantity,
-      currentPrice: a.currentPrice!,
-      avgPrice: a.avgPrice
-    }))
+    .filter(holding => holding.currentPrice != null && getHoldingGainLoss(holding) > 0)
+    .sort((a, b) => getHoldingGainLoss(b) - getHoldingGainLoss(a))
     .slice(0, 3)
+})
+
+// Winners - holdings with positive intraday performance
+const winners = computed(() => {
+  return portfolioStore.portfolioHoldings
+    .filter(holding => holding.currentPrice != null && holding.regularMarketChangePercent != null && holding.regularMarketChangePercent > 0)
+    .sort((a, b) => {
+      const aChange = a.regularMarketChangePercent || 0
+      const bChange = b.regularMarketChangePercent || 0
+      return bChange - aChange
+    })
+    .slice(0, 5)
+})
+
+// Losers - holdings with negative intraday performance
+const losers = computed(() => {
+  return portfolioStore.portfolioHoldings
+    .filter(holding => holding.currentPrice != null && holding.regularMarketChangePercent != null && holding.regularMarketChangePercent < 0)
+    .sort((a, b) => {
+      const aChange = a.regularMarketChangePercent || 0
+      const bChange = b.regularMarketChangePercent || 0
+      return aChange - bChange
+    })
+    .slice(0, 5)
+})
+
+// Most traded - holdings with highest intraday trading volume
+const mostTraded = computed(() => {
+  return portfolioStore.portfolioHoldings
+    .filter(holding => {
+      const volume = (holding as unknown as Record<string, unknown>)['regularMarketVolume']
+      return holding.currentPrice != null && volume != null && Number(volume) > 0
+    })
+    .sort((a, b) => {
+      const aVolume = Number((a as unknown as Record<string, unknown>)['regularMarketVolume']) || 0
+      const bVolume = Number((b as unknown as Record<string, unknown>)['regularMarketVolume']) || 0
+      return bVolume - aVolume
+    })
+    .slice(0, 5)
 })
 
 // Sorted holdings based on current sort column and direction
@@ -972,7 +1070,7 @@ function getSortIcon(column: SortKey) {
 }
 
 const totalPortfolioValue = computed(() => {
-  return portfolioStore.portfolioHoldings.reduce((total: number, holding: { quantity: number; currentPrice: number | null; avgPrice: number }) => {
+  return portfolioStore.portfolioHoldings.reduce((total, holding) => {
     return total + (holding.quantity * (holding.currentPrice || holding.avgPrice))
   }, 0)
 })
@@ -995,25 +1093,6 @@ function getColorForSymbol(symbol: string): string {
     hash = symbol.charCodeAt(i) + ((hash << 5) - hash)
   }
   return colors[Math.abs(hash) % colors.length] as string
-}
-
-// Get the symbol of the top performing holding
-function getTopPerformerSymbol(): string {
-  const performer = topPerformers.value[0]
-  return performer ? performer.symbol : 'N/A'
-}
-
-// Get the symbol of the largest holding by value
-function getLargestHoldingSymbol(): string {
-  if (portfolioStore.portfolioHoldings.length === 0) return 'N/A'
-
-  const largest = portfolioStore.portfolioHoldings.reduce((max: { quantity: number; currentPrice: number | null; avgPrice: number; symbol: string }, holding: { quantity: number; currentPrice: number | null; avgPrice: number; symbol: string }) => {
-    const value = holding.quantity * (holding.currentPrice || holding.avgPrice)
-    const maxValue = max.quantity * (max.currentPrice || max.avgPrice)
-    return value > maxValue ? holding : max
-  })
-
-  return largest.symbol
 }
 
 // Get transaction type styling
@@ -1095,6 +1174,41 @@ function getHoldingGainLossPercentage(holding: { quantity: number; currentPrice?
 function getGainLossColor(holding: { quantity: number; currentPrice?: number | null; avgPrice: number }): string {
   const gainLoss = getHoldingGainLoss(holding)
   return gainLoss >= 0 ? 'text-green-600' : 'text-red-600'
+}
+
+// Get the symbol of the top performing holding
+function getTopPerformerSymbol(): string {
+  if (topPerformers.value.length === 0) return 'N/A'
+  return topPerformers.value[0]?.symbol || 'N/A'
+}
+
+// Get the symbol of the largest holding by value
+function getLargestHoldingSymbol(): string {
+  if (portfolioStore.portfolioHoldings.length === 0) return 'N/A'
+  
+  const largest = portfolioStore.portfolioHoldings.reduce((max, holding) => {
+    const maxValue = max.quantity * (max.currentPrice || max.avgPrice)
+    const holdingValue = holding.quantity * (holding.currentPrice || holding.avgPrice)
+    return holdingValue > maxValue ? holding : max
+  })
+  
+  return largest.symbol
+}
+
+// Format volume with appropriate units (K, M, B)
+function formatVolume(volume: number | null | undefined): string {
+  if (!volume || volume === 0) return 'N/A'
+  
+  const num = Math.abs(volume)
+  if (num >= 1e9) {
+    return (num / 1e9).toFixed(1) + 'B'
+  } else if (num >= 1e6) {
+    return (num / 1e6).toFixed(1) + 'M'
+  } else if (num >= 1e3) {
+    return (num / 1e3).toFixed(1) + 'K'
+  } else {
+    return num.toString()
+  }
 }
 
 // Refresh prices
