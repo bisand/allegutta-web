@@ -7,6 +7,13 @@ export default defineEventHandler(async (event) => {
   const portfolioId = getRouterParam(event, 'id')
   const isin = getRouterParam(event, 'isin')
 
+  if (!isin || !portfolioId) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Portfolio ID and ISIN are required'
+    })
+  }
+
   const { dbUser } = await getRequiredAuth(event)
 
   // Validation schema
@@ -53,7 +60,8 @@ export default defineEventHandler(async (event) => {
           symbolYahoo: validatedData.symbolYahoo,
           longName: validatedData.longName,
           shortName: validatedData.shortName,
-          exchange: validatedData.exchange
+          exchange: validatedData.exchange,
+          updatedAt: new Date()
         }
       })
 
@@ -73,7 +81,8 @@ export default defineEventHandler(async (event) => {
           symbolYahoo: validatedData.symbolYahoo,
           longName: validatedData.longName,
           shortName: validatedData.shortName,
-          exchange: validatedData.exchange
+          exchange: validatedData.exchange,
+          updatedAt: new Date()
         }
       })
 

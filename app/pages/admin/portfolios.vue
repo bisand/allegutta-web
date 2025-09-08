@@ -504,6 +504,7 @@
                   <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Symbol</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ISIN</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Yahoo Symbol</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Avg Price</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Current Price</th>
@@ -519,6 +520,10 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {{ holding.isin || 'N/A' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <span v-if="holding.symbolYahoo" class="text-gray-900 dark:text-white">{{ holding.symbolYahoo }}</span>
+                      <span v-else class="text-red-500 font-medium">Not set</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {{ formatNumber(holding.quantity, 4) }}
@@ -546,13 +551,26 @@
                       <span v-else class="text-gray-500">N/A</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        type="button"
-                        class="text-indigo-600 hover:text-indigo-500"
-                        @click="editPosition(holding)"
-                      >
-                        Edit
-                      </button>
+                      <div class="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
+                          title="Edit position details"
+                          @click="editPosition(holding)"
+                        >
+                          <PencilIcon class="w-3 h-3 mr-1" />
+                          Edit Position
+                        </button>
+                        <button
+                          type="button"
+                          class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                          title="Edit market data (Yahoo symbol)"
+                          @click="editMarketData(holding)"
+                        >
+                          <ChartBarIcon class="w-3 h-3 mr-1" />
+                          Market Data
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -570,6 +588,15 @@
       :portfolio-id="selectedPortfolio?.id || ''"
       @close="closePositionModal"
       @success="handlePositionUpdate"
+    />
+
+    <!-- Edit Market Data Modal -->
+    <PortfolioEditMarketDataModal
+      :show="showMarketDataModal"
+      :holding="selectedPosition"
+      :portfolio-id="selectedPortfolio?.id || ''"
+      @close="closeMarketDataModal"
+      @success="handleMarketDataUpdate"
     />
 
     <!-- Import Transactions Modal -->
@@ -629,6 +656,7 @@ interface HoldingData {
   currency: string
   currentPrice?: number
   instrumentName?: string
+  symbolYahoo?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -654,6 +682,7 @@ const showImportTransactions = ref(false)
 // Position management states
 const showPositionModal = ref(false)
 const selectedPosition = ref<HoldingData | null>(null)
+const showMarketDataModal = ref(false)
 
 initialize()
 
@@ -769,6 +798,23 @@ function editPosition(holding: HoldingData): void {
 function closePositionModal(): void {
   showPositionModal.value = false
   selectedPosition.value = null
+}
+
+function editMarketData(holding: HoldingData): void {
+  selectedPosition.value = holding
+  showMarketDataModal.value = true
+}
+
+function closeMarketDataModal(): void {
+  showMarketDataModal.value = false
+  selectedPosition.value = null
+}
+
+function handleMarketDataUpdate(): void {
+  // Reload holdings after successful market data update
+  if (selectedPortfolio.value) {
+    loadPortfolioHoldings(selectedPortfolio.value.id)
+  }
 }
 
 function handlePositionUpdate(): void {

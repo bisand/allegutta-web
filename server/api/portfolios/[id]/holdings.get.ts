@@ -60,8 +60,9 @@ export default defineEventHandler(async (event) => {
           regularMarketPreviousClose: marketData?.regularMarketPreviousClose || null,
           regularMarketTime: marketData?.regularMarketTime || null,
           lastUpdated: marketData?.lastUpdated || null,
-          // Include instrument name
-          instrumentName: marketData?.longName || marketData?.shortName || null
+          // Include instrument name and Yahoo symbol
+          instrumentName: marketData?.longName || marketData?.shortName || null,
+          symbolYahoo: marketData?.symbolYahoo || null
         }
       })
     )
