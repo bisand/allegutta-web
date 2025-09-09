@@ -13,6 +13,8 @@ A modern portfolio management application built with Nuxt 4, featuring transacti
 - ✅ ESLint configuration
 
 ### 2. **Database & Backend**
+- ✅ **Simple database strategy** - No migrations, just schema push!
+- ✅ **Auto-migration** on server startup (production-safe)
 - ✅ SQLite database for development (easily switchable to PostgreSQL)
 - ✅ Prisma ORM with complete schema:
   - Users (linked to authentication)
@@ -113,11 +115,34 @@ MARKET_DATA_UPDATE_INTERVAL_MINUTES=1   # Update interval in minutes (default: 1
 ### Technologies Used
 - **Frontend**: Nuxt 4, Vue 3, Nuxt UI, Tailwind CSS
 - **Backend**: Nitro, Prisma ORM
-- **Database**: SQLite (dev) / PostgreSQL (production)
+- **Database**: SQLite (dev) / PostgreSQL (production) with **simple migration-free strategy**
 - **Authentication**: Kinde
 - **State Management**: Pinia
 - **Validation**: Zod
 - **Development**: TypeScript, ESLint
+
+## 📊 Database Management (SIMPLE!)
+
+Our database strategy is designed to be **migration-free** and **production-safe**:
+
+```bash
+# Development
+pnpm db:init          # Initialize/update database
+pnpm db:push          # Push schema changes  
+pnpm db:reset         # Reset database (deletes data!)
+pnpm db:backup        # Backup database
+pnpm db:studio        # Open database browser
+
+# Production deployment
+./scripts/deploy-production.sh    # Automatic backup + safe update
+```
+
+**Key Features:**
+- ✅ **No migration files** to manage
+- ✅ **Auto-migration** on server startup
+- ✅ **Data-safe** updates (never deletes data)
+- ✅ **Automatic backups** before changes
+- ✅ **Docker-ready** with auto-initialization
 
 ## 🚀 Getting Started
 
@@ -126,11 +151,13 @@ MARKET_DATA_UPDATE_INTERVAL_MINUTES=1   # Update interval in minutes (default: 1
    pnpm install
    ```
 
-2. **Set up Database**:
+2. **Set up Database** (Simple!):
    ```bash
-   npx prisma generate
-   npx prisma db push
-   pnpm run db:seed
+   # Initialize database with our simple strategy
+   pnpm db:init
+   
+   # Optional: Add sample data
+   pnpm db:seed
    ```
 
 3. **Start Development Server**:

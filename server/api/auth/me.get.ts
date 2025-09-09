@@ -1,33 +1,41 @@
+import { getOptionalAuth } from '../../lib/auth'
+
 export default defineEventHandler(async (event) => {
   try {
-    // Check if we have Kinde context and authentication available
-    if (!event.context.kinde) {
+    // Use the auth helper that handles both dev and production modes
+    const auth = await getOptionalAuth(event)
+
+    if (!auth) {
       return null
     }
 
-    // Use the proper Kinde server-side API
-    const profile = await event.context.kinde.getUser()
+    const { kindeUser, dbUser } = auth
 
-    // Return null if no profile is found instead of throwing
-    if (!profile) {
-      return null
+    // Get permissions from Kinde (only in production mode)
+    let permissions: string[] = []
+    let roles: string[] = []
+    
+    if (process.env.NUXT_DEV_AUTH === 'true') {
+      // In dev mode, give the test user admin permissions
+      roles = ['admin']
+      permissions = ['write:portfolio', 'read:portfolio']
+    } else if (event.context.kinde?.getPermissions) {
+      permissions = (await event.context.kinde.getPermissions())?.permissions || []
+      // TODO: Get roles from Kinde or database
     }
-
-    const permissions = event.context.kinde.getPermissions ? (await event.context.kinde.getPermissions())?.permissions : []
 
     return {
-      id: profile.id,
-      kindeId: profile.id,
-      email: profile.email || '',
-      firstName: profile.given_name || null,
-      lastName: profile.family_name || null,
-      name: `${profile.given_name || ''} ${profile.family_name || ''}`.trim() || profile.email || '',
-      picture: profile.picture || null,
-      // TODO: Add roles and permissions from your database or Kinde
-      roles: [],
-      permissions: permissions || [],
-      createdAt: new Date(),
-      updatedAt: new Date()
+      id: dbUser.id,
+      kindeId: kindeUser.id,
+      email: kindeUser.email || '',
+      firstName: kindeUser.given_name || null,
+      lastName: kindeUser.family_name || null,
+      name: `${kindeUser.given_name || ''} ${kindeUser.family_name || ''}`.trim() || kindeUser.email || '',
+      picture: kindeUser.picture || null,
+      roles: roles,
+      permissions: permissions,
+      createdAt: dbUser.createdAt,
+      updatedAt: dbUser.updatedAt
     }
   } catch (error: unknown) {
     // Silently return null for authentication errors to avoid console spam

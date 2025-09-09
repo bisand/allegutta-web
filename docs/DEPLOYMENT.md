@@ -83,7 +83,7 @@ wrangler secret put NUXT_SESSION_PASSWORD
 wrangler pages deploy
 
 # Initialize database
-wrangler d1 execute allegutta-production --file=./prisma/schema.sql
+wrangler d1 execute allegutta-production --file=./schema.sql
 ```
 
 ### ✅ Benefits
@@ -163,7 +163,7 @@ npx prisma db push --force-reset
 npx prisma db push --preview-feature
 
 # Apply to D1
-wrangler d1 execute allegutta-production --file=./prisma/migrations/schema.sql
+wrangler d1 execute allegutta-production --file=./migrations/schema.sql
 ```
 
 ### For Vercel (external DB):

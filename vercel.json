@@ -18,7 +18,7 @@
   },
   "build": {
     "env": {
-      "NUXT_DATABASE_URL": "file:./prisma/dev.db"
+      "NUXT_DATABASE_URL": "file:./dev.db"
     }
   }
 }

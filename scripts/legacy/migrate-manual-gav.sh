@@ -14,7 +14,7 @@ if [ ! -f "package.json" ]; then
 fi
 
 # Check if database file exists (for SQLite)
-if [ ! -f "prisma/dev.db" ] && [ ! -f "/app/data/portfolio.db" ]; then
+if [ ! -f "./dev.db" ] && [ ! -f "/app/data/portfolio.db" ]; then
     echo "❌ Error: Database file not found"
     exit 1
 fi
@@ -25,10 +25,10 @@ if [ -f "/app/data/portfolio.db" ]; then
     # Production backup
     cp /app/data/portfolio.db /app/data/portfolio.db.backup.$(date +%Y%m%d_%H%M%S)
     DB_PATH="/app/data/portfolio.db"
-elif [ -f "prisma/dev.db" ]; then
+elif [ -f "./dev.db" ]; then
     # Development backup
-    cp prisma/dev.db prisma/dev.db.backup.$(date +%Y%m%d_%H%M%S)
-    DB_PATH="prisma/dev.db"
+    cp ./dev.db ./dev.db.backup.$(date +%Y%m%d_%H%M%S)
+    DB_PATH="./dev.db"
 fi
 
 echo "✅ Database backed up"

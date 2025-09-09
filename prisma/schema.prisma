@@ -19,20 +19,20 @@ model ath_history {
 }
 
 model holdings {
-  id                    String     @id
-  portfolioId           String
-  symbol                String
-  isin                  String?
-  quantity              Float
-  avgPrice              Float
-  manualAvgPrice        Float?     // Manual GAV override
-  useManualAvgPrice     Boolean    @default(false) // Flag to use manual GAV
-  manualAvgPriceReason  String?    // Reason for manual override
-  manualAvgPriceDate    DateTime?  // When manual GAV was set
-  currency              String     @default("NOK")
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime
-  portfolios            portfolios @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  id                   String     @id
+  portfolioId          String
+  symbol               String
+  isin                 String?
+  quantity             Float
+  avgPrice             Float
+  manualAvgPrice       Float?
+  useManualAvgPrice    Boolean    @default(false)
+  manualAvgPriceReason String?
+  manualAvgPriceDate   DateTime?
+  currency             String     @default("NOK")
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime
+  portfolios           portfolios @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
 
   @@unique([portfolioId, symbol])
 }
@@ -74,21 +74,23 @@ model market_data {
 }
 
 model portfolios {
-  id           String         @id
-  name         String
-  description  String?
-  userId       String
-  isDefault    Boolean        @default(false)
-  currency     String         @default("NOK")
-  cashBalance  Float          @default(0)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime
-  athDate      DateTime?
-  athValue     Float?
-  ath_history  ath_history[]
-  holdings     holdings[]
-  users        users          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions transactions[]
+  id                    String         @id
+  name                  String
+  description           String?
+  userId                String
+  isDefault             Boolean        @default(false)
+  currency              String         @default("NOK")
+  cashBalance           Float          @default(0)
+  brokerType            String         @default("nordnet")
+  feeAllocationStrategy String         @default("all_to_buys")
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime
+  athDate               DateTime?
+  athValue              Float?
+  ath_history           ath_history[]
+  holdings              holdings[]
+  users                 users          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions          transactions[]
 }
 
 model transactions {

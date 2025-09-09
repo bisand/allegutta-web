@@ -32,51 +32,21 @@ mkdir -p /app/data
 
 echo "📊 Checking database status and setting up schema..."
 
-# Run database schema setup script
-if [ -f "/app/scripts/migrate-db.sh" ]; then
-    echo "🔄 Running database schema setup script..."
-    if /app/scripts/migrate-db.sh; then
+# Run our new production-safe database initialization
+if [ -f "/app/scripts/init-db.sh" ]; then
+    echo "🔄 Running production-safe database initialization..."
+    if /app/scripts/init-db.sh production; then
         echo "✅ Database schema setup completed successfully"
     else
         echo "❌ Database schema setup failed"
-        exit 1
+        echo "🔧 Note: Application will attempt auto-recovery on startup"
+        echo "⚠️  Continuing with application startup..."
     fi
 else
-    echo "⚠️  Schema setup script not found, using legacy approach..."
-
-    # Legacy fallback schema setup logic
-    if echo "$NUXT_DATABASE_URL" | grep -q "^file:"; then
-        DB_FILE=$(echo "$NUXT_DATABASE_URL" | sed 's|^file:||')
-        echo "📊 SQLite database detected: $DB_FILE"
-
-        # Create database directory if it doesn't exist
-        mkdir -p "$(dirname "$DB_FILE")"
-
-        # Try Prisma schema push first (development approach)
-        echo "🔄 Running Prisma schema push..."
-        if npx prisma db push --accept-data-loss; then
-            echo "✅ Database schema push completed successfully"
-        else
-            echo "❌ Database schema push failed, attempting fallback to schema.sql..."
-
-            # Fallback: use schema.sql if schema push fails
-            if [ -f "/app/prisma/schema.sql" ]; then
-                sqlite3 "$DB_FILE" < /app/prisma/schema.sql
-                echo "⚠️  Database initialized with schema.sql (fallback method)"
-            else
-                echo "❌ FATAL: No schema.sql fallback found and schema push failed"
-                exit 1
-            fi
-        fi
-    else
-        echo "📊 External database detected, running schema push..."
-        if npx prisma db push --accept-data-loss; then
-            echo "✅ Database schema push completed successfully"
-        else
-            echo "❌ Database schema push failed for external database"
-            exit 1
-        fi
-    fi
+    echo "⚠️  Production database script not found, using legacy approach..."
+    
+    # Note: The application will auto-initialize via server plugin
+    echo "� Database will be initialized automatically by application startup"
 fi
 
 echo "🚀 Starting AlleGutta application..."

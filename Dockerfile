@@ -17,7 +17,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # Copy Prisma schema and generate client
-COPY prisma ./prisma/
+COPY prisma ./
 RUN npx prisma generate
 
 # Copy application code
@@ -49,11 +49,13 @@ COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 
-# Copy database schema and migration scripts
-COPY prisma/schema.sql ./prisma/schema.sql
-COPY scripts/migrate-db.sh ./scripts/migrate-db.sh
+# Copy database schema and initialization scripts
+COPY prisma/schema.sql ./schema.sql
+COPY scripts/init-db.sh ./scripts/init-db.sh
+COPY scripts/backup.sh ./scripts/backup.sh
+COPY scripts/deploy-production.sh ./scripts/deploy-production.sh
 COPY scripts/start-production.sh ./start-production.sh
-RUN chmod +x ./scripts/migrate-db.sh ./start-production.sh
+RUN chmod +x ./scripts/*.sh ./start-production.sh
 
 # For a Nuxt app, the .output contains everything needed at runtime
 # Prisma client is embedded in the server bundle

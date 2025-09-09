@@ -225,10 +225,10 @@ run_prisma_migrations() {
     
     # Find the correct schema path
     SCHEMA_PATH=""
-    if [ -f "/app/prisma/schema.prisma" ]; then
-        SCHEMA_PATH="/app/prisma/schema.prisma"
-    elif [ -f "./prisma/schema.prisma" ]; then
-        SCHEMA_PATH="./prisma/schema.prisma"
+    if [ -f "/app/schema.prisma" ]; then
+        SCHEMA_PATH="/app/schema.prisma"
+    elif [ -f "./schema.prisma" ]; then
+        SCHEMA_PATH="./schema.prisma"
     elif [ -f "prisma/schema.prisma" ]; then
         SCHEMA_PATH="prisma/schema.prisma"
     else
@@ -280,10 +280,10 @@ run_prisma_schema_push() {
     
     # Find the correct schema path
     SCHEMA_PATH=""
-    if [ -f "/app/prisma/schema.prisma" ]; then
-        SCHEMA_PATH="/app/prisma/schema.prisma"
-    elif [ -f "./prisma/schema.prisma" ]; then
-        SCHEMA_PATH="./prisma/schema.prisma"
+    if [ -f "/app/schema.prisma" ]; then
+        SCHEMA_PATH="/app/schema.prisma"
+    elif [ -f "./schema.prisma" ]; then
+        SCHEMA_PATH="./schema.prisma"
     elif [ -f "prisma/schema.prisma" ]; then
         SCHEMA_PATH="prisma/schema.prisma"
     else
@@ -312,10 +312,10 @@ apply_fallback_schema() {
         
         # Find the correct schema.sql path
         SCHEMA_SQL_PATH=""
-        if [ -f "/app/prisma/schema.sql" ]; then
-            SCHEMA_SQL_PATH="/app/prisma/schema.sql"
-        elif [ -f "./prisma/schema.sql" ]; then
-            SCHEMA_SQL_PATH="./prisma/schema.sql"
+        if [ -f "/app/schema.sql" ]; then
+            SCHEMA_SQL_PATH="/app/schema.sql"
+        elif [ -f "./schema.sql" ]; then
+            SCHEMA_SQL_PATH="./schema.sql"
         elif [ -f "prisma/schema.sql" ]; then
             SCHEMA_SQL_PATH="prisma/schema.sql"
         else

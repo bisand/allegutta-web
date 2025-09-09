@@ -182,10 +182,10 @@ The implementation has been tested with:
 With sqlite3 now available in the devcontainer:
 ```bash
 # Check market data and instrument names
-sqlite3 prisma/dev.db "SELECT symbol, longName, shortName FROM market_data LIMIT 10;"
+sqlite3 ./dev.db "SELECT symbol, longName, shortName FROM market_data LIMIT 10;"
 
 # Check holdings with instrument names
-sqlite3 prisma/dev.db "SELECT h.symbol, h.quantity, m.longName FROM holdings h LEFT JOIN market_data m ON h.symbol = m.symbol LIMIT 10;"
+sqlite3 ./dev.db "SELECT h.symbol, h.quantity, m.longName FROM holdings h LEFT JOIN market_data m ON h.symbol = m.symbol LIMIT 10;"
 ```
 
 The application is running successfully with no compilation errors.
