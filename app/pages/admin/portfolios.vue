@@ -144,6 +144,14 @@
                       <Cog6ToothIcon class="w-4 h-4" />
                     </button>
 
+                    <!-- Recalculate Holdings -->
+                    <button type="button"
+                      :disabled="recalculatingPortfolios.has(portfolio.id)"
+                      class="inline-flex items-center justify-center w-8 h-8 text-orange-700 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md transition-colors dark:text-orange-300 dark:hover:text-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Recalculate portfolio holdings" @click="recalculateHoldings(portfolio)">
+                      <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': recalculatingPortfolios.has(portfolio.id) }" />
+                    </button>
+
                     <!-- Delete Portfolio -->
                     <button v-if="!portfolio.isDefault" type="button"
                       class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700"
@@ -637,7 +645,8 @@ import {
   ChartPieIcon,
   DocumentTextIcon,
   TrashIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 import type { Portfolio } from '~/stores/portfolio'
 
@@ -706,6 +715,9 @@ const selectedPosition = ref<HoldingData | null>(null)
 const showMarketDataModal = ref(false)
 const showBrokerConfigModal = ref(false)
 const brokerConfigPortfolio = ref<Portfolio | null>(null)
+
+// Track which portfolios are currently being recalculated
+const recalculatingPortfolios = ref(new Set<string>())
 
 initialize()
 
@@ -850,6 +862,36 @@ function configureBroker(portfolio: Portfolio): void {
   console.log('configureBroker called with portfolio:', portfolio)
   brokerConfigPortfolio.value = portfolio
   showBrokerConfigModal.value = true
+}
+
+// Recalculate holdings function
+async function recalculateHoldings(portfolio: Portfolio): Promise<void> {
+  try {
+    // Add portfolio to recalculating set to show loading state
+    recalculatingPortfolios.value.add(portfolio.id)
+    
+    console.log(`Starting recalculation for portfolio: ${portfolio.name} (${portfolio.id})`)
+    
+    const response = await $fetch(`/api/portfolios/${portfolio.id}/recalculate-holdings`, {
+      method: 'POST',
+      headers: import.meta.server ? useRequestHeaders(['cookie']) : {}
+    })
+    
+    console.log('Recalculation completed:', response)
+    
+    // Show success message
+    alert(`Holdings recalculated successfully for "${portfolio.name}"!\n\nProcessed ${response.symbolsProcessed} securities\nCash balance: ${formatCurrency(response.cashBalance, { currency: portfolio.currency || 'NOK' })}`)
+    
+    // Refresh the portfolio data in the store
+    await portfolioStore.fetchPortfolios()
+    
+  } catch (error) {
+    console.error('Failed to recalculate holdings:', error)
+    alert(`Failed to recalculate holdings for "${portfolio.name}". Please try again.`)
+  } finally {
+    // Remove portfolio from recalculating set
+    recalculatingPortfolios.value.delete(portfolio.id)
+  }
 }
 
 function editPosition(holding: HoldingData): void {
