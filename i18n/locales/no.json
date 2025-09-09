@@ -276,6 +276,7 @@
     "actions": "Handlinger",
     "edit": "Rediger",
     "delete": "Slett",
-    "noTransactionsFound": "Ingen transaksjoner funnet"
+    "noTransactionsFound": "Ingen transaksjoner funnet",
+    "cashBalance": "Kontantbeholdning"
   }
 }

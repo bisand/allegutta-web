@@ -69,192 +69,129 @@
         </div>
 
         <!-- Portfolio Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ChartBarIcon class="w-8 h-8 text-blue-500" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    Market Value
-                    <div v-if="refreshingEnhanced" class="inline-block animate-spin rounded-full h-3 w-3 border border-blue-400 border-t-transparent ml-2" />
-                  </dt>
-                  <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ formatCurrency(portfolioStore.marketValue, { decimals: 0 }) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <StatCard :title="$t('portfolioPage.marketValue')" :loading="refreshingEnhanced">
+            <template #icon>
+              <ChartBarIcon class="w-8 h-8 text-blue-500" />
+            </template>
+            {{ formatCurrency(portfolioStore.marketValue, { decimals: 0 }) }}
+          </StatCard>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <BanknotesIcon class="w-8 h-8 text-green-500" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    Cash Balance
-                    <div v-if="portfolioStore.loadingHoldings" class="inline-block animate-spin rounded-full h-3 w-3 border border-blue-400 border-t-transparent ml-2" />
-                  </dt>
-                  <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ formatCurrency(currentPortfolio?.cashBalance || 0, { decimals: 0 }) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+          <StatCard :title="$t('portfolioPage.cashBalance')" :loading="portfolioStore.loadingHoldings">
+            <template #icon>
+              <BanknotesIcon class="w-8 h-8 text-green-500" />
+            </template>
+            {{ formatCurrency(currentPortfolio?.cashBalance || 0, { decimals: 0 }) }}
+          </StatCard>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <CurrencyDollarIcon class="w-8 h-8 text-green-600" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ $t('portfolioPage.totalValue') }}
-                    <div v-if="refreshingEnhanced" class="inline-block animate-spin rounded-full h-3 w-3 border border-blue-400 border-t-transparent ml-2" />
-                  </dt>
-                  <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ formatCurrency(portfolioStore.totalValue, { decimals: 0 }) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+          <StatCard :title="$t('portfolioPage.totalValue')" :loading="refreshingEnhanced">
+            <template #icon>
+              <CurrencyDollarIcon class="w-8 h-8 text-green-600" />
+            </template>
+            {{ formatCurrency(portfolioStore.totalValue, { decimals: 0 }) }}
+          </StatCard>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ArrowTrendingUpIcon class="w-8 h-8" :class="portfolioStore.totalGainLoss >= 0 ? 'text-green-500' : 'text-red-500'" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ $t('portfolioPage.totalGainLoss') }}
-                  </dt>
-                  <dd class="text-lg font-semibold" :class="portfolioStore.totalGainLoss >= 0 ? 'text-green-600' : 'text-red-600'">
-                    {{ portfolioStore.totalGainLoss >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(portfolioStore.totalGainLoss), { decimals: 0 }) }}
-                    ({{ formatPercentage(portfolioStore.totalGainLossPercentage) }}%)
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+          <StatCard :title="$t('portfolioPage.totalGainLoss')">
+            <template #icon>
+              <ArrowTrendingUpIcon class="w-8 h-8" :class="portfolioStore.totalGainLoss >= 0 ? 'text-green-500' : 'text-red-500'" />
+            </template>
+            <span :class="portfolioStore.totalGainLoss >= 0 ? 'text-green-600' : 'text-red-600'">
+              {{ portfolioStore.totalGainLoss >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(portfolioStore.totalGainLoss), { decimals: 0 }) }}
+              ({{ formatPercentage(portfolioStore.totalGainLossPercentage) }}%)
+            </span>
+          </StatCard>
 
           <!-- All-Time High (ATH) -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ChartBarIcon class="w-8 h-8" :class="athData.isAtAth ? 'text-yellow-500' : 'text-blue-500'" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ $t('portfolioPage.allTimeHigh') }}
-                    <span v-if="athData.isAtAth" class="ml-1 text-yellow-500">⭐</span>
-                  </dt>
-                  <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ athData.value }}
-                  </dd>
-                  <dd class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {{ athData.dateText }}
-                  </dd>
-                </dl>
-              </div>
+          <StatCard :title="$t('portfolioPage.allTimeHigh')">
+            <template #icon>
+              <ChartBarIcon class="w-8 h-8" :class="athData.isAtAth ? 'text-yellow-500' : 'text-blue-500'" />
+            </template>
+            <div>
+              <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ athData.value }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ athData.dateText }}</div>
             </div>
-          </div>
+          </StatCard>
+
+          <StatCard class="lg:hidden" :title="$t('portfolioPage.lastUpdated')" :loading="refreshingEnhanced">
+            <template #icon>
+              <ClockIcon class="w-8 h-8 text-purple-500" />
+            </template>
+            <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ formatDateTime(marketDataLastUpdated || currentPortfolio.updatedAt) }}</div>
+            <template #subtitle>
+              {{ dynamicRelativeTime }}
+            </template>
+          </StatCard>
+
+          <StatCard class="lg:hidden" :title="$t('portfolioPage.changedToday')">
+            <template #icon>
+              <ArrowTrendingUpIcon class="w-8 h-8" :class="dailyChangeData.isPositive ? 'text-green-500' : dailyChangeData.isNegative ? 'text-red-500' : 'text-gray-500'" />
+            </template>
+            <div class="text-lg font-semibold"
+              :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-900 dark:text-white'">{{
+                dailyChangeData.currencyValue }}</div>
+            <template #subtitle>
+              <span :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-600'">{{ dailyChangeData.percentageValue
+                }}</span>
+            </template>
+          </StatCard>
+
+          <StatCard class="lg:hidden" :title="$t('portfolioPage.holdings')" :loading="portfolioStore.loadingHoldings">
+            <template #icon>
+              <ClockIcon class="w-8 h-8 text-purple-500" />
+            </template>
+            {{ portfolioStore.portfolioHoldings.length }} {{ $t('portfolioPage.positions') }}
+          </StatCard>
+
         </div>
 
         <!-- Enhanced Portfolio Metrics -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <!-- Last Updated with timestamp -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ClockIcon class="w-8 h-8 text-purple-500" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate flex items-center">
-                    {{ $t('portfolioPage.lastUpdated') }}
-                    <div v-if="refreshingEnhanced" class="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-500 ml-2" />
-                  </dt>
-                  <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ formatDateTime(marketDataLastUpdated || currentPortfolio.updatedAt) }}
-                  </dd>
-                  <dd class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {{ dynamicRelativeTime }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+        <div class="hidden lg:grid lg:grid-cols-3 gap-6 mb-8">
+          <StatCard :title="$t('portfolioPage.lastUpdated')" :loading="refreshingEnhanced">
+            <template #icon>
+              <ClockIcon class="w-8 h-8 text-purple-500" />
+            </template>
+            <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ formatDateTime(marketDataLastUpdated || currentPortfolio.updatedAt) }}</div>
+            <template #subtitle>
+              {{ dynamicRelativeTime }}
+            </template>
+          </StatCard>
 
-          <!-- Daily Change -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ArrowTrendingUpIcon class="w-8 h-8" :class="dailyChangeData.isPositive ? 'text-green-500' : dailyChangeData.isNegative ? 'text-red-500' : 'text-gray-500'" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ $t('portfolioPage.changedToday') }}
-                  </dt>
-                  <dd class="text-lg font-semibold"
-                    :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-900 dark:text-white'">
-                    {{ dailyChangeData.currencyValue }}
-                  </dd>
-                  <dd class="text-sm" :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-600'">
-                    {{ dailyChangeData.percentageValue }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+          <StatCard :title="$t('portfolioPage.changedToday')">
+            <template #icon>
+              <ArrowTrendingUpIcon class="w-8 h-8" :class="dailyChangeData.isPositive ? 'text-green-500' : dailyChangeData.isNegative ? 'text-red-500' : 'text-gray-500'" />
+            </template>
+            <div class="text-lg font-semibold"
+              :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-900 dark:text-white'">{{
+                dailyChangeData.currencyValue }}</div>
+            <template #subtitle>
+              <span :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-600'">{{ dailyChangeData.percentageValue
+                }}</span>
+            </template>
+          </StatCard>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ClockIcon class="w-8 h-8 text-purple-500" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ $t('portfolioPage.holdings') }}
-                  </dt>
-                  <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ portfolioStore.portfolioHoldings.length }} {{ $t('portfolioPage.positions') }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+          <StatCard :title="$t('portfolioPage.holdings')" :loading="portfolioStore.loadingHoldings">
+            <template #icon>
+              <ClockIcon class="w-8 h-8 text-purple-500" />
+            </template>
+            {{ portfolioStore.portfolioHoldings.length }} {{ $t('portfolioPage.positions') }}
+          </StatCard>
         </div>
 
         <!-- Quick Insights -->
-        <div v-if="portfolioStore.portfolioHoldings.length > 0" class="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-6 mb-8">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioInsights') }}</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="text-center">
-              <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ getTopPerformerSymbol() }}</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.bestPerformer') }}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ getLargestHoldingSymbol() }}</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.largestPosition') }}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ portfolioStore.portfolioTransactions.length }}</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.totalTransactions') }}</p>
-            </div>
+        <InsightsBox v-if="portfolioStore.portfolioHoldings.length > 0" :title="$t('portfolioPage.portfolioInsights')" variant="gradient">
+          <div class="text-center">
+            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ getTopPerformerSymbol() }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.bestPerformer') }}</p>
           </div>
-        </div>
+          <div class="text-center">
+            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ getLargestHoldingSymbol() }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.largestPosition') }}</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ portfolioStore.portfolioTransactions.length }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.totalTransactions') }}</p>
+          </div>
+        </InsightsBox>
 
         <!-- Holdings Table -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
@@ -476,8 +413,8 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('portfolioPage.portfolioAllocation') }}</h3>
           <div v-if="portfolioStore.portfolioHoldings.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id" 
-                 class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+            <div v-for="holding in portfolioStore.portfolioHoldings" :key="holding.id"
+              class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center min-w-0 flex-1">
                   <div class="w-4 h-4 rounded-full mr-3 flex-shrink-0" :style="{ backgroundColor: getColorForSymbol(holding.symbol) }" />
@@ -490,16 +427,15 @@
                   <div class="font-bold text-lg text-gray-900 dark:text-white">{{ getAllocationPercentage(holding).toFixed(1) }}%</div>
                 </div>
               </div>
-              
+
               <!-- Progress bar -->
               <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-2">
-                <div class="h-2 rounded-full transition-all duration-300" 
-                     :style="{ 
-                       backgroundColor: getColorForSymbol(holding.symbol), 
-                       width: getAllocationPercentage(holding) + '%' 
-                     }" />
+                <div class="h-2 rounded-full transition-all duration-300" :style="{
+                  backgroundColor: getColorForSymbol(holding.symbol),
+                  width: getAllocationPercentage(holding) + '%'
+                }" />
               </div>
-              
+
               <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-600 dark:text-gray-400">{{ formatNumber(holding.quantity, 0) }} shares</span>
                 <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(holding.quantity * (holding.currentPrice || holding.avgPrice), { decimals: 0 }) }}</span>
@@ -612,6 +548,9 @@ import {
   ChevronDownIcon
 } from '@heroicons/vue/24/outline'
 
+import StatCard from '../../components/Portfolio/StatCard.vue'
+import InsightsBox from '../../components/Portfolio/InsightsBox.vue'
+
 const route = useRoute()
 const portfolioStore = usePortfolioStore()
 const { loggedIn, user, canManagePortfolios } = useAuthorization()
@@ -656,7 +595,7 @@ onMounted(async () => {
       console.error('Failed to fetch public portfolios:', publicError)
     }
   }
-  
+
   // If we still don't have the portfolio data, try to set it directly
   if (!currentPortfolio.value && portfolioId.value) {
     await tryFetchSpecificPortfolio()
@@ -756,12 +695,12 @@ const checkForUpdates = async () => {
 
   try {
     const response = await $fetch(`/api/portfolios/${currentPortfolio.value.id}/last-change`)
-    
+
     // If this is the first check or data has changed, fetch updates
     if (!lastKnownChange.value || response.lastChange !== lastKnownChange.value) {
       console.log('Portfolio data changed, fetching updates...')
       lastKnownChange.value = response.lastChange
-      
+
       // Fetch both enhanced data and holdings in parallel
       await Promise.all([
         fetchEnhancedData(),
@@ -778,7 +717,7 @@ const startSmartPolling = () => {
   if (refreshInterval) {
     clearInterval(refreshInterval)
   }
-  
+
   // Check for changes every 30 seconds (much more efficient than fetching data every minute)
   refreshInterval = setInterval(checkForUpdates, 30 * 1000)
 }
@@ -832,13 +771,13 @@ const refreshEnhancedData = async () => {
     refreshingEnhanced.value = true
     console.log('[REFRESH] Starting enhanced data refresh...')
     console.log('[REFRESH] Fetching enhanced data and holdings in parallel...')
-    
+
     // Refresh both enhanced data and holdings to get updated market prices
     await Promise.all([
       fetchEnhancedData(),
       portfolioStore.fetchHoldings(currentPortfolio.value.id)
     ])
-    
+
     console.log('[REFRESH] Both enhanced data and holdings fetch completed')
     // Force a timestamp update to trigger reactivity
     portfolioStore.updateTimestamp()
@@ -855,10 +794,10 @@ watch(currentPortfolio, async (newPortfolio: typeof currentPortfolio.value) => {
   if (newPortfolio) {
     // Reset the change tracking for new portfolio
     lastKnownChange.value = null
-    
+
     // Fetch initial data and set baseline
     await fetchEnhancedData()
-    
+
     // Set initial change timestamp to prevent immediate re-fetch
     try {
       const response = await $fetch(`/api/portfolios/${newPortfolio.id}/last-change`)
@@ -1242,20 +1181,20 @@ function getTopPerformerSymbol(): string {
 // Get the symbol of the largest holding by value
 function getLargestHoldingSymbol(): string {
   if (portfolioStore.portfolioHoldings.length === 0) return 'N/A'
-  
+
   const largest = portfolioStore.portfolioHoldings.reduce((max, holding) => {
     const maxValue = max.quantity * (max.currentPrice || max.avgPrice)
     const holdingValue = holding.quantity * (holding.currentPrice || holding.avgPrice)
     return holdingValue > maxValue ? holding : max
   })
-  
+
   return largest.symbol
 }
 
 // Format volume with appropriate units (K, M, B)
 function formatVolume(volume: number | null | undefined): string {
   if (!volume || volume === 0) return 'N/A'
-  
+
   const num = Math.abs(volume)
   if (num >= 1e9) {
     return (num / 1e9).toFixed(1) + 'B'
