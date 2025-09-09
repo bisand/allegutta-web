@@ -145,11 +145,11 @@ export async function getPortfolioPerformanceMetrics(portfolioId: string) {
   }, 0)
 
   // Calculate distance from ATH
-  const athDrawdown = portfolio.athValue ? 
+  const athDrawdown = portfolio.athValue ?
     ((portfolio.athValue - currentMarketValue) / portfolio.athValue) * 100 : 0
 
   // Days since ATH
-  const daysSinceAth = portfolio.athDate ? 
+  const daysSinceAth = portfolio.athDate ?
     Math.floor((Date.now() - portfolio.athDate.getTime()) / (1000 * 60 * 60 * 24)) : null
 
   return {

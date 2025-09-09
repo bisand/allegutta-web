@@ -9,7 +9,7 @@ export default defineEventHandler(async (_event) => {
     console.log('Testing new MarketData structure...')
     await worker.updateAllMarketData()
     await prisma.$disconnect()
-    
+
     return {
       success: true,
       message: 'Market data update completed with new structure'

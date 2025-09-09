@@ -38,7 +38,7 @@ async function getCookieAndCrumb() {
 export default defineEventHandler(async (event) => {
   const id = event.context.params?.symbols;
   if (!id) return { error: 'Missing symbols parameter' };
-  
+
   const symbols = id.split(',');
 
   if (!symbols.length) return { error: 'Missing symbols' };

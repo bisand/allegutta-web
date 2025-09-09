@@ -3,7 +3,7 @@ import { getMarketDataWorker } from '../../lib/globalMarketDataWorker'
 export default defineEventHandler(async (event) => {
   try {
     console.log('Market data update endpoint called')
-    
+
     const query = getQuery(event)
     const portfolioId = query.portfolioId as string | undefined
 

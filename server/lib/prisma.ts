@@ -7,7 +7,7 @@ declare global {
 }
 
 // Create a singleton instance of Prisma Client
-const prisma = process.env.NODE_ENV === 'production' 
+const prisma = process.env.NODE_ENV === 'production'
   ? new PrismaClient()
   : globalThis.__prisma || (globalThis.__prisma = new PrismaClient())
 

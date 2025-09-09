@@ -25,7 +25,7 @@ interface MarketData {
 export default defineEventHandler(async (event) => {
   try {
     const portfolioId = getRouterParam(event, 'id')
-    
+
     if (!portfolioId) {
       throw createError({
         statusCode: 400,
@@ -90,7 +90,7 @@ export default defineEventHandler(async (event) => {
 
     // Update ATH if current value exceeds previous high
     const athData = await updatePortfolioAth(portfolioId, currentTotalValue)
-    
+
     // Use updated ATH data
     const athValue = athData.athValue
     const athDate = athData.athDate
@@ -105,18 +105,18 @@ export default defineEventHandler(async (event) => {
     let dailyChangeValue = 0
     let totalMarketValue = 0
     const marketDataUpdates: Date[] = []
-    
+
     for (const holding of holdings) {
       const marketData = marketDataMap.get(holding.symbol)
-      
+
       if (marketData) {
         marketDataUpdates.push(new Date(marketData.updatedAt))
-        
+
         const currentPrice = marketData.currentPrice || 0
         const marketValue = holding.quantity * currentPrice
         const changePercent = marketData.regularMarketChangePercent || 0
         const changeValue = (marketValue * changePercent) / 100
-        
+
         dailyChangeValue += changeValue
         totalMarketValue += marketValue
       } else {
@@ -125,11 +125,11 @@ export default defineEventHandler(async (event) => {
         totalMarketValue += marketValue
       }
     }
-    
+
     const dailyChangePercentage = totalMarketValue > 0 ? (dailyChangeValue / totalMarketValue) * 100 : 0
-    
+
     // Get most recent market data update
-    const marketDataLastUpdated = marketDataUpdates.length > 0 
+    const marketDataLastUpdated = marketDataUpdates.length > 0
       ? marketDataUpdates.sort((a, b) => b.getTime() - a.getTime())[0]
       : portfolio.updatedAt
 
@@ -141,11 +141,11 @@ export default defineEventHandler(async (event) => {
       athDrawdown,
       daysSinceAth,
       isAtAth,
-      
+
       // Daily change
       dailyChangeValue,
       dailyChangePercentage,
-      
+
       // Last updated
       lastUpdated: portfolio.updatedAt,
       marketDataLastUpdated

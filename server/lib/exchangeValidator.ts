@@ -23,22 +23,22 @@ export function validateNorwegianStock(symbol: string, isin?: string, exchange?:
 
   // Check if this is a Norwegian ISIN
   const isNorwegianISIN = isin?.startsWith('NO')
-  
+
   if (isNorwegianISIN) {
     expectedExchange = 'OSL'
-    
+
     // Validate exchange
     if (exchange && exchange !== 'OSL') {
       issues.push(`Norwegian stock ${symbol} (${isin}) should use OSL exchange, not ${exchange}`)
       isValid = false
     }
-    
+
     // Validate currency
     if (currency && currency !== 'NOK') {
       issues.push(`Norwegian stock ${symbol} (${isin}) should use NOK currency, not ${currency}`)
       isValid = false
     }
-    
+
     // Validate symbolYahoo format (should end with .OL for Yahoo Finance)
     if (symbolYahoo && !symbolYahoo.endsWith('.OL')) {
       issues.push(`Norwegian stock ${symbol} should use .OL suffix in symbolYahoo field (currently: ${symbolYahoo})`)
@@ -50,7 +50,7 @@ export function validateNorwegianStock(symbol: string, isin?: string, exchange?:
     symbol,
     isin,
     exchange: exchange || 'unknown',
-    currency: currency || 'unknown', 
+    currency: currency || 'unknown',
     isValid,
     expectedExchange,
     issues
@@ -77,7 +77,7 @@ export function validateMarketDataBatch(records: Array<{
   exchange?: string
   currency?: string
 }>): MarketDataValidation[] {
-  return records.map(record => 
+  return records.map(record =>
     validateNorwegianStock(record.symbol, record.isin, record.exchange, record.currency)
   )
 }
@@ -87,26 +87,26 @@ export function validateMarketDataBatch(records: Array<{
  */
 export function validatePrice(symbol: string, price: number, currency: string = 'NOK'): { isValid: boolean; issues: string[] } {
   const issues: string[] = []
-  
+
   // Basic sanity checks
   if (price <= 0) {
     issues.push(`Invalid price for ${symbol}: ${price}`)
   }
-  
+
   // Currency-specific checks
   if (currency === 'NOK' && price < 0.01) {
     issues.push(`Suspiciously low NOK price for ${symbol}: ${price}`)
   }
-  
+
   if (currency === 'USD' && price > 10000) {
     issues.push(`Suspiciously high USD price for ${symbol}: ${price}`)
   }
-  
+
   // Cross-currency validation: if Norwegian stock has USD price, it might be wrong exchange
   if (symbol.includes('.OL') && currency === 'USD') {
     issues.push(`Norwegian stock ${symbol} has USD price - might be wrong exchange`)
   }
-  
+
   return {
     isValid: issues.length === 0,
     issues

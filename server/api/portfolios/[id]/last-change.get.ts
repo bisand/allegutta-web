@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const prisma = new PrismaClient()
-    
+
     try {
       // Get the portfolio to ensure it exists
       const portfolio = await prisma.portfolios.findUnique({
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
       }
 
       // Get the most recent market data update time for holdings in this portfolio
-      const latestMarketData = await prisma.$queryRaw<Array<{regularMarketTime: string | null}>>`
+      const latestMarketData = await prisma.$queryRaw<Array<{ regularMarketTime: string | null }>>`
         SELECT MAX(md.regularMarketTime) as regularMarketTime
         FROM market_data md
         INNER JOIN holdings h ON h.isin = md.isin
@@ -39,16 +39,16 @@ export default defineEventHandler(async (event) => {
 
       // Use the most recent between portfolio update and market data update
       let lastChange = portfolio.updatedAt.toISOString()
-      
+
       if (latestMarketData[0]?.regularMarketTime) {
         const marketDataTime = new Date(latestMarketData[0].regularMarketTime)
         const portfolioTime = new Date(portfolio.updatedAt)
-        
+
         if (marketDataTime > portfolioTime) {
           lastChange = marketDataTime.toISOString()
         }
       }
-      
+
       return {
         lastChange,
         timestamp: Date.now()

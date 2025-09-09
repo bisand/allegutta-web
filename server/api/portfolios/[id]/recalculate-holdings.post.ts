@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   try {
     // Get portfolio ID from URL
     const portfolioId = getRouterParam(event, 'id')
-    
+
     if (!portfolioId) {
       throw createError({
         statusCode: 400,
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
     })
 
     console.log(`📊 Found ${uniqueSymbols.length} unique securities to recalculate`)
-    
+
     // Recalculate holdings for each security (no cash symbols)
     for (const { symbol } of uniqueSymbols) {
       console.log(`🔄 Recalculating holdings for: ${symbol}`)
@@ -72,10 +72,10 @@ export default defineEventHandler(async (event) => {
 
     // Calculate total portfolio value (market value + cash balance)
     const currentTotalValue = currentMarketValue + (portfolio?.cashBalance || 0)
-    
+
     // Update ATH if current value exceeds previous high
     const athData = await updatePortfolioAth(portfolioId, currentTotalValue)
-    
+
     console.log(`💰 Portfolio ${portfolioId} current value: ${currentTotalValue.toFixed(0)} NOK${athData.isNewAth ? ' (New ATH!)' : ''}`)
 
     return {

@@ -24,6 +24,66 @@
         </div>
       </div>
 
+      <!-- Investment Club History -->
+      <div class="mb-16">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ $t('about.clubHistory') }}</h2>
+        <div class="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-lg p-8 mb-8">
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+            {{ $t('about.clubHistoryDesc') }}
+          </p>
+        </div>
+        
+        <!-- Investment Philosophy & Social Aspect Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center mb-4">
+              <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4">
+                <ChartBarIcon class="w-5 h-5 text-green-600" />
+              </div>
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                {{ $t('about.investmentPhilosophy') }}
+              </h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+              {{ $t('about.investmentPhilosophyDesc') }}
+            </p>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center mb-4">
+              <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-4">
+                <UsersIcon class="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                {{ $t('about.socialAspect') }}
+              </h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+              {{ $t('about.socialAspectDesc') }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Governance Section -->
+      <div class="mb-16">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ $t('about.governance') }}</h2>
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8">
+          <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+            {{ $t('about.governanceDesc') }}
+          </p>
+          <div class="flex items-center justify-center">
+            <NuxtLink 
+              to="/vedtekter"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-700 border border-primary-300 dark:border-primary-600 hover:bg-primary-50 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              <DocumentTextIcon class="w-4 h-4 mr-2" />
+              {{ $t('common.vedtekter') }}
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+
       <!-- Features Section -->
       <div class="mb-16">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">{{ $t('about.keyFeatures') }}</h2>
@@ -173,7 +233,9 @@ import {
   ChartBarIcon, 
   BanknotesIcon, 
   ShieldCheckIcon, 
-  DevicePhoneMobileIcon 
+  DevicePhoneMobileIcon,
+  UsersIcon,
+  DocumentTextIcon
 } from '@heroicons/vue/24/outline'
 
 const { loggedIn, register, isRegistrationEnabled } = useAuthorization()

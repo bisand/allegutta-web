@@ -69,7 +69,7 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
 
       if (transaction.type === 'EXCHANGE_IN' && price <= 1.0 && transaction.notes?.includes('Fusjon')) {
         // Prefer explicit costBasis field when available (imported Kjøpsverdi)
-  const cb = (transaction as unknown as { costBasis?: number | null }).costBasis
+        const cb = (transaction as unknown as { costBasis?: number | null }).costBasis
         let usedKjopsverdi = false
         if (cb && cb > 0 && quantity > 0) {
           // costBasis may be either a total cost for the lot or a per-share value.
@@ -168,6 +168,18 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
         remaining -= take
 
         if (lot.qty === 0) lots.shift()
+      }
+
+      // Allocate sell fees proportionally to remaining shares
+      if (fees > 0 && lots.length > 0) {
+        const totalRemainingShares = lots.reduce((s, l) => s + l.qty, 0)
+        if (totalRemainingShares > 0) {
+          const feePerShare = fees / totalRemainingShares
+          for (const lot of lots) {
+            lot.cost += lot.qty * feePerShare
+          }
+          console.log(`  💰 Allocated sell fees ${fees.toFixed(2)} to ${totalRemainingShares} remaining shares (${feePerShare.toFixed(4)}/share)`)
+        }
       }
 
       if (remaining > 0) {

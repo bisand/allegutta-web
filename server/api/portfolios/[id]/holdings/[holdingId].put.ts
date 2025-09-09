@@ -117,18 +117,18 @@ export default defineEventHandler(async (event) => {
 
   } catch (error) {
     console.error('Error updating holding:', error)
-    
+
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error
     }
-    
+
     if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
       throw createError({
         statusCode: 409,
         statusMessage: 'A holding with this symbol already exists'
       })
     }
-    
+
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to update holding'

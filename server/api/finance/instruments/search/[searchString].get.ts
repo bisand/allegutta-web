@@ -26,24 +26,24 @@ export default defineEventHandler(async (event) => {
   );
 
   const data = await res.json();
-  
+
   // Helper function to prioritize Oslo Stock Exchange (OSL) results
   // This ensures Norwegian stocks are returned from OSL rather than foreign exchanges
   // Example: ISIN NO0010840515 returns ACR.OL (OSL) instead of NO0010840515.SG (Stuttgart)
-  function prioritizeOSLExchange(quotes: Array<{ exchange?: string; [key: string]: unknown }>): Array<{ exchange?: string; [key: string]: unknown }> {
+  function prioritizeOSLExchange(quotes: Array<{ exchange?: string;[key: string]: unknown }>): Array<{ exchange?: string;[key: string]: unknown }> {
     if (!quotes || quotes.length === 0) return quotes;
-    
+
     // Sort to put OSL exchange first, then others
     return quotes.sort((a, b) => {
       // OSL exchange gets highest priority
       if (a.exchange === 'OSL' && b.exchange !== 'OSL') return -1;
       if (b.exchange === 'OSL' && a.exchange !== 'OSL') return 1;
-      
+
       // If both or neither are OSL, maintain original order
       return 0;
     });
   }
-  
+
   if (full) {
     if (all) {
       // Return all results with OSL prioritized
@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
       return prioritized[0] || null;
     }
   }
-  
+
   // Default behavior - return symbol of best match (OSL preferred)
   const quotes = data.quotes || [];
   const prioritized = prioritizeOSLExchange(quotes);

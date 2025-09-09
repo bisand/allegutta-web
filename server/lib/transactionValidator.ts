@@ -78,7 +78,7 @@ export function validateTransaction(transaction: {
   if (transaction.amount !== undefined) {
     const calculatedAmount = transaction.quantity * transaction.price + (transaction.fees || 0)
     const difference = Math.abs(transaction.amount - calculatedAmount)
-    
+
     if (difference > 1) { // Allow small rounding differences
       warnings.push(`Amount mismatch: provided ${transaction.amount}, calculated ${calculatedAmount.toFixed(2)}`)
     }
@@ -112,7 +112,7 @@ export function validateTransactionBatch(transactions: Array<{
   validationResults: TransactionValidation[]
 } {
   const validationResults = transactions.map(validateTransaction)
-  
+
   return {
     validTransactions: validationResults.filter(r => r.isValid).length,
     invalidTransactions: validationResults.filter(r => !r.isValid).length,
@@ -127,7 +127,7 @@ export function validateTransactionBatch(transactions: Array<{
  */
 export function generateImportValidationReport(
   validationResults: TransactionValidation[],
-  originalData: Array<{ 
+  originalData: Array<{
     symbol?: string
     isin?: string
     type: string
@@ -139,16 +139,16 @@ export function generateImportValidationReport(
   }>
 ): string {
   const report: string[] = []
-  
+
   report.push('=== TRANSACTION IMPORT VALIDATION REPORT ===\n')
-  
+
   const summary = validateTransactionBatch(originalData)
   report.push(`📊 Summary:`)
   report.push(`   Valid: ${summary.validTransactions}`)
   report.push(`   Invalid: ${summary.invalidTransactions}`)
   report.push(`   Warnings: ${summary.totalWarnings}`)
   report.push(`   Suggestions: ${summary.totalSuggestions}\n`)
-  
+
   // List critical issues
   const criticalIssues: string[] = []
   validationResults.forEach((result, index) => {
@@ -156,13 +156,13 @@ export function generateImportValidationReport(
       criticalIssues.push(`Line ${index + 1}: ${result.errors.join('; ')}`)
     }
   })
-  
+
   if (criticalIssues.length > 0) {
     report.push('🚨 Critical Issues (must fix):')
     criticalIssues.forEach(issue => report.push(`   ${issue}`))
     report.push('')
   }
-  
+
   // List warnings
   const warnings: string[] = []
   validationResults.forEach((result, index) => {
@@ -170,7 +170,7 @@ export function generateImportValidationReport(
       warnings.forEach(warning => warnings.push(`Line ${index + 1}: ${warning}`))
     }
   })
-  
+
   if (warnings.length > 0) {
     report.push('⚠️  Warnings (review recommended):')
     warnings.slice(0, 10).forEach(warning => report.push(`   ${warning}`))
@@ -179,6 +179,6 @@ export function generateImportValidationReport(
     }
     report.push('')
   }
-  
+
   return report.join('\n')
 }

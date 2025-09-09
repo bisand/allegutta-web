@@ -3,11 +3,11 @@ import { getMarketDataWorker } from '../../lib/globalMarketDataWorker'
 export default defineEventHandler(async (_event) => {
   try {
     const worker = getMarketDataWorker()
-    
+
     return {
       isRunning: worker.isWorkerRunning(),
       status: worker.isWorkerRunning() ? 'active' : 'stopped',
-      message: worker.isWorkerRunning() 
+      message: worker.isWorkerRunning()
         ? 'Market data worker is running and updating holdings periodically'
         : 'Market data worker is stopped'
     }

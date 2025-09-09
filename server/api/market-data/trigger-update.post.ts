@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
       console.log(`Manually triggering market data update for portfolio: ${portfolioId}`)
       await worker.updateAllMarketData()
       await prisma.$disconnect()
-      
+
       return {
         success: true,
         message: `Market data update completed for portfolio ${portfolioId}`
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
       console.log('Manually triggering market data update for all holdings')
       await worker.updateAllMarketData()
       await prisma.$disconnect()
-      
+
       return {
         success: true,
         message: 'Market data update completed for all holdings'

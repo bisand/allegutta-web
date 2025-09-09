@@ -7,7 +7,7 @@ export function getMarketDataWorker(): MarketDataWorkerV2 {
   if (!globalMarketDataWorker) {
     globalMarketDataWorker = new MarketDataWorkerV2(prisma)
   }
-  
+
   return globalMarketDataWorker
 }
 

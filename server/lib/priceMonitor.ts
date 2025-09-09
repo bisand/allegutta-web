@@ -27,7 +27,7 @@ export function analyzeMarketData(data: {
   symbolYahoo?: string
 }): PriceAlert[] {
   const alerts: PriceAlert[] = []
-  
+
   // Validate Norwegian stocks
   const validation = validateNorwegianStock(data.symbol, data.isin, data.exchange, data.currency, data.symbolYahoo)
   if (!validation.isValid) {
@@ -41,7 +41,7 @@ export function analyzeMarketData(data: {
       suggestion: `Update symbolYahoo to ${data.symbol}.OL`
     })
   }
-  
+
   // Validate price if available
   if (data.currentPrice) {
     const priceValidation = validatePrice(data.symbol, data.currentPrice, data.currency)
@@ -55,7 +55,7 @@ export function analyzeMarketData(data: {
       })
     }
   }
-  
+
   // Check for common mismatches
   if (data.isin?.startsWith('NO') && data.symbolYahoo && !data.symbolYahoo.endsWith('.OL')) {
     alerts.push({
@@ -68,7 +68,7 @@ export function analyzeMarketData(data: {
       suggestion: 'Update symbolYahoo field'
     })
   }
-  
+
   return alerts
 }
 
@@ -77,7 +77,7 @@ export function analyzeMarketData(data: {
  */
 export async function scanMarketDataForIssues(): Promise<PriceAlert[]> {
   const prisma = (await import('./prisma')).default
-  
+
   const marketData = await prisma.market_data.findMany({
     select: {
       symbol: true,
@@ -88,9 +88,9 @@ export async function scanMarketDataForIssues(): Promise<PriceAlert[]> {
       symbolYahoo: true
     }
   })
-  
+
   const allAlerts: PriceAlert[] = []
-  
+
   for (const data of marketData) {
     const alerts = analyzeMarketData({
       symbol: data.symbol,
@@ -102,7 +102,7 @@ export async function scanMarketDataForIssues(): Promise<PriceAlert[]> {
     })
     allAlerts.push(...alerts)
   }
-  
+
   return allAlerts
 }
 
@@ -118,11 +118,11 @@ export async function generateMarketDataHealthReport(): Promise<{
 }> {
   const alerts = await scanMarketDataForIssues()
   const criticalIssues = alerts.filter(a => a.severity === 'CRITICAL').length
-  
+
   const prisma = (await import('./prisma')).default
   const totalRecords = await prisma.market_data.count()
   const healthyRecords = totalRecords - alerts.length
-  
+
   return {
     totalRecords,
     healthyRecords,

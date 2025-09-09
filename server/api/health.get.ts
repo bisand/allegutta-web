@@ -5,14 +5,14 @@ export default defineEventHandler(async () => {
     // Test database connection
     const { PrismaClient } = await import('@prisma/client')
     const prisma = new PrismaClient()
-    
+
     // Simple query to test database connectivity
     await prisma.$queryRaw`SELECT 1 as health`
-    
+
     // Test essential tables exist
     const userCount = await prisma.users.count()
     const portfolioCount = await prisma.portfolios.count()
-    
+
     await prisma.$disconnect()
 
     return {
@@ -28,7 +28,7 @@ export default defineEventHandler(async () => {
     }
   } catch (error) {
     console.error('Health check failed:', error)
-    
+
     throw createError({
       statusCode: 503,
       statusMessage: 'Service Unavailable',

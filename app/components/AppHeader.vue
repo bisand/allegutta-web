@@ -67,6 +67,11 @@
               </Transition>
             </Menu>
 
+            <NuxtLink to="/vedtekter" class="text-gray-900 dark:text-white hover:text-primary-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              active-class="text-primary-500">
+              {{ $t('common.vedtekter') }}
+            </NuxtLink>
+
             <NuxtLink to="/about" class="text-gray-900 dark:text-white hover:text-primary-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               active-class="text-primary-500">
               {{ $t('common.about') }}
@@ -276,6 +281,12 @@
               class="block text-gray-900 dark:text-white hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-md text-base font-medium transition-colors"
               @click="mobileMenuOpen = false">
               {{ $t('common.about') }}
+            </NuxtLink>
+
+            <NuxtLink to="/vedtekter"
+              class="block text-gray-900 dark:text-white hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-md text-base font-medium transition-colors"
+              @click="mobileMenuOpen = false">
+              {{ $t('common.vedtekter') }}
             </NuxtLink>
           </div>
         </div>

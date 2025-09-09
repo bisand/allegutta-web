@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
     // Use the proper Kinde server-side API
     const profile = await event.context.kinde.getUser()
-    
+
     // Return null if no profile is found instead of throwing
     if (!profile) {
       return null
