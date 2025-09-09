@@ -163,13 +163,16 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
               const preSplitCost = preSplitLots.reduce((s, l) => s + l.cost, 0)
 
               if (preSplitQuantity > 0 && preSplitCost > 0) {
-                const preSplitAvgPrice = preSplitCost / preSplitQuantity
-                console.log(`  📊 Pre-split: ${preSplitQuantity} shares @ ${preSplitAvgPrice.toFixed(4)} NOK`)
+                const preSplitAvgPrice = preSplitCost / preSplitQuantity;
+                console.log(`  📊 Pre-split: ${preSplitQuantity} shares @ ${preSplitAvgPrice.toFixed(4)} NOK`);
 
-                // For splits, the cost basis should be preserved but distributed across more shares
-                estimatedExchangePrice = preSplitAvgPrice
-                console.log(`  📊 Using pre-split cost basis: ${estimatedExchangePrice.toFixed(4)} NOK/share`)
-                lotCost = quantity * estimatedExchangePrice + fees
+                // Calculate split ratio (old shares / new shares) for reverse split
+                const splitRatio = preSplitQuantity / liquidationTransaction.quantity;
+                const postSplitAvgPrice = preSplitAvgPrice * splitRatio;
+                estimatedExchangePrice = postSplitAvgPrice;
+                console.log(`  📊 Using post-split cost basis: ${estimatedExchangePrice.toFixed(4)} NOK/share (split ratio ${splitRatio})`);
+                // Preserve total pre-split cost for the new lot after split
+                lotCost = preSplitCost + fees;
               }
             }
           }

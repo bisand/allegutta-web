@@ -37,7 +37,7 @@ The app uses **dual authentication modes**:
 - **Error handling**: Always wrap in try/catch with proper HTTP status codes
 
 ### 4. Component Architecture
-
+- Keep pages clean. Extract as many components as you can.
 - **Modal components**: Use `Portfolio/CreateModal.vue` pattern with reactive refs
 - **Table components**: Responsive design with empty states (see `HoldingsTable.vue`)
 - **Form validation**: Zod schemas with real-time validation feedback
@@ -46,15 +46,16 @@ The app uses **dual authentication modes**:
 
 ```bash
 # Database operations
-pnpm run db:seed              # Seed with test data
 npx prisma db push            # Apply schema changes
 npx prisma generate           # Regenerate client after schema changes
 
 # Development
-pnpm run dev                  # Start dev server, blocking terminal (auto-login enabled)
-pnpm run dev &                # Start dev server in the background (auto-login enabled)
+Assume that the development server is alvays running in debug mode in the background
 pnpm run build                # Production build
 pnpm run docker:build         # Build Docker image
+
+# Portfolio
+curl -s -X POST http://localhost:3000/api/portfolios/{PORTFOLIO_ID}/recalculate-holdings | jq '.holdings[] | select(.symbol == "{SYMBOL}")' # Recalculate all holdings and display a symbol
 
 # Market data
 curl -X POST localhost:3000/api/market-data/update    # Manual price update
