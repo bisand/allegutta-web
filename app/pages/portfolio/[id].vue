@@ -131,7 +131,7 @@
                 dailyChangeData.currencyValue }}</div>
             <template #subtitle>
               <span :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-600'">{{ dailyChangeData.percentageValue
-                }}</span>
+              }}</span>
             </template>
           </StatCard>
 
@@ -165,7 +165,7 @@
                 dailyChangeData.currencyValue }}</div>
             <template #subtitle>
               <span :class="dailyChangeData.isPositive ? 'text-green-600' : dailyChangeData.isNegative ? 'text-red-600' : 'text-gray-600'">{{ dailyChangeData.percentageValue
-                }}</span>
+              }}</span>
             </template>
           </StatCard>
 
