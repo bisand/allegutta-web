@@ -137,13 +137,6 @@
                       <DocumentTextIcon class="w-4 h-4" />
                     </button>
 
-                    <!-- Broker Configuration -->
-                    <button type="button"
-                      class="inline-flex items-center justify-center w-8 h-8 text-purple-700 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md transition-colors dark:text-purple-300 dark:hover:text-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:border-purple-700"
-                      title="Configure broker settings" @click="configureBroker(portfolio)">
-                      <Cog6ToothIcon class="w-4 h-4" />
-                    </button>
-
                     <!-- Recalculate Holdings -->
                     <button type="button"
                       :disabled="recalculatingPortfolios.has(portfolio.id)"
@@ -594,43 +587,6 @@
         style="z-index: 60;" @success="handleImportSuccess" />
     </Teleport>
 
-    <!-- Broker Configuration Modal -->
-    <Teleport to="body">
-      <div v-if="showBrokerConfigModal && brokerConfigPortfolio" class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <!-- Background overlay -->
-          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showBrokerConfigModal = false" />
-          
-          <!-- Modal dialog -->
-          <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                  Broker Configuration - {{ brokerConfigPortfolio.name }}
-                </h3>
-                <button 
-                  class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  @click="showBrokerConfigModal = false"
-                >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              <PortfolioBrokerConfigForm 
-                :portfolio-id="brokerConfigPortfolio.id"
-                :current-config="{
-                  brokerType: (brokerConfigPortfolio as any).brokerType || 'nordnet',
-                  feeAllocationStrategy: (brokerConfigPortfolio as any).feeAllocationStrategy || 'all_to_buys'
-                }"
-                @saved="handleBrokerConfigSaved"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
@@ -645,7 +601,6 @@ import {
   ChartPieIcon,
   DocumentTextIcon,
   TrashIcon,
-  Cog6ToothIcon,
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 import type { Portfolio } from '~/stores/portfolio'
@@ -713,8 +668,6 @@ const showPositionsListModal = ref(false)
 const showPositionModal = ref(false)
 const selectedPosition = ref<HoldingData | null>(null)
 const showMarketDataModal = ref(false)
-const showBrokerConfigModal = ref(false)
-const brokerConfigPortfolio = ref<Portfolio | null>(null)
 
 // Track which portfolios are currently being recalculated
 const recalculatingPortfolios = ref(new Set<string>())
@@ -830,38 +783,12 @@ function handleImportSuccess(): void {
   showImportTransactions.value = false
 }
 
-// Handle broker configuration saved
-function handleBrokerConfigSaved(config: { brokerType: string; feeAllocationStrategy: string }): void {
-  console.log('Broker configuration saved:', config)
-  if (brokerConfigPortfolio.value) {
-    // Update the portfolio in our local data
-    const portfolioIndex = portfolioStore.allPortfolios.findIndex((p: Portfolio) => p.id === brokerConfigPortfolio.value!.id)
-    if (portfolioIndex !== -1) {
-      portfolioStore.allPortfolios[portfolioIndex] = {
-        ...portfolioStore.allPortfolios[portfolioIndex],
-        brokerType: config.brokerType,
-        feeAllocationStrategy: config.feeAllocationStrategy
-      } as Portfolio & { brokerType: string; feeAllocationStrategy: string }
-    }
-    // Trigger portfolio recalculation by reloading data
-    loadPortfolioData(brokerConfigPortfolio.value.id)
-  }
-  showBrokerConfigModal.value = false
-}
-
 // Position management functions
 function managePositions(portfolio: Portfolio): void {
   console.log('managePositions called with portfolio:', portfolio)
   selectedPortfolio.value = portfolio
   showPositionsListModal.value = true
   loadPortfolioHoldings(portfolio.id)
-}
-
-// Broker configuration function
-function configureBroker(portfolio: Portfolio): void {
-  console.log('configureBroker called with portfolio:', portfolio)
-  brokerConfigPortfolio.value = portfolio
-  showBrokerConfigModal.value = true
 }
 
 // Recalculate holdings function

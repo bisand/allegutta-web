@@ -81,8 +81,6 @@ model portfolios {
   isDefault             Boolean        @default(false)
   currency              String         @default("NOK")
   cashBalance           Float          @default(0)
-  brokerType            String         @default("nordnet")
-  feeAllocationStrategy String         @default("all_to_buys")
   createdAt             DateTime       @default(now())
   updatedAt             DateTime
   athDate               DateTime?
