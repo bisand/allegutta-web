@@ -77,18 +77,18 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
       console.log(`  🔍 Processing ${transaction.type} for ${symbol}: qty=${quantity}, price=${price}, fees=${fees}`)
 
       // Check for corporate actions that need special costBasis handling
-      if ((transaction.type === 'EXCHANGE_IN' || transaction.type === 'SPIN_OFF_IN') && price <= 1.0 && 
-          (transaction.notes?.includes('Fusjon') || 
-           transaction.notes?.includes('ISINSKIFTE') || 
-           transaction.notes?.includes('SPLEIS') ||
-           transaction.notes?.includes('Splitt') ||
-           transaction.notes?.includes('Change of ISIN') ||
-           transaction.notes?.includes('BYTE AV EMITTENTLAND'))) {
-        
+      if ((transaction.type === 'EXCHANGE_IN' || transaction.type === 'SPIN_OFF_IN') && price <= 1.0 &&
+        (transaction.notes?.includes('Fusjon') ||
+          transaction.notes?.includes('ISINSKIFTE') ||
+          transaction.notes?.includes('SPLEIS') ||
+          transaction.notes?.includes('Splitt') ||
+          transaction.notes?.includes('Change of ISIN') ||
+          transaction.notes?.includes('BYTE AV EMITTENTLAND'))) {
+
         // Check for explicit costBasis field (imported Kjøpsverdi)
         const cb = (transaction as unknown as { costBasis?: number | null }).costBasis
         let usedKjopsverdi = false
-        
+
         if (cb && cb > 0 && quantity > 0) {
           // costBasis may be either a total cost for the lot or a per-share value.
           // Heuristic: if costBasis is larger than a plausible per-share (price*qty*0.5), treat as total cost.
@@ -101,14 +101,14 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
           usedKjopsverdi = true
           console.log(`  📊 Using explicit costBasis ${cb} (lot total=${(lotCost - fees).toFixed(2)}) + fees ${fees} for ${quantity} shares`)
         }
-        
+
         if (!usedKjopsverdi) {
           let estimatedExchangePrice = 0
-          
+
           // Special handling for stock splits: look for LIQUIDATION on same date
           if (transaction.type === 'SPIN_OFF_IN' && transaction.notes?.includes('Splitt')) {
             console.log(`  📊 Detected stock split for ${symbol}, looking for LIQUIDATION on same date`)
-            
+
             const liquidationTransaction = await prisma.transactions.findFirst({
               where: {
                 portfolioId: portfolioId,
@@ -117,10 +117,10 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                 date: transaction.date
               }
             })
-            
+
             if (liquidationTransaction) {
               console.log(`  📊 Found LIQUIDATION: ${liquidationTransaction.quantity} shares`)
-              
+
               // Calculate cost basis from all transactions before the split
               const preSplitTransactions = await prisma.transactions.findMany({
                 where: {
@@ -135,7 +135,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                 },
                 orderBy: { date: 'asc' }
               })
-              
+
               // Build FIFO lots up to the liquidation
               const preSplitLots: Array<{ qty: number; cost: number }> = []
               for (const pt of preSplitTransactions) {
@@ -158,14 +158,14 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                   }
                 }
               }
-              
+
               const preSplitQuantity = preSplitLots.reduce((s, l) => s + l.qty, 0)
               const preSplitCost = preSplitLots.reduce((s, l) => s + l.cost, 0)
-              
+
               if (preSplitQuantity > 0 && preSplitCost > 0) {
                 const preSplitAvgPrice = preSplitCost / preSplitQuantity
                 console.log(`  📊 Pre-split: ${preSplitQuantity} shares @ ${preSplitAvgPrice.toFixed(4)} NOK`)
-                
+
                 // For splits, the cost basis should be preserved but distributed across more shares
                 estimatedExchangePrice = preSplitAvgPrice
                 console.log(`  📊 Using pre-split cost basis: ${estimatedExchangePrice.toFixed(4)} NOK/share`)
@@ -173,23 +173,23 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
               }
             }
           }
-          
+
           // If still no cost basis found, use the original fallback logic
           if (estimatedExchangePrice === 0) {
             // Fallback: calculate estimated exchange price from related symbols
             // For corporate actions, we need to look at all related symbols that could contain the original cost basis
-            
+
             // First, try to find the symbol mentioned in notes
             const exchangeOutSymbol = transaction.notes?.match(/(\w+)\s+ger\s+\d+\s+(\w+)/)?.[1]
-            
+
             // Get the base symbol (remove suffixes like .NO, .OL, T-RETT, etc.)
             const baseSymbol = symbol.split(/[.\s-]/)[0]
             const symbolsToCheck = []
-            
+
             if (exchangeOutSymbol) {
               symbolsToCheck.push(exchangeOutSymbol)
             }
-            
+
             // Add variations of the current symbol to check for cost basis
             symbolsToCheck.push(
               `${baseSymbol}.NO`,     // Old Norwegian format
@@ -197,67 +197,67 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
               baseSymbol,             // Base symbol
               `AXA.NO`,              // Special case for AXACTOR
               `AXA.NO.OLD/X`         // Special case for old AXACTOR
-          )
+            )
 
-          console.log(`  🔄 Searching for cost basis in related symbols: ${symbolsToCheck.join(', ')}`)
-          
-          for (const searchSymbol of symbolsToCheck) {
-            const exchangeOutTransactions = await prisma.transactions.findMany({
-              where: {
-                portfolioId: portfolioId,
-                symbol: {
-                  startsWith: searchSymbol.split(/[.\s-]/)[0] // Use base symbol for LIKE pattern
+            console.log(`  🔄 Searching for cost basis in related symbols: ${symbolsToCheck.join(', ')}`)
+
+            for (const searchSymbol of symbolsToCheck) {
+              const exchangeOutTransactions = await prisma.transactions.findMany({
+                where: {
+                  portfolioId: portfolioId,
+                  symbol: {
+                    startsWith: searchSymbol.split(/[.\s-]/)[0] // Use base symbol for LIKE pattern
+                  },
+                  type: {
+                    in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN']
+                  },
+                  date: {
+                    lte: transaction.date
+                  }
                 },
-                type: {
-                  in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN']
-                },
-                date: {
-                  lte: transaction.date
-                }
-              },
-              orderBy: { date: 'asc' }
-            })
+                orderBy: { date: 'asc' }
+              })
 
-            // Build FIFO lots for the related security and compute remaining avg price
-            const exchLots: Array<{ qty: number; cost: number }> = []
-            for (const et of exchangeOutTransactions) {
-              const etQty = et.quantity
-              const etPrice = et.price ?? 0
-              const etFees = et.fees ?? 0
+              // Build FIFO lots for the related security and compute remaining avg price
+              const exchLots: Array<{ qty: number; cost: number }> = []
+              for (const et of exchangeOutTransactions) {
+                const etQty = et.quantity
+                const etPrice = et.price ?? 0
+                const etFees = et.fees ?? 0
 
-              if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(et.type)) {
-                exchLots.push({ qty: etQty, cost: etQty * etPrice + etFees })
-              } else if (['SELL', 'EXCHANGE_OUT'].includes(et.type)) {
-                let remainingSell = etQty
-                while (remainingSell > 0 && exchLots.length > 0) {
-                  const lot = exchLots[0]
-                  const take = Math.min(remainingSell, lot.qty)
-                  const costPerShare = lot.cost / lot.qty
-                  lot.qty -= take
-                  lot.cost -= costPerShare * take
-                  remainingSell -= take
-                  if (lot.qty === 0) exchLots.shift()
+                if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(et.type)) {
+                  exchLots.push({ qty: etQty, cost: etQty * etPrice + etFees })
+                } else if (['SELL', 'EXCHANGE_OUT'].includes(et.type)) {
+                  let remainingSell = etQty
+                  while (remainingSell > 0 && exchLots.length > 0) {
+                    const lot = exchLots[0]
+                    const take = Math.min(remainingSell, lot.qty)
+                    const costPerShare = lot.cost / lot.qty
+                    lot.qty -= take
+                    lot.cost -= costPerShare * take
+                    remainingSell -= take
+                    if (lot.qty === 0) exchLots.shift()
+                  }
                 }
+              }
+
+              // sum remaining exchLots
+              const exchangedQuantity = exchLots.reduce((s, l) => s + l.qty, 0)
+              const exchangedCost = exchLots.reduce((s, l) => s + l.cost, 0)
+              if (exchangedQuantity > 0 && exchangedCost > 0) {
+                estimatedExchangePrice = exchangedCost / exchangedQuantity
+                console.log(`  📊 Found cost basis from ${searchSymbol}: ${estimatedExchangePrice.toFixed(6)} NOK/share`)
+                break // Found cost basis, stop searching
               }
             }
 
-            // sum remaining exchLots
-            const exchangedQuantity = exchLots.reduce((s, l) => s + l.qty, 0)
-            const exchangedCost = exchLots.reduce((s, l) => s + l.cost, 0)
-            if (exchangedQuantity > 0 && exchangedCost > 0) {
-              estimatedExchangePrice = exchangedCost / exchangedQuantity
-              console.log(`  📊 Found cost basis from ${searchSymbol}: ${estimatedExchangePrice.toFixed(6)} NOK/share`)
-              break // Found cost basis, stop searching
+            if (estimatedExchangePrice === 0) {
+              estimatedExchangePrice = 100
+              console.log(`  ⚠️  Could not find cost basis in any related symbols, using fallback: ${estimatedExchangePrice}`)
             }
-          }
-          
-          if (estimatedExchangePrice === 0) {
-            estimatedExchangePrice = 100
-            console.log(`  ⚠️  Could not find cost basis in any related symbols, using fallback: ${estimatedExchangePrice}`)
-          }
 
-          lotCost = quantity * estimatedExchangePrice + fees
-        }
+            lotCost = quantity * estimatedExchangePrice + fees
+          }
         }
       } else {
         // Normal buy/spin-off - simple cost calculation
@@ -300,24 +300,24 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
       lots.length = 0
     } else if (['REFUND'].includes(transaction.type)) {
       // Check if this is a capital return that should reduce cost basis
-      if (transaction.notes?.includes('tilbakebetaling av innbetalt kapital') || 
-          transaction.notes?.includes('Kapitalutbetaling') ||
-          transaction.notes?.includes('return of capital')) {
-        
+      if (transaction.notes?.includes('tilbakebetaling av innbetalt kapital') ||
+        transaction.notes?.includes('Kapitalutbetaling') ||
+        transaction.notes?.includes('return of capital')) {
+
         // This is a return of capital - reduce cost basis proportionally
         const refundPerShare = (quantity * price) // Total refund amount
         const totalShares = lots.reduce((s, l) => s + l.qty, 0)
-        
+
         if (totalShares > 0 && refundPerShare > 0) {
           const costReductionPerShare = refundPerShare / totalShares
           let totalCostReduction = 0
-          
+
           for (const lot of lots) {
             const reduction = lot.qty * costReductionPerShare
             lot.cost = Math.max(0, lot.cost - reduction) // Don't go negative
             totalCostReduction += reduction
           }
-          
+
           console.log(`  💰 ${transaction.type}: Capital return of ${refundPerShare.toFixed(2)} reduced cost basis by ${costReductionPerShare.toFixed(6)}/share (total: ${totalCostReduction.toFixed(2)})`)
         }
       } else {
