@@ -338,6 +338,44 @@ apply_fallback_schema() {
     fi
 }
 
+# Function to check and add missing manual GAV columns
+check_and_add_manual_gav_columns() {
+    echo "🔍 Checking for manual GAV columns..."
+    
+    if echo "$NUXT_DATABASE_URL" | grep -q "^file:"; then
+        DB_FILE=$(echo "$NUXT_DATABASE_URL" | sed 's|^file:||')
+        
+        # Check if manualAvgPrice column exists
+        MANUAL_COLUMNS=$(sqlite3 "$DB_FILE" "PRAGMA table_info(holdings);" 2>/dev/null | grep -E "(manualAvgPrice|useManualAvgPrice|manualAvgPriceReason|manualAvgPriceDate)" | wc -l || echo "0")
+        
+        if [ "$MANUAL_COLUMNS" -lt 4 ]; then
+            echo "⚠️  Manual GAV columns missing, adding them..."
+            
+            # Add missing columns one by one to avoid conflicts
+            sqlite3 "$DB_FILE" "ALTER TABLE holdings ADD COLUMN manualAvgPrice REAL;" 2>/dev/null || echo "   - manualAvgPrice column already exists"
+            sqlite3 "$DB_FILE" "ALTER TABLE holdings ADD COLUMN useManualAvgPrice BOOLEAN NOT NULL DEFAULT 0;" 2>/dev/null || echo "   - useManualAvgPrice column already exists"
+            sqlite3 "$DB_FILE" "ALTER TABLE holdings ADD COLUMN manualAvgPriceReason TEXT;" 2>/dev/null || echo "   - manualAvgPriceReason column already exists"
+            sqlite3 "$DB_FILE" "ALTER TABLE holdings ADD COLUMN manualAvgPriceDate DATETIME;" 2>/dev/null || echo "   - manualAvgPriceDate column already exists"
+            
+            # Verify columns were added
+            MANUAL_COLUMNS_AFTER=$(sqlite3 "$DB_FILE" "PRAGMA table_info(holdings);" 2>/dev/null | grep -E "(manualAvgPrice|useManualAvgPrice|manualAvgPriceReason|manualAvgPriceDate)" | wc -l || echo "0")
+            
+            if [ "$MANUAL_COLUMNS_AFTER" -ge 4 ]; then
+                echo "✅ Manual GAV columns added successfully"
+            else
+                echo "❌ Failed to add all manual GAV columns"
+                return 1
+            fi
+        else
+            echo "✅ Manual GAV columns already present"
+        fi
+    else
+        echo "⚠️  Manual GAV column check not supported for external databases"
+    fi
+    
+    return 0
+}
+
 # Function to verify database schema
 verify_database_schema() {
     echo "🔍 Verifying database schema..."
@@ -414,7 +452,14 @@ main() {
         fi
     fi
     
-    # Step 4: Verify schema
+    # Step 4: Check and add manual GAV columns if missing
+    if check_and_add_manual_gav_columns; then
+        echo "✅ Manual GAV columns check completed"
+    else
+        echo "⚠️  Manual GAV columns check failed, but continuing..."
+    fi
+    
+    # Step 5: Verify schema
     if verify_database_schema; then
         echo "✅ Database schema verification successful"
     else
