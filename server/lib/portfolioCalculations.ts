@@ -299,7 +299,30 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
       console.log(`  💰 ${transaction.type}: LIQUIDATING all lots`)
       lots.length = 0
     } else if (['REFUND'].includes(transaction.type)) {
-      console.log(`  💰 ${transaction.type}: cash-only event, no change to lots`)
+      // Check if this is a capital return that should reduce cost basis
+      if (transaction.notes?.includes('tilbakebetaling av innbetalt kapital') || 
+          transaction.notes?.includes('Kapitalutbetaling') ||
+          transaction.notes?.includes('return of capital')) {
+        
+        // This is a return of capital - reduce cost basis proportionally
+        const refundPerShare = (quantity * price) // Total refund amount
+        const totalShares = lots.reduce((s, l) => s + l.qty, 0)
+        
+        if (totalShares > 0 && refundPerShare > 0) {
+          const costReductionPerShare = refundPerShare / totalShares
+          let totalCostReduction = 0
+          
+          for (const lot of lots) {
+            const reduction = lot.qty * costReductionPerShare
+            lot.cost = Math.max(0, lot.cost - reduction) // Don't go negative
+            totalCostReduction += reduction
+          }
+          
+          console.log(`  💰 ${transaction.type}: Capital return of ${refundPerShare.toFixed(2)} reduced cost basis by ${costReductionPerShare.toFixed(6)}/share (total: ${totalCostReduction.toFixed(2)})`)
+        }
+      } else {
+        console.log(`  💰 ${transaction.type}: cash-only event, no change to lots`)
+      }
     } else if (['DECIMAL_LIQUIDATION', 'DECIMAL_WITHDRAWAL'].includes(transaction.type)) {
       if (transaction.type === 'DECIMAL_LIQUIDATION') {
         // Add a small fractional lot; price used as provided
