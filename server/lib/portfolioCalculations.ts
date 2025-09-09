@@ -74,30 +74,35 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
       // Create a new lot for the incoming shares.
       let lotCost = 0
 
-      // Always check for explicit costBasis field first (imported Kjøpsverdi)
-      const cb = (transaction as unknown as { costBasis?: number | null }).costBasis
-      let usedKjopsverdi = false
-      
-      if (cb && cb > 0 && quantity > 0) {
-        // costBasis may be either a total cost for the lot or a per-share value.
-        // Heuristic: if costBasis is larger than a plausible per-share (price*qty*0.5), treat as total cost.
-        if (cb >= price * quantity * 0.5) {
-          lotCost = cb + fees
-        } else {
-          // treat cb as per-share
-          lotCost = cb * quantity + fees
-        }
-        usedKjopsverdi = true
-        console.log(`  📊 Using explicit costBasis ${cb} (lot total=${(lotCost - fees).toFixed(2)}) + fees ${fees} for ${quantity} shares`)
-      }
+      console.log(`  🔍 Processing ${transaction.type} for ${symbol}: qty=${quantity}, price=${price}, fees=${fees}`)
 
-      // If no explicit costBasis, check for corporate actions that need special handling
-      if (!usedKjopsverdi && (transaction.type === 'EXCHANGE_IN' || transaction.type === 'SPIN_OFF_IN') && price <= 1.0 && 
+      // Check for corporate actions that need special costBasis handling
+      if ((transaction.type === 'EXCHANGE_IN' || transaction.type === 'SPIN_OFF_IN') && price <= 1.0 && 
           (transaction.notes?.includes('Fusjon') || 
            transaction.notes?.includes('ISINSKIFTE') || 
            transaction.notes?.includes('SPLEIS') ||
            transaction.notes?.includes('Splitt') ||
+           transaction.notes?.includes('Change of ISIN') ||
            transaction.notes?.includes('BYTE AV EMITTENTLAND'))) {
+        
+        // Check for explicit costBasis field (imported Kjøpsverdi)
+        const cb = (transaction as unknown as { costBasis?: number | null }).costBasis
+        let usedKjopsverdi = false
+        
+        if (cb && cb > 0 && quantity > 0) {
+          // costBasis may be either a total cost for the lot or a per-share value.
+          // Heuristic: if costBasis is larger than a plausible per-share (price*qty*0.5), treat as total cost.
+          if (cb >= price * quantity * 0.5) {
+            lotCost = cb + fees
+          } else {
+            // treat cb as per-share
+            lotCost = cb * quantity + fees
+          }
+          usedKjopsverdi = true
+          console.log(`  📊 Using explicit costBasis ${cb} (lot total=${(lotCost - fees).toFixed(2)}) + fees ${fees} for ${quantity} shares`)
+        }
+        
+        if (!usedKjopsverdi) {
           let estimatedExchangePrice = 0
           
           // Special handling for stock splits: look for LIQUIDATION on same date
@@ -253,10 +258,8 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
 
           lotCost = quantity * estimatedExchangePrice + fees
         }
-      }
-
-      // If still no cost basis found, use simple calculation
-      if (!usedKjopsverdi) {
+        }
+      } else {
         // Normal buy/spin-off - simple cost calculation
         lotCost = quantity * price + fees
         console.log(`  📊 Simple cost calculation: ${quantity} × ${price} + ${fees} = ${lotCost.toFixed(2)}`)
@@ -282,17 +285,8 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
         if (lot.qty === 0) lots.shift()
       }
 
-      // Allocate sell fees proportionally to remaining shares
-      if (fees > 0 && lots.length > 0) {
-        const totalRemainingShares = lots.reduce((s, l) => s + l.qty, 0)
-        if (totalRemainingShares > 0) {
-          const feePerShare = fees / totalRemainingShares
-          for (const lot of lots) {
-            lot.cost += lot.qty * feePerShare
-          }
-          console.log(`  💰 Allocated sell fees ${fees.toFixed(2)} to ${totalRemainingShares} remaining shares (${feePerShare.toFixed(4)}/share)`)
-        }
-      }
+      // NOTE: SELL fees should NOT be allocated to remaining holdings in FIFO accounting
+      // They reduce the proceeds from the sale, but don't affect the cost basis of remaining shares
 
       if (remaining > 0) {
         // Selling more than available: log and clamp (no negative lots)
