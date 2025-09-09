@@ -20,6 +20,24 @@
     <div v-else class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
+        <!-- Admin Navigation -->
+        <nav class="mb-6">
+          <div class="flex space-x-8">
+            <NuxtLink 
+              to="/admin/portfolios" 
+              class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 border-b-2 border-blue-600 dark:border-blue-400 pb-2"
+            >
+              Portfolio Management
+            </NuxtLink>
+            <NuxtLink 
+              to="/admin/holdings" 
+              class="text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 pb-2"
+            >
+              Holdings GAV Management
+            </NuxtLink>
+          </div>
+        </nav>
+        
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">

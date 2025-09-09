@@ -62,7 +62,16 @@
             {{ isCashHolding(holding.symbol) ? formatCurrency(holding.quantity) : formatQuantity(holding.quantity) }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-            {{ isCashHolding(holding.symbol) ? '-' : '$' + formatCurrency(holding.avgPrice) }}
+            <div class="flex items-center">
+              <span>{{ isCashHolding(holding.symbol) ? '-' : '$' + formatCurrency(holding.avgPrice) }}</span>
+              <button
+                v-if="!isCashHolding(holding.symbol) && holding.useManualAvgPrice"
+                class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full"
+                title="Using manual GAV"
+              >
+                Manual
+              </button>
+            </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
             {{ isCashHolding(holding.symbol) ? '-' : '$' + formatCurrency(holding.currentPrice || holding.avgPrice) }}
@@ -90,6 +99,10 @@ interface Holding {
   quantity: number
   avgPrice: number
   currentPrice?: number
+  useManualAvgPrice?: boolean
+  manualAvgPrice?: number | null
+  manualAvgPriceReason?: string | null
+  manualAvgPriceDate?: string | null
 }
 
 defineProps({

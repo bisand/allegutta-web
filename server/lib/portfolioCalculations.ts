@@ -224,9 +224,33 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
   console.log(`📊 Final calculation for ${symbol}: ${totalQuantity} shares, cost: ${totalCost.toFixed(2)}`)
 
   if (totalQuantity > 0) {
-    const avgPrice = totalCost / totalQuantity
+    const calculatedAvgPrice = totalCost / totalQuantity
     const isin = transactions[0]?.isin || null
     const currency = transactions[0]?.currency || 'NOK'
+
+    // Check if there's an existing holding with manual GAV override
+    const existingHolding = await prisma.holdings.findUnique({
+      where: {
+        portfolioId_symbol: {
+          portfolioId: portfolioId,
+          symbol: symbol
+        }
+      },
+      select: {
+        useManualAvgPrice: true,
+        manualAvgPrice: true,
+        manualAvgPriceReason: true,
+        manualAvgPriceDate: true
+      }
+    })
+
+    // Preserve manual GAV if it exists and is active
+    const shouldUseManualGav = existingHolding?.useManualAvgPrice && existingHolding?.manualAvgPrice != null
+    const finalAvgPrice = shouldUseManualGav ? existingHolding.manualAvgPrice! : calculatedAvgPrice
+
+    if (shouldUseManualGav) {
+      console.log(`📌 Using manual GAV for ${symbol}: ${finalAvgPrice.toFixed(4)} (calculated: ${calculatedAvgPrice.toFixed(4)})`)
+    }
 
     await prisma.holdings.upsert({
       where: {
@@ -237,10 +261,11 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
       },
       update: {
         quantity: totalQuantity,
-        avgPrice: avgPrice,
+        avgPrice: finalAvgPrice,
         isin: isin,
         currency: currency,
         updatedAt: new Date()
+        // Preserve existing manual GAV fields - don't overwrite them
       },
       create: {
         id: `${portfolioId}_${symbol}`,
@@ -248,13 +273,14 @@ export async function updateSecurityHoldings(portfolioId: string, symbol: string
         symbol: symbol,
         isin: isin,
         quantity: totalQuantity,
-        avgPrice: avgPrice,
+        avgPrice: finalAvgPrice,
         currency: currency,
+        useManualAvgPrice: false,
         updatedAt: new Date()
       }
     })
 
-    console.log(`✅ Updated holding: ${symbol} = ${totalQuantity} shares @ ${avgPrice.toFixed(4)} ${currency}`)
+    console.log(`✅ Updated holding: ${symbol} = ${totalQuantity} shares @ ${finalAvgPrice.toFixed(4)} ${currency}`)
   } else {
     // Remove the holding if quantity is zero
     await prisma.holdings.deleteMany({
