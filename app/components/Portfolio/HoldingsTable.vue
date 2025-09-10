@@ -6,6 +6,30 @@
     </div>
     
     <div v-if="sortedHoldings && sortedHoldings.length > 0">
+      <!-- Mobile: Sort Dropdown -->
+      <div class="md:hidden px-6 py-3 border-b border-gray-200 dark:border-gray-700">
+        <select 
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          :value="currentMobileSortKey"
+          @change="handleMobileSortChange"
+        >
+          <option value="marketValue-desc">{{ $t('portfolioPage.sortBy.marketValueHighToLow') }}</option>
+          <option value="marketValue-asc">{{ $t('portfolioPage.sortBy.marketValueLowToHigh') }}</option>
+          <option value="gainLoss-desc">{{ $t('portfolioPage.sortBy.gainLossBestFirst') }}</option>
+          <option value="gainLoss-asc">{{ $t('portfolioPage.sortBy.gainLossWorstFirst') }}</option>
+          <option value="todayChange-desc">{{ $t('portfolioPage.sortBy.todayChangeBestFirst') }}</option>
+          <option value="todayChange-asc">{{ $t('portfolioPage.sortBy.todayChangeWorstFirst') }}</option>
+          <option value="symbol-asc">{{ $t('portfolioPage.sortBy.symbolAZ') }}</option>
+          <option value="symbol-desc">{{ $t('portfolioPage.sortBy.symbolZA') }}</option>
+          <option value="quantity-desc">{{ $t('portfolioPage.sortBy.quantityHighToLow') }}</option>
+          <option value="quantity-asc">{{ $t('portfolioPage.sortBy.quantityLowToHigh') }}</option>
+          <option value="currentPrice-desc">{{ $t('portfolioPage.sortBy.priceHighToLow') }}</option>
+          <option value="currentPrice-asc">{{ $t('portfolioPage.sortBy.priceLowToHigh') }}</option>
+          <option value="avgPrice-desc">{{ $t('portfolioPage.sortBy.avgPriceHighToLow') }}</option>
+          <option value="avgPrice-asc">{{ $t('portfolioPage.sortBy.avgPriceLowToHigh') }}</option>
+        </select>
+      </div>
+
       <!-- Desktop: Table Header (hidden on mobile) -->
       <div class="hidden md:grid md:grid-cols-7 lg:grid-cols-8 gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-900 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
         <button class="text-left hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none" @click="handleSort?.('symbol')">
@@ -208,13 +232,13 @@
 
 <script setup lang="ts">
 import { ChartBarIcon } from '@heroicons/vue/24/outline'
-import { defineProps } from 'vue'
+import { defineProps, computed } from 'vue'
 
 // Sort options for different columns
 export type SortKey = 'symbol' | 'instrumentName' | 'quantity' | 'avgPrice' | 'cost' | 'currentPrice' | 'todayChange' | 'marketValue' | 'gainLoss' | 'gainLossPercent'
 
-// prefix with underscore to avoid 'assigned but never used' lint if TS rules complain
-const _props = defineProps<{
+// Define props with mobile sort functionality
+const props = defineProps<{
   sortedHoldings: Holding[]
   loadingHoldings?: boolean
   formatNumber?: (value: number, decimalPlaces: number) => string
@@ -226,7 +250,46 @@ const _props = defineProps<{
   getGainLossColor?: (holding: Holding) => string
   getHoldingGainLoss?: (holding: Holding) => number
   getHoldingGainLossPercentage?: (holding: Holding) => number
+  currentSortKey?: SortKey
+  currentSortDirection?: 'asc' | 'desc'
 }>()
+
+// Computed property for the current mobile sort key (field + direction)
+const currentMobileSortKey = computed(() => {
+  const key = props.currentSortKey || 'marketValue'
+  const direction = props.currentSortDirection || 'desc'
+  return `${key}-${direction}`
+})
+
+// Handle mobile sort change
+const handleMobileSortChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  const [field, direction] = target.value.split('-') as [SortKey, 'asc' | 'desc']
+  
+  const currentField = props.currentSortKey
+  const currentDirection = props.currentSortDirection
+  
+  // If we're selecting the same field but different direction
+  if (field === currentField && direction !== currentDirection) {
+    // Just call sort once to toggle direction
+    props.handleSort?.(field)
+  }
+  // If we're selecting a different field
+  else if (field !== currentField) {
+    // Call sort once to set new field (it will use default direction)
+    props.handleSort?.(field)
+    
+    // If the default direction doesn't match desired direction, toggle
+    // Note: Most sort implementations default to 'desc' for numeric fields, 'asc' for text
+    const expectedDefaultDirection = ['symbol', 'instrumentName'].includes(field) ? 'asc' : 'desc'
+    
+    if (direction !== expectedDefaultDirection) {
+      // Small delay to ensure the first sort completes, then toggle
+      setTimeout(() => props.handleSort?.(field), 10)
+    }
+  }
+  // If we're selecting the exact same field + direction, do nothing
+}
 </script>
 
 <style scoped>

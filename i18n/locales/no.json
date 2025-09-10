@@ -277,6 +277,22 @@
     "edit": "Rediger",
     "delete": "Slett",
     "noTransactionsFound": "Ingen transaksjoner funnet",
-    "cashBalance": "Kontantbeholdning"
+    "cashBalance": "Kontantbeholdning",
+    "sortBy": {
+      "marketValueHighToLow": "Markedsverdi (høy til lav)",
+      "marketValueLowToHigh": "Markedsverdi (lav til høy)",
+      "gainLossBestFirst": "Gevinst/tap (beste først)",
+      "gainLossWorstFirst": "Gevinst/tap (verste først)",
+      "todayChangeBestFirst": "I dag % (beste først)",
+      "todayChangeWorstFirst": "I dag % (verste først)",
+      "symbolAZ": "Symbol (A-Å)",
+      "symbolZA": "Symbol (Å-A)",
+      "quantityHighToLow": "Antall (høy til lav)",
+      "quantityLowToHigh": "Antall (lav til høy)",
+      "priceHighToLow": "Pris (høy til lav)",
+      "priceLowToHigh": "Pris (lav til høy)",
+      "avgPriceHighToLow": "GAV (høy til lav)",
+      "avgPriceLowToHigh": "GAV (lav til høy)"
+    }
   }
 }

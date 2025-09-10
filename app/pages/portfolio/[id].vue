@@ -121,7 +121,7 @@
         <!-- Holdings table -->
         <PortfolioHoldingsTable :sorted-holdings="sortedHoldings" :loading-holdings="portfolioStore.loadingHoldings" :format-number="formatNumber" :format-currency="formatCurrency"
           :format-percentage="formatPercentage" :get-sort-icon="getSortIcon" :handle-sort="handleSort" :can-edit="canEdit" :get-gain-loss-color="getGainLossColor"
-          :get-holding-gain-loss="getHoldingGainLoss" :get-holding-gain-loss-percentage="getHoldingGainLossPercentage" />
+          :get-holding-gain-loss="getHoldingGainLoss" :get-holding-gain-loss-percentage="getHoldingGainLossPercentage" :current-sort-key="sortColumn" :current-sort-direction="sortDirection" />
 
         <!-- Portfolio Overview Cards -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -374,7 +374,7 @@ const showAddTransaction = ref(false)
 const showImportTransactions = ref(false)
 
 // Sorting state
-const sortColumn = ref<string>('symbol')
+const sortColumn = ref<SortKey>('symbol')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 
 // Get portfolio ID from route

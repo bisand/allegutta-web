@@ -277,6 +277,22 @@
     "edit": "Edit",
     "delete": "Delete",
     "noTransactionsFound": "No transactions found",
-    "cashBalance": "Cash balance"
+    "cashBalance": "Cash balance",
+    "sortBy": {
+      "marketValueHighToLow": "Market Value (High to Low)",
+      "marketValueLowToHigh": "Market Value (Low to High)",
+      "gainLossBestFirst": "Gain/Loss (Best First)",
+      "gainLossWorstFirst": "Gain/Loss (Worst First)",
+      "todayChangeBestFirst": "Today % (Best First)",
+      "todayChangeWorstFirst": "Today % (Worst First)",
+      "symbolAZ": "Symbol (A-Z)",
+      "symbolZA": "Symbol (Z-A)",
+      "quantityHighToLow": "Quantity (High to Low)",
+      "quantityLowToHigh": "Quantity (Low to High)",
+      "priceHighToLow": "Price (High to Low)",
+      "priceLowToHigh": "Price (Low to High)",
+      "avgPriceHighToLow": "Avg Price (High to Low)",
+      "avgPriceLowToHigh": "Avg Price (Low to High)"
+    }
   }
 }
