@@ -1,8 +1,5 @@
 <template>
-  <PortfolioStatCard :title="$t('portfolioPage.changedToday')">
-    <template #icon>
-      <ArrowTrendingUpIcon class="w-8 h-8" :class="iconClass" />
-    </template>
+  <PortfolioStatCard :title="$t('portfolioPage.changedToday')" :icon-component="isPositive ? ArrowTrendingUpIcon : isNegative ? ArrowTrendingDownIcon : ArrowRightIcon" :icon-class="iconClass">
     <div class="text-lg font-semibold" :class="valueClass">{{ currencyText }}</div>
     <template #subtitle>
       <span :class="subtitleClass">{{ percentageText }}</span>
@@ -11,7 +8,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ArrowTrendingUpIcon } from '@heroicons/vue/24/outline';
+import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ArrowRightIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
   currencyText?: string | null

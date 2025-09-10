@@ -276,6 +276,7 @@
     "actions": "Actions",
     "edit": "Edit",
     "delete": "Delete",
-    "noTransactionsFound": "No transactions found"
+    "noTransactionsFound": "No transactions found",
+    "cashBalance": "Cash balance"
   }
 }

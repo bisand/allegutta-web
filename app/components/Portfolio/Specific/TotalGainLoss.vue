@@ -1,14 +1,11 @@
 <template>
-  <PortfolioStatCard :title="$t('portfolioPage.totalGainLoss')">
-    <template #icon>
-      <ArrowTrendingUpIcon class="w-8 h-8" :class="iconClass" />
-    </template>
-    <span :class="valueClass">{{ sign }}{{ amountText }} ({{ percentageText }}%)</span>
+  <PortfolioStatCard :title="$t('portfolioPage.totalGainLoss')" :icon-component="isPositive ? ArrowTrendingUpIcon : ArrowTrendingDownIcon" :icon-class="iconClass">
+    <span :class="valueClass">{{ sign }}{{ amountText }} ({{ percentageText }})</span>
   </PortfolioStatCard>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   amountText?: string | null

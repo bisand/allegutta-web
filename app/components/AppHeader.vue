@@ -251,11 +251,17 @@
 
               <!-- Admin link - only when logged in and has permissions -->
               <ClientOnly>
-                <NuxtLink v-if="loggedIn && portfolioStore.canManagePortfolios" to="/admin/portfolios"
-                  class="block text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors"
-                  @click="mobileMenuOpen = false">
-                  {{ $t('header.portfolioManagement') }}
-                </NuxtLink>
+                <div v-if="loggedIn && canManagePortfolios" class="py-1">
+                  <div class="px-6">
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-1" />
+                  </div>
+                  <NuxtLink to="/admin/portfolios"
+                    class="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800 px-6 py-2 rounded-md text-sm transition-colors whitespace-nowrap"
+                    @click="mobileMenuOpen = false">
+                    <PlusIcon class="w-4 h-4 mr-3" />
+                    {{ $t('header.portfolioManagement') }}
+                  </NuxtLink>
+                </div>
               </ClientOnly>
             </div>
 

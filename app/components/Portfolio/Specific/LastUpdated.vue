@@ -1,8 +1,5 @@
 <template>
-  <PortfolioStatCard :title="$t('portfolioPage.lastUpdated')" :loading="loading">
-    <template #icon>
-      <ClockIcon class="w-8 h-8 text-purple-500" />
-    </template>
+  <PortfolioStatCard :title="$t('portfolioPage.lastUpdated')" :loading="loading" :icon-component="ClockIcon" :icon-class="['text-purple-500']">
     <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ text }}</div>
     <template #subtitle>
       {{ relative }}

@@ -38,7 +38,7 @@
           </div>
         </nav>
         
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {{ $t('portfolio.management') }}
@@ -47,121 +47,106 @@
               {{ $t('portfolio.managementDescription') }}
             </p>
           </div>
-
-          <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors mt-4 sm:mt-0"
+          <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors mt-4 lg:mt-0"
             @click="showCreateModal = true">
             <PlusIcon class="w-4 h-4 mr-2" />
-            {{ $t('portfolio.createPortfolio') }}
+            <span class="hidden md:inline">{{ $t('portfolio.create') || 'Create' }}</span>
           </button>
         </div>
-      </div>
 
-      <!-- Portfolios List -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('portfolio.allPortfolios') }}</h3>
-        </div>
-        <div class="overflow-x-auto">
-          <table v-if="portfolioStore.allPortfolios.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Currency</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              <tr v-for="portfolio in portfolioStore.allPortfolios" :key="portfolio.id">
-                <td class="px-6 py-4 whitespace-nowrap">
+        <!-- Portfolios list -->
+        <div>
+          <!-- Desktop / tablet: keep table and horizontal scroll for sm+ -->
+          <div class="hidden md:block overflow-x-auto">
+            <table v-if="portfolioStore.allPortfolios.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+                  <!-- <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th> -->
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Currency</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tr v-for="portfolio in portfolioStore.allPortfolios" :key="portfolio.id">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <ChartBarIcon class="w-5 h-5 text-gray-400 mr-3" />
+                      <div>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ portfolio.name }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ portfolio.description || '' }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <!-- <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ portfolio.description || 'No description' }}</td> -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ portfolio.currency || 'NOK' }}</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span v-if="portfolio.isDefault" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Default</span>
+                    <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Active</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ formatDate(portfolio.createdAt) }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex items-center gap-1 flex-wrap">
+                      <NuxtLink :to="`/portfolio/${portfolio.id}`" class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700" title="View portfolio details">
+                        <EyeIcon class="w-4 h-4" />
+                      </NuxtLink>
+                      <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700" title="Edit portfolio settings" @click="editPortfolio(portfolio)"><PencilIcon class="w-4 h-4" /></button>
+                      <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700" title="Manage portfolio positions" @click="managePositions(portfolio)"><ChartPieIcon class="w-4 h-4" /></button>
+                      <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700" title="Manage portfolio transactions" @click="manageTransactions(portfolio)"><DocumentTextIcon class="w-4 h-4" /></button>
+                      <button type="button" :disabled="recalculatingPortfolios.has(portfolio.id)" class="inline-flex items-center justify-center w-8 h-8 text-orange-700 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md transition-colors dark:text-orange-300 dark:hover:text-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed" title="Recalculate portfolio holdings" @click="recalculateHoldings(portfolio)"><ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': recalculatingPortfolios.has(portfolio.id) }" /></button>
+                      <button v-if="!portfolio.isDefault" type="button" class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700" title="Delete portfolio" @click="deletePortfolio(portfolio)"><TrashIcon class="w-4 h-4" /></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else class="px-6 py-8 text-center">
+              <ChartBarIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p class="text-gray-500 dark:text-gray-400">No portfolios found</p>
+              <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Create your first portfolio to get started</p>
+            </div>
+          </div>
+
+          <!-- Mobile: stacked cards -->
+          <div v-if="portfolioStore.allPortfolios.length > 0" class="md:hidden px-4 py-4 space-y-3">
+            <div v-for="portfolio in portfolioStore.allPortfolios" :key="portfolio.id" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+              <div class="flex justify-between items-start">
+                <div class="pr-2 w-0 flex-1">
                   <div class="flex items-center">
                     <ChartBarIcon class="w-5 h-5 text-gray-400 mr-3" />
                     <div>
-                      <div class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ portfolio.name }}
-                      </div>
-                      <div class="text-sm text-gray-500 dark:text-gray-400">
-                        ID: {{ portfolio.id }}
-                      </div>
+                      <div class="text-sm font-medium text-gray-900 dark:text-white">{{ portfolio.name }}</div>
+                      <div class="text-sm text-gray-500 dark:text-gray-400">{{ portfolio.description || 'No description' }}</div>
                     </div>
                   </div>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {{ portfolio.description || 'No description' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    {{ portfolio.currency || 'NOK' }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span v-if="portfolio.isDefault" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Default
-                  </span>
-                  <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    Active
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {{ formatDate(portfolio.createdAt) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div class="flex items-center gap-1">
-                    <!-- View Portfolio -->
-                    <NuxtLink :to="`/portfolio/${portfolio.id}`"
-                      class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700"
-                      title="View portfolio details">
-                      <EyeIcon class="w-4 h-4" />
-                    </NuxtLink>
-
-                    <!-- Edit Portfolio -->
-                    <button type="button"
-                      class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700"
-                      title="Edit portfolio settings" @click="editPortfolio(portfolio)">
-                      <PencilIcon class="w-4 h-4" />
-                    </button>
-
-                    <!-- Manage Positions -->
-                    <button type="button"
-                      class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700"
-                      title="Manage portfolio positions" @click="managePositions(portfolio)">
-                      <ChartPieIcon class="w-4 h-4" />
-                    </button>
-
-                    <!-- Manage Transactions -->
-                    <button type="button"
-                      class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700"
-                      title="Manage portfolio transactions" @click="manageTransactions(portfolio)">
-                      <DocumentTextIcon class="w-4 h-4" />
-                    </button>
-
-                    <!-- Recalculate Holdings -->
-                    <button type="button"
-                      :disabled="recalculatingPortfolios.has(portfolio.id)"
-                      class="inline-flex items-center justify-center w-8 h-8 text-orange-700 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md transition-colors dark:text-orange-300 dark:hover:text-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Recalculate portfolio holdings" @click="recalculateHoldings(portfolio)">
-                      <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': recalculatingPortfolios.has(portfolio.id) }" />
-                    </button>
-
-                    <!-- Delete Portfolio -->
-                    <button v-if="!portfolio.isDefault" type="button"
-                      class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700"
-                      title="Delete portfolio" @click="deletePortfolio(portfolio)">
-                      <TrashIcon class="w-4 h-4" />
-                    </button>
+                  <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ portfolio.currency || 'NOK' }}</span>
+                    <span v-if="portfolio.isDefault" class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-green-100 text-green-800">Default</span>
+                    <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-800">Active</span>
                   </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div v-else class="px-6 py-8 text-center">
+                  <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ formatDate(portfolio.createdAt) }}</div>
+                </div>
+
+                <div class="ml-3 flex items-start gap-2 flex-wrap">
+                  <NuxtLink :to="`/portfolio/${portfolio.id}`" class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700" title="View portfolio details"><EyeIcon class="w-4 h-4"/></NuxtLink>
+                  <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700" title="Edit portfolio settings" @click="editPortfolio(portfolio)"><PencilIcon class="w-4 h-4"/></button>
+                  <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700" title="Manage portfolio positions" @click="managePositions(portfolio)"><ChartPieIcon class="w-4 h-4"/></button>
+                  <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700" title="Manage portfolio transactions" @click="manageTransactions(portfolio)"><DocumentTextIcon class="w-4 h-4"/></button>
+                  <button type="button" :disabled="recalculatingPortfolios.has(portfolio.id)" class="inline-flex items-center justify-center w-8 h-8 text-orange-700 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md transition-colors dark:text-orange-300 dark:hover:text-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed" title="Recalculate portfolio holdings" @click="recalculateHoldings(portfolio)"><ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': recalculatingPortfolios.has(portfolio.id) }"/></button>
+                  <button v-if="!portfolio.isDefault" type="button" class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700" title="Delete portfolio" @click="deletePortfolio(portfolio)"><TrashIcon class="w-4 h-4"/></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="px-6 py-8 text-center sm:hidden">
             <ChartBarIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p class="text-gray-500 dark:text-gray-400">No portfolios found</p>
-            <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">
-              Create your first portfolio to get started
-            </p>
+            <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Create your first portfolio to get started</p>
           </div>
         </div>
       </div>

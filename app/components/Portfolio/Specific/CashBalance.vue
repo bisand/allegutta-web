@@ -1,8 +1,5 @@
 <template>
-    <PortfolioStatCard :title="$t('portfolioPage.cashBalance')" :loading="loading">
-        <template #icon>
-            <BanknotesIcon class="w-8 h-8 text-green-500" />
-        </template>
+    <PortfolioStatCard :title="$t('portfolioPage.cashBalance')" :loading="loading" :icon-component="BanknotesIcon" :icon-class="['text-green-500']">
         {{ valueText }}
     </PortfolioStatCard>
 </template>

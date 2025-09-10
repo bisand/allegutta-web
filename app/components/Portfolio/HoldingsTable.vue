@@ -86,7 +86,7 @@
             <td class="px-3 py-4 whitespace-nowrap text-sm text-right">
               <span v-if="holding.regularMarketChangePercent !== null && holding.regularMarketChangePercent !== undefined"
                 :class="holding.regularMarketChangePercent >= 0 ? 'text-green-600' : 'text-red-600'">
-                {{ formatPercentage?.(holding.regularMarketChangePercent ?? 0) ?? (holding.regularMarketChangePercent ?? 0) }}
+                {{ formatPercentage?.(holding.regularMarketChangePercent ?? 0, 2) ?? (holding.regularMarketChangePercent ?? 0, 2) }}
               </span>
               <span v-else class="text-gray-400">N/A</span>
             </td>
@@ -96,7 +96,7 @@
             <td class="px-4 py-4 whitespace-nowrap text-sm text-right">
               <span :class="getGainLossColor?.(holding) ?? ''">
                 {{ (getHoldingGainLoss?.(holding) ?? 0) >= 0 ? '+' : '-' }}{{ formatCurrency?.(Math.abs(getHoldingGainLoss?.(holding) ?? 0), { decimals: 0 }) ?? Math.abs(getHoldingGainLoss?.(holding) ?? 0) }}
-                ({{ (getHoldingGainLoss?.(holding) ?? 0) >= 0 ? '+' : '-' }}{{ Math.abs(getHoldingGainLossPercentage?.(holding) ?? 0).toFixed(2) }}%)
+                ({{ (getHoldingGainLoss?.(holding) ?? 0) >= 0 ? '+' : '-' }}{{ Math.abs(getHoldingGainLossPercentage?.(holding) ?? 0).toFixed(2) }} %)
               </span>
             </td>
           </tr>
@@ -117,29 +117,22 @@
 import { ChartBarIcon } from '@heroicons/vue/24/outline'
 import { defineProps } from 'vue'
 
-type Holding = {
-  id: string | number
-  symbol?: string
-  instrumentName?: string
-  quantity?: number | null
-  avgPrice?: number | null
-  currentPrice?: number | null
-  regularMarketChangePercent?: number | null
-}
+// Sort options for different columns
+export type SortKey = 'symbol' | 'instrumentName' | 'quantity' | 'avgPrice' | 'cost' | 'currentPrice' | 'todayChange' | 'marketValue' | 'gainLoss' | 'gainLossPercent'
 
 // prefix with underscore to avoid 'assigned but never used' lint if TS rules complain
 const _props = defineProps<{
   sortedHoldings: Holding[]
   loadingHoldings?: boolean
-  formatNumber?: (...args: unknown[]) => string
-  formatCurrency?: (...args: unknown[]) => string
-  formatPercentage?: (...args: unknown[]) => string
-  getSortIcon?: (...args: unknown[]) => unknown
-  handleSort?: (...args: unknown[]) => void
+  formatNumber?: (value: number, decimalPlaces: number) => string
+  formatCurrency?: (value: number, options?: { currency?: string, decimals?: number }) => string
+  formatPercentage?: (value: number | null | undefined, decimalPlaces: number) => string
+  getSortIcon?: (column: SortKey) => unknown
+  handleSort?: (column: SortKey) => void
   canEdit?: boolean
-  getGainLossColor?: (...args: unknown[]) => string
-  getHoldingGainLoss?: (...args: unknown[]) => number
-  getHoldingGainLossPercentage?: (...args: unknown[]) => number
+  getGainLossColor?: (holding: Holding) => string
+  getHoldingGainLoss?: (holding: Holding) => number
+  getHoldingGainLossPercentage?: (holding: Holding) => number
 }>()
 </script>
 

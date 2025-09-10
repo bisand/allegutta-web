@@ -1,8 +1,5 @@
 <template>
-    <PortfolioStatCard :title="$t('portfolioPage.allTimeHigh')" title-icon="⭐" :display-title-icon="isAtAth">
-        <template #icon>
-            <ChartBarIcon class="w-8 h-8" :class="iconClass" />
-        </template>
+    <PortfolioStatCard :title="$t('portfolioPage.allTimeHigh')" title-icon="⭐" :display-title-icon="isAtAth" :icon-component="ChartBarIcon" :icon-class="iconClass">
         <div>
             <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ valueText }}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ dateText }}</div>

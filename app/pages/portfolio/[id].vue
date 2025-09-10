@@ -76,14 +76,17 @@
 
           <PortfolioSpecificTotalValue :value-text="formatCurrency(portfolioStore.totalValue, { decimals: 0 })" :loading="refreshingEnhanced" />
 
-          <PortfolioSpecificTotalGainLoss :amount-text="formatCurrency(Math.abs(portfolioStore.totalGainLoss), { decimals: 0 })" :percentage-text="formatPercentage(portfolioStore.totalGainLossPercentage)" :is-positive="portfolioStore.totalGainLoss >= 0" />
+          <PortfolioSpecificTotalGainLoss :amount-text="formatCurrency(Math.abs(portfolioStore.totalGainLoss), { decimals: 0 })"
+            :percentage-text="formatPercentage(portfolioStore.totalGainLossPercentage)" :is-positive="portfolioStore.totalGainLoss >= 0" />
 
           <!-- All-Time High (ATH) -->
           <PortfolioSpecificAllTimeHigh :value-text="athData.value" :date-text="athData.dateText" :is-at-ath="athData.isAtAth" />
 
-          <PortfolioSpecificLastUpdated class="lg:hidden" :loading="refreshingEnhanced" :text="formatDateTime(marketDataLastUpdated || currentPortfolio.updatedAt)" :relative="dynamicRelativeTime" />
+          <PortfolioSpecificLastUpdated class="lg:hidden" :loading="refreshingEnhanced" :text="formatDateTime(marketDataLastUpdated || currentPortfolio.updatedAt)"
+            :relative="dynamicRelativeTime" />
 
-          <PortfolioSpecificChangedToday class="lg:hidden" :currency-text="dailyChangeData.currencyValue" :percentage-text="dailyChangeData.percentageValue" :is-positive="dailyChangeData.isPositive" :is-negative="dailyChangeData.isNegative" />
+          <PortfolioSpecificChangedToday class="lg:hidden" :currency-text="dailyChangeData.currencyValue" :percentage-text="dailyChangeData.percentageValue"
+            :is-positive="dailyChangeData.isPositive" :is-negative="dailyChangeData.isNegative" />
 
           <PortfolioSpecificHoldingsCount class="lg:hidden" :count="portfolioStore.portfolioHoldings.length" :loading="portfolioStore.loadingHoldings" />
 
@@ -93,13 +96,14 @@
         <div class="hidden lg:grid lg:grid-cols-3 gap-6 mb-8">
           <PortfolioSpecificLastUpdated :loading="refreshingEnhanced" :text="formatDateTime(marketDataLastUpdated || currentPortfolio.updatedAt)" :relative="dynamicRelativeTime" />
 
-          <PortfolioSpecificChangedToday :currency-text="dailyChangeData.currencyValue" :percentage-text="dailyChangeData.percentageValue" :is-positive="dailyChangeData.isPositive" :is-negative="dailyChangeData.isNegative" />
+          <PortfolioSpecificChangedToday :currency-text="dailyChangeData.currencyValue" :percentage-text="dailyChangeData.percentageValue" :is-positive="dailyChangeData.isPositive"
+            :is-negative="dailyChangeData.isNegative" />
 
           <PortfolioSpecificHoldingsCount :count="portfolioStore.portfolioHoldings.length" :loading="portfolioStore.loadingHoldings" />
         </div>
 
         <!-- Quick Insights -->
-        <InsightsBox v-if="portfolioStore.portfolioHoldings.length > 0" :title="$t('portfolioPage.portfolioInsights')" variant="gradient">
+        <PortfolioInsightsBox v-if="portfolioStore.portfolioHoldings.length > 0" :title="$t('portfolioPage.portfolioInsights')" variant="gradient">
           <div class="text-center">
             <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ getTopPerformerSymbol() }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.bestPerformer') }}</p>
@@ -112,22 +116,12 @@
             <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ portfolioStore.portfolioTransactions.length }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('portfolioPage.totalTransactions') }}</p>
           </div>
-        </InsightsBox>
+        </PortfolioInsightsBox>
 
         <!-- Holdings table -->
-        <HoldingsTable
-          :sorted-holdings="sortedHoldings"
-          :loading-holdings="portfolioStore.loadingHoldings"
-          :format-number="formatNumber"
-          :format-currency="formatCurrency"
-          :format-percentage="formatPercentage"
-          :get-sort-icon="getSortIcon"
-          :handle-sort="handleSort"
-          :can-edit="canEdit"
-          :get-gain-loss-color="getGainLossColor"
-          :get-holding-gain-loss="getHoldingGainLoss"
-          :get-holding-gain-loss-percentage="getHoldingGainLossPercentage"
-        />
+        <PortfolioHoldingsTable :sorted-holdings="sortedHoldings" :loading-holdings="portfolioStore.loadingHoldings" :format-number="formatNumber" :format-currency="formatCurrency"
+          :format-percentage="formatPercentage" :get-sort-icon="getSortIcon" :handle-sort="handleSort" :can-edit="canEdit" :get-gain-loss-color="getGainLossColor"
+          :get-holding-gain-loss="getHoldingGainLoss" :get-holding-gain-loss-percentage="getHoldingGainLossPercentage" />
 
         <!-- Portfolio Overview Cards -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -367,6 +361,7 @@ import {
   ChevronUpIcon,
   ChevronDownIcon
 } from '@heroicons/vue/24/outline'
+import type { SortKey } from '~/components/Portfolio/HoldingsTable.vue'
 
 const route = useRoute()
 const portfolioStore = usePortfolioStore()
@@ -381,9 +376,6 @@ const showImportTransactions = ref(false)
 // Sorting state
 const sortColumn = ref<string>('symbol')
 const sortDirection = ref<'asc' | 'desc'>('asc')
-
-// Sort options for different columns
-type SortKey = 'symbol' | 'instrumentName' | 'quantity' | 'avgPrice' | 'cost' | 'currentPrice' | 'todayChange' | 'marketValue' | 'gainLoss' | 'gainLossPercent'
 
 // Get portfolio ID from route
 const portfolioId = computed(() => route.params.id as string)
@@ -889,7 +881,7 @@ const totalPortfolioValue = computed(() => {
 })
 
 // Get allocation percentage for a holding
-function getAllocationPercentage(holding: { quantity: number; currentPrice?: number | null; avgPrice: number }): number {
+function getAllocationPercentage(holding: Holding): number {
   const holdingValue = holding.quantity * (holding.currentPrice || holding.avgPrice)
   const total = totalPortfolioValue.value
   return total > 0 ? (holdingValue / total) * 100 : 0
@@ -970,21 +962,21 @@ function calculateTransactionTotal(transaction: { type: string; quantity: number
 }
 
 // Get holding gain/loss
-function getHoldingGainLoss(holding: { quantity: number; currentPrice?: number | null; avgPrice: number }): number {
+function getHoldingGainLoss(holding: Holding): number {
   const currentValue = holding.quantity * (holding.currentPrice || holding.avgPrice)
   const costBasis = holding.quantity * holding.avgPrice
   return currentValue - costBasis
 }
 
 // Get holding gain/loss percentage
-function getHoldingGainLossPercentage(holding: { quantity: number; currentPrice?: number | null; avgPrice: number }): number {
+function getHoldingGainLossPercentage(holding: Holding): number {
   const costBasis = holding.quantity * holding.avgPrice
   if (costBasis === 0) return 0
   return (getHoldingGainLoss(holding) / costBasis) * 100
 }
 
 // Get gain/loss color class
-function getGainLossColor(holding: { quantity: number; currentPrice?: number | null; avgPrice: number }): string {
+function getGainLossColor(holding: Holding): string {
   const gainLoss = getHoldingGainLoss(holding)
   return gainLoss >= 0 ? 'text-green-600' : 'text-red-600'
 }
