@@ -320,7 +320,7 @@ export class MarketDataWorkerV2 {
                         `
 
                         updatedCount++
-                        console.log(`Updated market data for ${quote.symbol} (${isin}): $${quote.regularMarketPrice}`)
+                        // console.log(`Updated market data for ${quote.symbol} (${isin}): $${quote.regularMarketPrice}`)
                     } catch (error) {
                         console.error(`Error updating market data for ${quote.symbol}:`, error)
                     }

@@ -158,6 +158,7 @@ async function calculateRelationshipScore(
 
   // Quick prefix similarity check - skip obviously unrelated symbols
   const prefixSimilarity = calculatePrefixSimilarity(symbol1, symbol2)
+  
   if (prefixSimilarity < 0.3) {
     return {
       symbol1,
@@ -175,6 +176,7 @@ async function calculateRelationshipScore(
 
   // 1. NAME SIMILARITY ANALYSIS
   const nameSimilarity = calculateAdvancedSimilarity(symbol1, symbol2)
+  
   if (nameSimilarity > 0.6) {
     totalScore += nameSimilarity * 0.4
     evidence.push(`High name similarity: ${(nameSimilarity * 100).toFixed(1)}%`)
@@ -197,6 +199,22 @@ async function calculateRelationshipScore(
       totalScore += 0.25
       evidence.push('Contains rights issue indicators')
       relationshipType = 'RIGHTS_ISSUE'
+    }
+  } else if (nameSimilarity > 0.3 && (symbol1.includes('OLD') || symbol2.includes('OLD'))) {
+    // Special case for OLD pattern with lower name similarity threshold
+    totalScore += nameSimilarity * 0.3  // Reduced weight
+    evidence.push(`Moderate name similarity with OLD pattern: ${(nameSimilarity * 100).toFixed(1)}%`)
+    
+    if (symbol2.includes(symbol1) || symbol1.includes(symbol2)) {
+      totalScore += 0.3
+      evidence.push('One symbol contains the other')
+      relationshipType = 'SYMBOL_CHANGE'
+    }
+    
+    if (symbol1.includes('OLD') || symbol2.includes('OLD')) {
+      totalScore += 0.25
+      evidence.push('Contains "OLD" - likely symbol change')
+      relationshipType = 'SYMBOL_CHANGE'
     }
   }
 
@@ -383,7 +401,7 @@ function createInstrumentGroups(relationships: RelationshipScore[]): Array<{
   const processedSymbols = new Set<string>()
 
   for (const rel of relationships) {
-    if (rel.confidence < 0.7) continue // Only high-confidence relationships
+    if (rel.confidence < 0.3) continue // Only basic confidence relationships
     
     if (processedSymbols.has(rel.symbol1) || processedSymbols.has(rel.symbol2)) {
       continue // Already in a group
