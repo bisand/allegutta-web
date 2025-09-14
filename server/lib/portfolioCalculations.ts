@@ -49,6 +49,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
           'BUY', 'SELL',                    // Standard buy/sell transactions
           'EXCHANGE_IN', 'EXCHANGE_OUT',    // Exchange transactions (treat as buy/sell)
           'SPIN_OFF_IN',                    // Spin-offs that create new holdings
+          'TRANSFER_IN',                    // Transfers from other accounts
           'DECIMAL_LIQUIDATION',            // Decimal adjustments
           'DECIMAL_WITHDRAWAL',             // Decimal withdrawals
           'REFUND', 'LIQUIDATION', 'REDEMPTION'  // Corporate actions that liquidate positions
@@ -86,18 +87,19 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
     const price = transaction.price ?? 0
     const fees = transaction.fees ?? 0
 
-    if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(transaction.type)) {
+    if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'TRANSFER_IN'].includes(transaction.type)) {
       // Create a new lot for the incoming shares.
       let lotCost = 0
 
       // Check for corporate actions that need special costBasis handling
-      if ((transaction.type === 'EXCHANGE_IN' || transaction.type === 'SPIN_OFF_IN') && price <= 1.0 &&
+      if (((transaction.type === 'EXCHANGE_IN' || transaction.type === 'SPIN_OFF_IN') && price <= 1.0 &&
         (transaction.notes?.includes('Fusjon') ||
           transaction.notes?.includes('ISINSKIFTE') ||
           transaction.notes?.includes('SPLEIS') ||
           transaction.notes?.includes('Splitt') ||
           transaction.notes?.includes('Change of ISIN') ||
-          transaction.notes?.includes('BYTE AV EMITTENTLAND'))) {
+          transaction.notes?.includes('BYTE AV EMITTENTLAND'))) ||
+        transaction.type === 'TRANSFER_IN') {
 
         // For EXCHANGE_IN with lot tracking, recreate lots preserving original cost basis
         if (hasCorporateActions && transaction.type === 'EXCHANGE_IN') {
@@ -118,7 +120,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                 portfolioId: portfolioId,
                 symbol: exchangeOutTransaction.symbol,
                 type: {
-                  in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN']
+                  in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN', 'TRANSFER_IN']
                 },
                 date: {
                   lte: transaction.date
@@ -217,7 +219,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                 portfolioId: portfolioId,
                 symbol: exchangeOutTransactions[0].symbol, // The old symbol
                 type: {
-                  in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN']
+                  in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN', 'TRANSFER_IN']
                 },
                 date: {
                   lte: transaction.date
@@ -235,7 +237,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
               const prePrice = preTransaction.price ?? 0
               const preFees = preTransaction.fees ?? 0
 
-              if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(preTransaction.type)) {
+              if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'TRANSFER_IN'].includes(preTransaction.type)) {
                 oldSymbolLots.push({ qty: preQty, cost: preQty * prePrice + preFees })
               } else if (['SELL'].includes(preTransaction.type)) {
                 let remaining = preQty
@@ -318,7 +320,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                     portfolioId: portfolioId,
                     symbol: symbol,
                     type: {
-                      in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN']
+                      in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN', 'TRANSFER_IN']
                     },
                     date: {
                       lt: transaction.date
@@ -334,7 +336,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                   const ptPrice = pt.price ?? 0
                   const ptFees = pt.fees ?? 0
 
-                  if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(pt.type)) {
+                  if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'TRANSFER_IN'].includes(pt.type)) {
                     preSplitLots.push({ qty: ptQty, cost: ptQty * ptPrice + ptFees })
                   } else if (['SELL', 'EXCHANGE_OUT'].includes(pt.type)) {
                     let remainingSell = ptQty
@@ -403,7 +405,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                       startsWith: searchSymbol.split(/[.\s-]/)[0] // Use base symbol for LIKE pattern
                     },
                     type: {
-                      in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN']
+                      in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN', 'TRANSFER_IN']
                     },
                     date: {
                       lte: transaction.date
@@ -419,7 +421,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                   const etPrice = et.price ?? 0
                   const etFees = et.fees ?? 0
 
-                  if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN'].includes(et.type)) {
+                  if (['BUY', 'EXCHANGE_IN', 'SPIN_OFF_IN', 'TRANSFER_IN'].includes(et.type)) {
                     exchLots.push({ qty: etQty, cost: etQty * etPrice + etFees })
                   } else if (['SELL', 'EXCHANGE_OUT'].includes(et.type)) {
                     let remainingSell = etQty
