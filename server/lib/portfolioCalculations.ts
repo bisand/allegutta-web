@@ -167,7 +167,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
               portfolioId: portfolioId,
               type: 'EXCHANGE_OUT',
               date: transaction.date,
-              notes: transaction.notes
+              verificationNumber: transaction.verificationNumber // Match by verification number (more reliable than notes)
             }
           })
 
@@ -265,7 +265,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
               portfolioId: portfolioId,
               type: 'EXCHANGE_OUT',
               date: transaction.date,
-              notes: transaction.notes // Same notes should indicate related transactions
+              verificationNumber: transaction.verificationNumber // Match by verification number (more reliable than notes)
             },
             orderBy: { date: 'asc' }
           })
@@ -365,7 +365,7 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
                   portfolioId: portfolioId,
                   type: 'LIQUIDATION',
                   date: transaction.date,
-                  notes: transaction.notes // Match by notes to find the corresponding liquidation
+                  verificationNumber: transaction.verificationNumber // Match by verification number (more reliable than notes)
                 }
               })
 
