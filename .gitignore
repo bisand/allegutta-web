@@ -26,3 +26,4 @@ logs
 
 # Prisma migrations (development - using schema push)
 prisma/migrations/
+*.db
