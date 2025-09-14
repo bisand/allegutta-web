@@ -363,20 +363,20 @@ async function updateSecurityHoldingsStandard(portfolioId: string, symbol: strin
               const liquidationTransaction = await prisma.transactions.findFirst({
                 where: {
                   portfolioId: portfolioId,
-                  symbol: symbol,
                   type: 'LIQUIDATION',
-                  date: transaction.date
+                  date: transaction.date,
+                  notes: transaction.notes // Match by notes to find the corresponding liquidation
                 }
               })
 
               if (liquidationTransaction) {
-                console.log(`  📊 Found LIQUIDATION: ${liquidationTransaction.quantity} shares`)
+                console.log(`  📊 Found LIQUIDATION: ${liquidationTransaction.symbol} ${liquidationTransaction.quantity} shares`)
 
-                // Calculate cost basis from all transactions before the split
+                // Calculate cost basis from all transactions of the OLD symbol before the split
                 const preSplitTransactions = await prisma.transactions.findMany({
                   where: {
                     portfolioId: portfolioId,
-                    symbol: symbol,
+                    symbol: liquidationTransaction.symbol, // Use the liquidated symbol
                     type: {
                       in: ['BUY', 'SELL', 'EXCHANGE_IN', 'EXCHANGE_OUT', 'SPIN_OFF_IN', 'TRANSFER_IN']
                     },
