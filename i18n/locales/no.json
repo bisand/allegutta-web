@@ -262,6 +262,7 @@
     "avgPrice": "GAV",
     "cost": "Kostnad",
     "currentPrice": "Pris",
+    "marketClosed": "Marked stengt",
     "todayChange": "I dag %",
     "marketValue": "Markedsverdi",
     "gainLoss": "Gevinst/tap",

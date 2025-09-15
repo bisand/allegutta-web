@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client'
 import { fetchWithRetry } from '~~/server/utils/fetchWithRetry'
+import { isOvernightResetPeriod, getMarketStateDescription } from './marketSchedule'
 
 interface CacheData {
     cookie: string
@@ -164,7 +165,7 @@ export class MarketDataWorkerV2 {
         }
 
         // Split into smaller batches to avoid overwhelming Yahoo Finance
-        const BATCH_SIZE = 20 // Reduced from 48 to 20 symbols per request
+        const BATCH_SIZE = 50
         const batches: Array<Array<{ isin: string, symbolYahoo: string }>> = []
 
         for (let i = 0; i < validRecords.length; i += BATCH_SIZE) {
@@ -173,14 +174,20 @@ export class MarketDataWorkerV2 {
 
         console.log(`Processing ${validRecords.length} symbols in ${batches.length} batches of ${BATCH_SIZE}`)
 
+        if (batches.length === 0) {
+            console.log('No batches to process')
+            return []
+        }
+
         const allQuotes: QuoteResult[] = []
 
+        console.log(`Starting batch processing loop for ${batches.length} batches...`)
         for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
             const batch = batches[batchIndex]
+            const yahooSymbols = batch.map(r => r.symbolYahoo)
 
             try {
                 const { cookie, crumb } = await this.getCookieAndCrumb()
-                const yahooSymbols = batch.map(r => r.symbolYahoo)
 
                 console.log(`[Batch ${batchIndex + 1}/${batches.length}] Fetching quotes for: ${yahooSymbols.join(', ')}`)
 
@@ -236,8 +243,11 @@ export class MarketDataWorkerV2 {
                     await new Promise(resolve => setTimeout(resolve, 1000))
                 }
 
+                console.log(`[Batch ${batchIndex + 1}/${batches.length}] Completed successfully`)
+
             } catch (error) {
                 console.error(`[Batch ${batchIndex + 1}/${batches.length}] Error fetching quotes:`, error)
+                console.error(`Failed symbols for this batch: ${yahooSymbols.join(', ')}`)
                 // Continue with next batch instead of failing entirely
                 continue
             }
@@ -247,10 +257,49 @@ export class MarketDataWorkerV2 {
         return allQuotes
     }
 
+    /**
+     * Reset daily change data during overnight hours while preserving prices
+     * This clears daily percentage changes and related fields while keeping currentPrice intact
+     */
+    private async resetOvernightMarketData(): Promise<void> {
+        try {
+            console.log('Resetting daily change data for overnight period...')
+
+            // Reset only daily change data, keep current prices intact
+            // This allows total gain/loss calculations to continue working properly
+            await this.prisma.$executeRaw`
+                UPDATE market_data SET
+                    regularMarketChange = NULL,
+                    regularMarketChangePercent = NULL,
+                    marketState = 'CLOSED',
+                    lastUpdated = CURRENT_TIMESTAMP,
+                    updatedAt = CURRENT_TIMESTAMP
+                WHERE regularMarketChangePercent IS NOT NULL
+            `
+
+            console.log('Daily change data reset completed for overnight period')
+        } catch (error) {
+            console.error('Error resetting overnight daily change data:', error)
+            throw error
+        }
+    }
+
     async updateAllMarketData(): Promise<void> {
         console.log('Starting market data update...')
 
         try {
+            // Check if we're in overnight reset period
+            const isOvernightReset = await isOvernightResetPeriod()
+            const marketStateDesc = await getMarketStateDescription()
+
+            console.log(`Market state: ${marketStateDesc}`)
+
+            if (isOvernightReset) {
+                console.log('Overnight reset period detected - clearing market prices to show market closed state')
+                await this.resetOvernightMarketData()
+                return
+            }
+
             // First ensure all ISINs have market data records
             await this.ensureMarketDataRecords()
 
@@ -292,11 +341,15 @@ export class MarketDataWorkerV2 {
 
             for (const quote of quotes) {
                 const isin = symbolToISIN.get(quote.symbol)
-                if (isin && quote.regularMarketPrice) {
+                if (isin) {
                     try {
+                        // Use regularMarketPrice if available, otherwise use regularMarketPreviousClose
+                        // This ensures we always have a current price, even during overnight periods
+                        const currentPrice = quote.regularMarketPrice || quote.regularMarketPreviousClose || null
+
                         await this.prisma.$executeRaw`
                             UPDATE market_data SET
-                                currentPrice = ${quote.regularMarketPrice},
+                                currentPrice = ${currentPrice},
                                 longName = ${quote.longName || null},
                                 shortName = ${quote.shortName || null},
                                 regularMarketChange = ${quote.regularMarketChange || null},
@@ -320,7 +373,7 @@ export class MarketDataWorkerV2 {
                         `
 
                         updatedCount++
-                        // console.log(`Updated market data for ${quote.symbol} (${isin}): $${quote.regularMarketPrice}`)
+                        // console.log(`Updated market data for ${quote.symbol} (${isin}): $${currentPrice}`)
                     } catch (error) {
                         console.error(`Error updating market data for ${quote.symbol}:`, error)
                     }

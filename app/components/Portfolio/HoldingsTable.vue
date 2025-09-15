@@ -4,15 +4,13 @@
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('portfolioPage.holdingsTable') }}</h3>
       <div v-if="loadingHoldings" class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500" />
     </div>
-    
+
     <div v-if="sortedHoldings && sortedHoldings.length > 0">
       <!-- Mobile: Sort Dropdown -->
       <div class="md:hidden px-6 py-3 border-b border-gray-200 dark:border-gray-700">
-        <select 
+        <select
           class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          :value="currentMobileSortKey"
-          @change="handleMobileSortChange"
-        >
+          :value="currentMobileSortKey" @change="handleMobileSortChange">
           <option value="marketValue-desc">{{ $t('portfolioPage.sortBy.marketValueHighToLow') }}</option>
           <option value="marketValue-asc">{{ $t('portfolioPage.sortBy.marketValueLowToHigh') }}</option>
           <option value="gainLoss-desc">{{ $t('portfolioPage.sortBy.gainLossBestFirst') }}</option>
@@ -31,7 +29,8 @@
       </div>
 
       <!-- Desktop: Table Header (hidden on mobile) -->
-      <div class="hidden md:grid md:grid-cols-7 lg:grid-cols-8 gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-900 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+      <div
+        class="hidden md:grid md:grid-cols-7 lg:grid-cols-8 gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-900 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
         <button class="text-left hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none" @click="handleSort?.('symbol')">
           <span class="flex items-center space-x-1">
             <span>{{ $t('portfolioPage.symbol') }}</span>
@@ -100,11 +99,12 @@
               <div class="text-right ml-4">
                 <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.marketValue') }}</div>
                 <div class="text-base font-medium text-gray-900 dark:text-white">
-                  {{ formatCurrency?.((holding.quantity ?? 0) * (holding.currentPrice ?? holding.avgPrice ?? 0), { decimals: 0 }) ?? ((holding.quantity ?? 0) * (holding.currentPrice ?? holding.avgPrice ?? 0)) }}
+                  {{ formatCurrency?.((holding.quantity ?? 0) * (holding.currentPrice ?? holding.avgPrice ?? 0), { decimals: 0 }) ?? ((holding.quantity ?? 0) *
+                    (holding.currentPrice ?? holding.avgPrice ?? 0)) }}
                 </div>
               </div>
             </div>
-            
+
             <!-- All data in compact 3-column grid layout -->
             <div class="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
               <!-- Row 1: Antall, Pris, Kostnad -->
@@ -117,7 +117,12 @@
               <div class="text-center">
                 <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.currentPrice') }}</div>
                 <div class="font-medium text-gray-900 dark:text-white">
-                  {{ formatCurrency?.((holding.currentPrice ?? holding.avgPrice ?? 0), { decimals: 2 }) ?? (holding.currentPrice ?? holding.avgPrice ?? 0) }}
+                  <span v-if="holding.currentPrice !== null && holding.currentPrice !== undefined">
+                    {{ formatCurrency?.((holding.currentPrice ?? 0), { decimals: 2 }) ?? (holding.currentPrice ?? 0) }}
+                  </span>
+                  <span v-else class="text-gray-400 text-xs">
+                    N/A
+                  </span>
                 </div>
               </div>
               <div class="text-right">
@@ -148,7 +153,8 @@
                 <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.gainLoss') }}</div>
                 <div class="font-semibold">
                   <span :class="getGainLossColor?.(holding) ?? ''">
-                    {{ (getHoldingGainLoss?.(holding) ?? 0) >= 0 ? '+' : '-' }}{{ formatCurrency?.(Math.abs(getHoldingGainLoss?.(holding) ?? 0), { decimals: 0 }) ?? Math.abs(getHoldingGainLoss?.(holding) ?? 0) }}
+                    {{ (getHoldingGainLoss?.(holding) ?? 0) >= 0 ? '+' : '-' }}{{ formatCurrency?.(Math.abs(getHoldingGainLoss?.(holding) ?? 0), { decimals: 0 }) ??
+                    Math.abs(getHoldingGainLoss?.(holding) ?? 0) }}
                     <div class="text-xs">
                       ({{ (getHoldingGainLoss?.(holding) ?? 0) >= 0 ? '+' : '-' }}{{ Math.abs(getHoldingGainLossPercentage?.(holding) ?? 0).toFixed(2) }}%)
                     </div>
@@ -169,27 +175,32 @@
                 {{ holding.instrumentName }}
               </div>
             </div>
-            
+
             <!-- Quantity -->
             <div class="text-sm text-gray-500 dark:text-gray-400 text-right">
               {{ formatNumber?.(holding.quantity ?? 0, 0) ?? (holding.quantity ?? 0) }}
             </div>
-            
+
             <!-- Avg Price -->
             <div class="text-sm text-gray-500 dark:text-gray-400 text-right">
               {{ formatCurrency?.(holding.avgPrice ?? 0, { decimals: 2 }) ?? (holding.avgPrice ?? 0) }}
             </div>
-            
+
             <!-- Cost (Desktop only) -->
             <div class="hidden lg:block text-sm text-gray-500 dark:text-gray-400 text-right">
               {{ formatCurrency?.((holding.quantity ?? 0) * (holding.avgPrice ?? 0), { decimals: 0 }) ?? ((holding.quantity ?? 0) * (holding.avgPrice ?? 0)) }}
             </div>
-            
+
             <!-- Current Price -->
             <div class="text-sm text-gray-500 dark:text-gray-400 text-right">
-              {{ formatCurrency?.((holding.currentPrice ?? holding.avgPrice ?? 0), { decimals: 2 }) ?? (holding.currentPrice ?? holding.avgPrice ?? 0) }}
+              <span v-if="holding.currentPrice !== null && holding.currentPrice !== undefined">
+                {{ formatCurrency?.((holding.currentPrice ?? 0), { decimals: 2 }) ?? (holding.currentPrice ?? 0) }}
+              </span>
+              <span v-else class="text-gray-400 text-xs">
+                N/A
+              </span>
             </div>
-            
+
             <!-- Today Change -->
             <div class="text-sm text-right">
               <span v-if="holding.regularMarketChangePercent !== null && holding.regularMarketChangePercent !== undefined"
@@ -198,17 +209,19 @@
               </span>
               <span v-else class="text-gray-400">N/A</span>
             </div>
-            
+
             <!-- Market Value -->
             <div class="text-sm text-gray-500 dark:text-gray-400 text-right">
-              {{ formatCurrency?.((holding.quantity ?? 0) * (holding.currentPrice ?? holding.avgPrice ?? 0), { decimals: 0 }) ?? ((holding.quantity ?? 0) * (holding.currentPrice ?? holding.avgPrice ?? 0)) }}
+              {{ formatCurrency?.((holding.quantity ?? 0) * (holding.currentPrice ?? holding.avgPrice ?? 0), { decimals: 0 }) ?? ((holding.quantity ?? 0) * (holding.currentPrice ??
+              holding.avgPrice ?? 0)) }}
             </div>
-            
+
             <!-- Gain/Loss -->
             <div class="text-sm text-right">
               <span :class="getGainLossColor?.(holding) ?? ''">
                 <div class="font-medium">
-                  {{ (getHoldingGainLoss?.(holding) ?? 0) >= 0 ? '+' : '-' }}{{ formatCurrency?.(Math.abs(getHoldingGainLoss?.(holding) ?? 0), { decimals: 0 }) ?? Math.abs(getHoldingGainLoss?.(holding) ?? 0) }}
+                  {{ (getHoldingGainLoss?.(holding) ?? 0) >= 0 ? '+' : '-' }}{{ formatCurrency?.(Math.abs(getHoldingGainLoss?.(holding) ?? 0), { decimals: 0 }) ??
+                  Math.abs(getHoldingGainLoss?.(holding) ?? 0) }}
                 </div>
                 <div class="text-xs">
                   ({{ (getHoldingGainLoss?.(holding) ?? 0) >= 0 ? '+' : '-' }}{{ Math.abs(getHoldingGainLossPercentage?.(holding) ?? 0).toFixed(2) }}%)
@@ -219,7 +232,7 @@
         </div>
       </div>
     </div>
-    
+
     <div v-else class="px-6 py-8 text-center">
       <ChartBarIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" />
       <p class="text-gray-500 dark:text-gray-400">{{ $t('portfolioPage.noHoldingsFound') }}</p>
@@ -265,10 +278,10 @@ const currentMobileSortKey = computed(() => {
 const handleMobileSortChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
   const [field, direction] = target.value.split('-') as [SortKey, 'asc' | 'desc']
-  
+
   const currentField = props.currentSortKey
   const currentDirection = props.currentSortDirection
-  
+
   // If we're selecting the same field but different direction
   if (field === currentField && direction !== currentDirection) {
     // Just call sort once to toggle direction
@@ -278,11 +291,11 @@ const handleMobileSortChange = (event: Event) => {
   else if (field !== currentField) {
     // Call sort once to set new field (it will use default direction)
     props.handleSort?.(field)
-    
+
     // If the default direction doesn't match desired direction, toggle
     // Note: Most sort implementations default to 'desc' for numeric fields, 'asc' for text
     const expectedDefaultDirection = ['symbol', 'instrumentName'].includes(field) ? 'asc' : 'desc'
-    
+
     if (direction !== expectedDefaultDirection) {
       // Small delay to ensure the first sort completes, then toggle
       setTimeout(() => props.handleSort?.(field), 10)

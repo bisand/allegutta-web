@@ -262,6 +262,7 @@
     "avgPrice": "Avg Price",
     "cost": "Cost",
     "currentPrice": "Current Price",
+    "marketClosed": "Market Closed",
     "todayChange": "Today %",
     "marketValue": "Market Value",
     "gainLoss": "Gain/Loss",

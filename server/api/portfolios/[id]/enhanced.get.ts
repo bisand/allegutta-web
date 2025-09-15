@@ -81,7 +81,8 @@ export default defineEventHandler(async (event) => {
     // Calculate current market value from holdings
     for (const holding of holdings) {
       const marketData = marketDataMap.get(holding.symbol)
-      const currentPrice = marketData?.currentPrice || holding.avgPrice
+      // Use current price if available, otherwise fall back to average price
+      const currentPrice = marketData?.currentPrice ?? holding.avgPrice
       currentMarketValue += holding.quantity * currentPrice
     }
 
@@ -109,18 +110,23 @@ export default defineEventHandler(async (event) => {
     for (const holding of holdings) {
       const marketData = marketDataMap.get(holding.symbol)
 
-      if (marketData) {
+      if (marketData && marketData.currentPrice !== null && marketData.currentPrice !== undefined) {
+        // We have market data with current price
         marketDataUpdates.push(new Date(marketData.updatedAt))
 
-        const currentPrice = marketData.currentPrice || 0
+        const currentPrice = marketData.currentPrice
         const marketValue = holding.quantity * currentPrice
-        const changePercent = marketData.regularMarketChangePercent || 0
-        const changeValue = (marketValue * changePercent) / 100
 
-        dailyChangeValue += changeValue
+        // Only add daily change if we have valid daily change data (market is open)
+        if (marketData.regularMarketChangePercent !== null && marketData.regularMarketChangePercent !== undefined) {
+          const changePercent = marketData.regularMarketChangePercent
+          const changeValue = (marketValue * changePercent) / 100
+          dailyChangeValue += changeValue
+        }
+
         totalMarketValue += marketValue
       } else {
-        // Use average price if no market data
+        // No market data or no current price - use average price
         const marketValue = holding.quantity * holding.avgPrice
         totalMarketValue += marketValue
       }
