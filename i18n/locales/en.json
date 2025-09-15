@@ -294,5 +294,21 @@
       "avgPriceHighToLow": "Avg Price (High to Low)",
       "avgPriceLowToHigh": "Avg Price (Low to High)"
     }
+  },
+  "offline": {
+    "title": "You are offline",
+    "message": "Please check your internet connection and try again.",
+    "retry": "Try Again",
+    "retrying": "Retrying...",
+    "home": "Go to Home"
+  },
+  "pwa": {
+    "install": {
+      "title": "Install AlleGutta Portfolio",
+      "description": "Add this app to your home screen for quick access and offline use.",
+      "install": "Install",
+      "installing": "Installing...",
+      "dismiss": "Not now"
+    }
   }
 }

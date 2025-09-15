@@ -6,6 +6,10 @@
       <NuxtPage />
     </main>
     <AppFooter />
+    
+    <!-- PWA Install Prompt -->
+    <PWAInstallPrompt />
+    
     <!-- Toast notifications can be added later with a custom implementation -->
   </div>
 </template>

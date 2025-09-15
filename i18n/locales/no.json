@@ -294,5 +294,21 @@
       "avgPriceHighToLow": "GAV (høy til lav)",
       "avgPriceLowToHigh": "GAV (lav til høy)"
     }
+  },
+  "offline": {
+    "title": "Du er frakoblet",
+    "message": "Sjekk internetttilkoblingen din og prøv igjen.",
+    "retry": "Prøv igjen",
+    "retrying": "Prøver igjen...",
+    "home": "Gå til hjem"
+  },
+  "pwa": {
+    "install": {
+      "title": "Installer AlleGutta Portfolio",
+      "description": "Legg til denne appen på hjemskjermen for rask tilgang og offline bruk.",
+      "install": "Installer",
+      "installing": "Installerer...",
+      "dismiss": "Ikke nå"
+    }
   }
 }
