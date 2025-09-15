@@ -42,8 +42,8 @@ export default defineNuxtConfig({
       name: 'AlleGutta Portfolio',
       short_name: 'AlleGutta',
       description: 'Personal portfolio and investment tracking application',
-      theme_color: '#1f2937',
-      background_color: '#ffffff',
+      theme_color: '#111827', // Match gray-900 (dark background)
+      background_color: '#111827', // Match the dark theme background
       display: 'standalone',
       orientation: 'portrait-primary',
       scope: '/',
@@ -128,11 +128,11 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1, user-scalable=no' },
         // PWA meta tags
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
-        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'dark-content' }, // New iOS 14.5+ value for dark text on white background
         { name: 'apple-mobile-web-app-title', content: 'AlleGutta Portfolio' },
         { name: 'mobile-web-app-capable', content: 'yes' },
-        { name: 'theme-color', content: '#1f2937' },
-        { name: 'msapplication-TileColor', content: '#1f2937' },
+        { name: 'theme-color', content: '#f9fafb' }, // Start with gray-50 (light theme), will be updated by JS
+        { name: 'msapplication-TileColor', content: '#111827' }, // Use gray-900 for tiles
         { name: 'msapplication-tap-highlight', content: 'no' },
         { name: 'apple-touch-fullscreen', content: 'yes' },
         // Prevent zooming
@@ -143,7 +143,7 @@ export default defineNuxtConfig({
         { rel: 'apple-touch-icon', sizes: '180x180', href: '/icons/apple-touch-icon.png' },
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/icons/icon-32x32.png' },
         { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/icons/icon-16x16.png' },
-        { rel: 'mask-icon', href: '/icons/safari-pinned-tab.svg', color: '#1f2937' },
+        { rel: 'mask-icon', href: '/icons/safari-pinned-tab.svg', color: '#111827' },
         // iOS splash screens
         { rel: 'apple-touch-startup-image', href: '/icons/apple-splash-2048-2732.png', media: '(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)' },
         { rel: 'apple-touch-startup-image', href: '/icons/apple-splash-1668-2224.png', media: '(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)' },
