@@ -345,28 +345,28 @@ export class MarketDataWorkerV2 {
                     try {
                         // Use regularMarketPrice if available, otherwise use regularMarketPreviousClose
                         // This ensures we always have a current price, even during overnight periods
-                        const currentPrice = quote.regularMarketPrice || quote.regularMarketPreviousClose || null
+                        const currentPrice = quote.regularMarketPrice || quote.regularMarketPreviousClose || 0
 
                         await this.prisma.$executeRaw`
                             UPDATE market_data SET
                                 currentPrice = ${currentPrice},
-                                longName = ${quote.longName || null},
-                                shortName = ${quote.shortName || null},
-                                regularMarketChange = ${quote.regularMarketChange || null},
-                                regularMarketChangePercent = ${quote.regularMarketChangePercent || null},
-                                regularMarketPreviousClose = ${quote.regularMarketPreviousClose || null},
-                                regularMarketDayHigh = ${quote.regularMarketDayHigh || null},
-                                regularMarketDayLow = ${quote.regularMarketDayLow || null},
-                                regularMarketDayRange = ${quote.regularMarketDayRange || null},
-                                regularMarketVolume = ${quote.regularMarketVolume || null},
+                                longName = ${quote.longName ?? null},
+                                shortName = ${quote.shortName ?? null},
+                                regularMarketChange = ${quote.regularMarketChange ?? null},
+                                regularMarketChangePercent = ${quote.regularMarketChangePercent ?? null},
+                                regularMarketPreviousClose = ${quote.regularMarketPreviousClose ?? null},
+                                regularMarketDayHigh = ${quote.regularMarketDayHigh ?? null},
+                                regularMarketDayLow = ${quote.regularMarketDayLow ?? null},
+                                regularMarketDayRange = ${quote.regularMarketDayRange ?? null},
+                                regularMarketVolume = ${quote.regularMarketVolume ?? null},
                                 regularMarketTime = ${quote.regularMarketTime ? new Date(quote.regularMarketTime * 1000).toISOString() : null},
-                                fiftyTwoWeekLow = ${quote.fiftyTwoWeekLow || null},
-                                fiftyTwoWeekHigh = ${quote.fiftyTwoWeekHigh || null},
-                                fiftyTwoWeekRange = ${quote.fiftyTwoWeekRange || null},
-                                exchange = ${quote.exchange || null},
-                                fullExchangeName = ${quote.fullExchangeName || null},
-                                marketState = ${quote.marketState || null},
-                                currency = ${quote.currency || null},
+                                fiftyTwoWeekLow = ${quote.fiftyTwoWeekLow ?? null},
+                                fiftyTwoWeekHigh = ${quote.fiftyTwoWeekHigh ?? null},
+                                fiftyTwoWeekRange = ${quote.fiftyTwoWeekRange ?? null},
+                                exchange = ${quote.exchange ?? null},
+                                fullExchangeName = ${quote.fullExchangeName ?? null},
+                                marketState = ${quote.marketState ?? null},
+                                currency = ${quote.currency ?? null},
                                 lastUpdated = CURRENT_TIMESTAMP,
                                 updatedAt = CURRENT_TIMESTAMP
                             WHERE isin = ${isin}

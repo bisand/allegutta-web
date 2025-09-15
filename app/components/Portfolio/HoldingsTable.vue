@@ -39,44 +39,44 @@
         </button>
         <button class="text-right hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none" @click="handleSort?.('quantity')">
           <span class="flex items-center justify-end space-x-1">
-            <span>{{ $t('portfolioPage.quantity') }}</span>
             <component :is="getSortIcon?.('quantity')" v-if="getSortIcon" class="w-4 h-4" />
+            <span>{{ $t('portfolioPage.quantity') }}</span>
           </span>
         </button>
         <button class="text-right hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none" @click="handleSort?.('avgPrice')">
           <span class="flex items-center justify-end space-x-1">
-            <span>{{ $t('portfolioPage.avgPrice') }}</span>
             <component :is="getSortIcon?.('avgPrice')" v-if="getSortIcon" class="w-4 h-4" />
+            <span>{{ $t('portfolioPage.avgPrice') }}</span>
           </span>
         </button>
         <button class="hidden lg:block text-right hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none" @click="handleSort?.('cost')">
           <span class="flex items-center justify-end space-x-1">
-            <span>{{ $t('portfolioPage.cost') }}</span>
             <component :is="getSortIcon?.('cost')" v-if="getSortIcon" class="w-4 h-4" />
+            <span>{{ $t('portfolioPage.cost') }}</span>
           </span>
         </button>
         <button class="text-right hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none" @click="handleSort?.('currentPrice')">
           <span class="flex items-center justify-end space-x-1">
-            <span>{{ $t('portfolioPage.currentPrice') }}</span>
             <component :is="getSortIcon?.('currentPrice')" v-if="getSortIcon" class="w-4 h-4" />
+            <span>{{ $t('portfolioPage.currentPrice') }}</span>
           </span>
         </button>
         <button class="text-right hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none" @click="handleSort?.('todayChange')">
           <span class="flex items-center justify-end space-x-1">
-            <span>{{ $t('portfolioPage.todayChange') }}</span>
             <component :is="getSortIcon?.('todayChange')" v-if="getSortIcon" class="w-4 h-4" />
+            <span>{{ $t('portfolioPage.todayChange') }}</span>
           </span>
         </button>
         <button class="text-right hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none" @click="handleSort?.('marketValue')">
           <span class="flex items-center justify-end space-x-1">
-            <span>{{ $t('portfolioPage.marketValue') }}</span>
             <component :is="getSortIcon?.('marketValue')" v-if="getSortIcon" class="w-4 h-4" />
+            <span>{{ $t('portfolioPage.marketValue') }}</span>
           </span>
         </button>
         <button class="text-right hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none" @click="handleSort?.('gainLoss')">
           <span class="flex items-center justify-end space-x-1">
-            <span>{{ $t('portfolioPage.gainLoss') }}</span>
             <component :is="getSortIcon?.('gainLoss')" v-if="getSortIcon" class="w-4 h-4" />
+            <span>{{ $t('portfolioPage.gainLoss') }}</span>
           </span>
         </button>
       </div>
@@ -142,11 +142,9 @@
               <div class="text-center">
                 <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ $t('portfolioPage.todayChange') }}</div>
                 <div class="font-medium">
-                  <span v-if="holding.regularMarketChangePercent !== null && holding.regularMarketChangePercent !== undefined"
-                    :class="holding.regularMarketChangePercent >= 0 ? 'text-green-600' : 'text-red-600'">
+                  <span :class="getChangeColor(holding.regularMarketChangePercent)">
                     {{ formatPercentage?.(holding.regularMarketChangePercent ?? 0, 2) ?? (holding.regularMarketChangePercent ?? 0, 2) }}
                   </span>
-                  <span v-else class="text-gray-400">N/A</span>
                 </div>
               </div>
               <div class="text-right">
@@ -203,11 +201,9 @@
 
             <!-- Today Change -->
             <div class="text-sm text-right">
-              <span v-if="holding.regularMarketChangePercent !== null && holding.regularMarketChangePercent !== undefined"
-                :class="holding.regularMarketChangePercent >= 0 ? 'text-green-600' : 'text-red-600'">
+              <span :class="getChangeColor(holding.regularMarketChangePercent)">
                 {{ formatPercentage?.(holding.regularMarketChangePercent ?? 0, 2) ?? (holding.regularMarketChangePercent ?? 0, 2) }}
               </span>
-              <span v-else class="text-gray-400">N/A</span>
             </div>
 
             <!-- Market Value -->
@@ -249,6 +245,15 @@ import { defineProps, computed } from 'vue'
 
 // Sort options for different columns
 export type SortKey = 'symbol' | 'instrumentName' | 'quantity' | 'avgPrice' | 'cost' | 'currentPrice' | 'todayChange' | 'marketValue' | 'gainLoss' | 'gainLossPercent'
+
+// Function to get color class for change percentage
+const getChangeColor = (changePercent: number | null | undefined): string => {
+  if (changePercent === null || changePercent === undefined || changePercent === 0) {
+    // Use neutral/green color for 0% change (market unchanged)
+    return 'text-green-600'
+  }
+  return changePercent > 0 ? 'text-green-600' : 'text-red-600'
+}
 
 // Define props with mobile sort functionality
 const props = defineProps<{

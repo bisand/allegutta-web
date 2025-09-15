@@ -44,13 +44,13 @@ export default defineEventHandler(async (event) => {
 
         return {
           ...holding,
-          currentPrice: marketData?.currentPrice || null,
-          regularMarketChange: marketData?.regularMarketChange || null,
-          regularMarketChangePercent: marketData?.regularMarketChangePercent || null,
-          regularMarketPreviousClose: marketData?.regularMarketPreviousClose || null,
-          regularMarketTime: marketData?.regularMarketTime || null,
-          regularMarketVolume: marketData?.regularMarketVolume || null,
-          lastUpdated: marketData?.lastUpdated || null
+          currentPrice: marketData?.currentPrice ?? null,
+          regularMarketChange: marketData?.regularMarketChange ?? null,
+          regularMarketChangePercent: marketData?.regularMarketChangePercent ?? null,
+          regularMarketPreviousClose: marketData?.regularMarketPreviousClose ?? null,
+          regularMarketTime: marketData?.regularMarketTime ?? null,
+          regularMarketVolume: marketData?.regularMarketVolume ?? null,
+          lastUpdated: marketData?.lastUpdated ?? null
         }
       })
     )
