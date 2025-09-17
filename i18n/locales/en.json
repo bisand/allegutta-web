@@ -45,6 +45,14 @@
     "hoursAgo": "{count} hour ago | {count} hours ago",
     "daysAgo": "{count} day ago | {count} days ago"
   },
+  "dateTime": {
+    "preview": "Preview",
+    "selectDate": "Select date",
+    "selectTime": "Select time",
+    "selectDateTime": "Select date and time",
+    "invalidDate": "Invalid date",
+    "invalidTime": "Invalid time"
+  },
   "privacy": {
     "title": "Privacy Policy",
     "description": "This privacy policy describes how AlleGutta Portfolio Manager handles your personal information.",

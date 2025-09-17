@@ -45,6 +45,14 @@
     "hoursAgo": "{count} time siden | {count} timer siden",
     "daysAgo": "{count} dag siden | {count} dager siden"
   },
+  "dateTime": {
+    "preview": "Forhåndsvisning",
+    "selectDate": "Velg dato",
+    "selectTime": "Velg tid",
+    "selectDateTime": "Velg dato og tid",
+    "invalidDate": "Ugyldig dato",
+    "invalidTime": "Ugyldig tid"
+  },
   "privacy": {
     "title": "Personvernerklæring",
     "description": "Denne personvernerklæringen beskriver hvordan AlleGutta Portfolio Manager håndterer din personlige informasjon.",

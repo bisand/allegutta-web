@@ -180,7 +180,7 @@
                         Portfolio Name
                       </label>
                       <input id="name" v-model="form.name" type="text" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         placeholder="Enter portfolio name">
                     </div>
 
@@ -189,7 +189,7 @@
                         Description (Optional)
                       </label>
                       <textarea id="description" v-model="form.description" rows="3"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         placeholder="Enter portfolio description" />
                     </div>
 
@@ -198,7 +198,7 @@
                         Currency
                       </label>
                       <select id="currency" v-model="form.currency" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <option value="NOK">NOK - Norwegian Krone</option>
                         <option value="USD">USD - US Dollar</option>
                         <option value="EUR">EUR - Euro</option>
@@ -227,7 +227,7 @@
                             ATH Value
                           </label>
                           <input id="athValue" v-model.number="form.athValue" type="number" step="0.01"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            class="mt-1 block w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             placeholder="Enter portfolio ATH value">
                           <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Set the all-time high value for this portfolio
@@ -235,14 +235,12 @@
                         </div>
 
                         <div>
-                          <label for="athDate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            ATH Date & Time
-                          </label>
-                          <input id="athDate" v-model="form.athDate" type="datetime-local"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Date and time when the ATH was reached
-                          </p>
+                          <UIDateTimePicker 
+                            v-model="form.athDate"
+                            type="datetime-local"
+                            label="ATH Date & Time"
+                            help-text="Date and time when the ATH was reached"
+                          />
                         </div>
                       </div>
                     </div>
@@ -332,19 +330,19 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Symbol</label>
                   <input v-model="transactionForm.symbol" type="text" required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white uppercase"
+                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white uppercase"
                     placeholder="AAPL">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ISIN (Optional)</label>
                   <input v-model="transactionForm.isin" type="text" maxlength="12"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white uppercase"
+                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white uppercase"
                     placeholder="US0378331005">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
                   <select v-model="transactionForm.type" required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="BUY">Buy</option>
                     <option value="SELL">Sell</option>
                     <option value="DIVIDEND">Dividend</option>
@@ -370,27 +368,27 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
                   <input v-model.number="transactionForm.quantity" type="number" step="1" min="1"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="10">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
                   }})</label>
                   <input v-model.number="transactionForm.price" type="number" step="0.0001" min="0.0001"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="150.00">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fees ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
                   }})</label>
                   <input v-model.number="transactionForm.fees" type="number" step="0.0001" min="0"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="9.99">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
                   <select v-model="transactionForm.currency"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="NOK">NOK - Norwegian Krone</option>
                     <option value="USD">USD - US Dollar</option>
                     <option value="EUR">EUR - Euro</option>
@@ -400,14 +398,17 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-                  <input v-model="transactionForm.date" type="date" required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <UIDateTimePicker 
+                    v-model="transactionForm.date"
+                    type="date"
+                    label="Date"
+                    required
+                  />
                 </div>
                 <div class="md:col-span-2 lg:col-span-3">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes (Optional)</label>
                   <input v-model="transactionForm.notes" type="text"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="Transaction notes">
                 </div>
                 <div class="md:col-span-2 lg:col-span-3 flex justify-end space-x-3">

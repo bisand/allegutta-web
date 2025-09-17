@@ -61,7 +61,7 @@
                       type="text"
                       required
                       maxlength="10"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="e.g., AAPL"
                       :class="{ 'border-red-500': errors.symbol }"
                     >
@@ -77,7 +77,7 @@
                       v-model="form.isin"
                       type="text"
                       maxlength="12"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="e.g., US0378331005"
                       style="text-transform: uppercase"
                       :class="{ 'border-red-500': errors.isin }"
@@ -96,7 +96,7 @@
                       id="currency"
                       v-model="form.currency"
                       required
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       :class="{ 'border-red-500': errors.currency }"
                     >
                       <option value="NOK">NOK - Norwegian Krone</option>
@@ -117,7 +117,7 @@
                       id="notes"
                       v-model="form.notes"
                       rows="3"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="Optional notes about this position..."
                     />
                   </div>

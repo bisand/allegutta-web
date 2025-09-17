@@ -59,7 +59,7 @@
                       type="text"
                       required
                       maxlength="10"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="e.g., AAPL"
                       :class="{ 'border-red-500': errors.symbol }"
                     >
@@ -76,7 +76,7 @@
                       type="text"
                       required
                       maxlength="20"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="e.g., AAPL, EQNR.OL, MOWI.OL"
                       :class="{ 'border-red-500': errors.symbolYahoo }"
                     >
@@ -95,7 +95,7 @@
                       v-model="form.longName"
                       type="text"
                       maxlength="100"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="e.g., Apple Inc."
                     >
                   </div>
@@ -109,7 +109,7 @@
                       v-model="form.shortName"
                       type="text"
                       maxlength="50"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="e.g., Apple"
                     >
                   </div>
@@ -123,7 +123,7 @@
                       v-model="form.exchange"
                       type="text"
                       maxlength="20"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="e.g., OSL, NASDAQ"
                     >
                   </div>

@@ -1,12 +1,23 @@
 /**
- * Enhanced date and time formatting composable with locale support
+ * Enhanced date and time formatting composable with true browser locale support
  */
 
 export const useDateTime = () => {
   const { locale } = useI18n()
   
+  // Get the actual browser locale, not just the i18n locale
+  const getBrowserLocale = (): string => {
+    // First try navigator.language (most accurate)
+    if (typeof navigator !== 'undefined' && navigator.language) {
+      return navigator.language
+    }
+    
+    // Fallback to i18n locale, then default
+    return locale.value || 'no-NO'
+  }
+  
   /**
-   * Formats a date with locale-specific formatting
+   * Formats a date with locale-specific formatting using browser's actual locale
    */
   const formatDate = (date: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions): string => {
     if (!date) return 'N/A'
@@ -15,6 +26,8 @@ export const useDateTime = () => {
     
     if (isNaN(dateObj.getTime())) return 'Invalid Date'
     
+    const browserLocale = getBrowserLocale()
+    
     const defaultOptions: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'short',
@@ -22,16 +35,20 @@ export const useDateTime = () => {
     }
     
     try {
-      return new Intl.DateTimeFormat(locale.value, { ...defaultOptions, ...options }).format(dateObj)
+      return new Intl.DateTimeFormat(browserLocale, { ...defaultOptions, ...options }).format(dateObj)
     } catch {
-      // Fallback to ISO string if locale formatting fails
-      return dateObj.toLocaleDateString()
+      // Fallback to browser's default if custom locale fails
+      try {
+        return new Intl.DateTimeFormat(undefined, { ...defaultOptions, ...options }).format(dateObj)
+      } catch {
+        return dateObj.toLocaleDateString()
+      }
     }
   }
   
   /**
-   * Formats a date with time (timestamp) with locale-specific formatting
-   * Converts UTC dates to CET (Central European Time)
+   * Formats a date with time (timestamp) with locale-specific formatting using browser's actual locale
+   * Converts UTC dates to the browser's timezone
    */
   const formatDateTime = (date: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions): string => {
     if (!date) return 'N/A'
@@ -40,25 +57,32 @@ export const useDateTime = () => {
     
     if (isNaN(dateObj.getTime())) return 'Invalid Date'
     
+    const browserLocale = getBrowserLocale()
+    
     const defaultOptions: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Europe/Oslo' // CET/CEST timezone
+      // Don't force timezone, let browser decide
+      timeZone: undefined
     }
     
     try {
-      return new Intl.DateTimeFormat(locale.value, { ...defaultOptions, ...options }).format(dateObj)
+      return new Intl.DateTimeFormat(browserLocale, { ...defaultOptions, ...options }).format(dateObj)
     } catch {
-      // Fallback to ISO string if locale formatting fails
-      return dateObj.toLocaleString()
+      // Fallback to browser's default
+      try {
+        return new Intl.DateTimeFormat(undefined, { ...defaultOptions, ...options }).format(dateObj)
+      } catch {
+        return dateObj.toLocaleString()
+      }
     }
   }
   
   /**
-   * Formats time only with locale-specific formatting
+   * Formats time only with locale-specific formatting using browser's actual locale
    */
   const formatTime = (date: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions): string => {
     if (!date) return 'N/A'
@@ -67,6 +91,8 @@ export const useDateTime = () => {
     
     if (isNaN(dateObj.getTime())) return 'Invalid Time'
     
+    const browserLocale = getBrowserLocale()
+    
     const defaultOptions: Intl.DateTimeFormatOptions = {
       hour: '2-digit',
       minute: '2-digit',
@@ -74,10 +100,14 @@ export const useDateTime = () => {
     }
     
     try {
-      return new Intl.DateTimeFormat(locale.value, { ...defaultOptions, ...options }).format(dateObj)
+      return new Intl.DateTimeFormat(browserLocale, { ...defaultOptions, ...options }).format(dateObj)
     } catch {
-      // Fallback to ISO string if locale formatting fails
-      return dateObj.toLocaleTimeString()
+      // Fallback to browser's default
+      try {
+        return new Intl.DateTimeFormat(undefined, { ...defaultOptions, ...options }).format(dateObj)
+      } catch {
+        return dateObj.toLocaleTimeString()
+      }
     }
   }
   
@@ -128,6 +158,7 @@ export const useDateTime = () => {
     formatDateTime,
     formatTime,
     formatRelativeTime,
-    formatDuration
+    formatDuration,
+    getBrowserLocale
   }
 }
