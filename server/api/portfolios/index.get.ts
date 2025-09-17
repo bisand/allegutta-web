@@ -19,6 +19,8 @@ export default defineEventHandler(async (event) => {
         isDefault: true,
         currency: true,
         cashBalance: true,
+        athValue: true,
+        athDate: true,
         createdAt: true,
         updatedAt: true,
         // Don't include userId for privacy

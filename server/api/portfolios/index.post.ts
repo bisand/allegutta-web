@@ -25,6 +25,8 @@ export default defineEventHandler(async (event) => {
         currency: body.currency || 'NOK',
         userId: dbUser.id, // Use the database user ID
         isDefault: body.isDefault || false,
+        athValue: body.athValue || null,
+        athDate: body.athDate ? new Date(body.athDate) : null,
         updatedAt: new Date()
       }
     })

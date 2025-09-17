@@ -10,6 +10,10 @@ export default defineEventHandler(async (event) => {
         name: true,
         description: true,
         isDefault: true,
+        currency: true,
+        cashBalance: true,
+        athValue: true,
+        athDate: true,
         createdAt: true,
         updatedAt: true,
         // Don't include userId for public view

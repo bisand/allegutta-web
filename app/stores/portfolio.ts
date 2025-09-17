@@ -67,6 +67,8 @@ export interface CreatePortfolioData {
   description?: string
   currency?: string
   isDefault?: boolean
+  athValue?: number | null
+  athDate?: string | null
 }
 
 export interface CreateTransactionData {

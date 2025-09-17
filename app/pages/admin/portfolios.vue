@@ -47,11 +47,18 @@
               {{ $t('portfolio.managementDescription') }}
             </p>
           </div>
-          <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors mt-4 lg:mt-0"
-            @click="showCreateModal = true">
-            <PlusIcon class="w-4 h-4 mr-2" />
-            <span class="hidden md:inline">{{ $t('portfolio.create') || 'Create' }}</span>
-          </button>
+          <div class="flex gap-2">
+            <button type="button" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600"
+              title="Refresh portfolio data" @click="refreshPortfolios">
+              <ArrowPathIcon class="w-4 h-4 mr-1" />
+              <span class="hidden sm:inline">Refresh</span>
+            </button>
+            <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
+              @click="showCreateModal = true">
+              <PlusIcon class="w-4 h-4 mr-2" />
+              <span class="hidden md:inline">{{ $t('portfolio.create') || 'Create' }}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Portfolios list -->
@@ -206,6 +213,38 @@
                       <label for="isDefault" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                         Set as default portfolio
                       </label>
+                    </div>
+
+                    <!-- ATH (All-Time High) Section -->
+                    <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                        All-Time High (ATH) Settings
+                      </h4>
+                      
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label for="athValue" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            ATH Value
+                          </label>
+                          <input id="athValue" v-model.number="form.athValue" type="number" step="0.01"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Enter portfolio ATH value">
+                          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Set the all-time high value for this portfolio
+                          </p>
+                        </div>
+
+                        <div>
+                          <label for="athDate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            ATH Date & Time
+                          </label>
+                          <input id="athDate" v-model="form.athDate" type="datetime-local"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Date and time when the ATH was reached
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -680,6 +719,9 @@ onMounted(async () => {
     if (portfolioToEdit) {
       editPortfolio(portfolioToEdit)
     }
+  } else {
+    // Load portfolios on mount
+    await portfolioStore.loadAllPortfolios()
   }
 })
 
@@ -688,7 +730,9 @@ const form = reactive({
   name: '',
   description: '',
   currency: 'NOK',
-  isDefault: false
+  isDefault: false,
+  athValue: null as number | null,
+  athDate: '' as string
 })
 
 // Transaction form data
@@ -710,6 +754,8 @@ function resetForm(): void {
   form.description = ''
   form.currency = 'NOK'
   form.isDefault = false
+  form.athValue = null
+  form.athDate = ''
 }
 
 // Reset transaction form
@@ -1042,6 +1088,17 @@ function editPortfolio(portfolio: Portfolio): void {
   form.description = portfolio.description || ''
   form.isDefault = portfolio.isDefault
   form.currency = portfolio.currency || 'NOK'
+  form.athValue = portfolio.athValue || null
+  form.athDate = portfolio.athDate ? new Date(portfolio.athDate).toISOString().slice(0, 16) : ''
+}
+
+// Refresh portfolios data
+async function refreshPortfolios(): Promise<void> {
+  try {
+    await portfolioStore.loadAllPortfolios()
+  } catch (error) {
+    console.error('Failed to refresh portfolios:', error)
+  }
 }
 
 // Format currency - using useCurrency composable above
@@ -1106,7 +1163,9 @@ async function submitForm(): Promise<void> {
       const result = await portfolioStore.updatePortfolio(editingPortfolio.value.id, {
         name: form.name,
         description: form.description || undefined,
-        isDefault: form.isDefault
+        isDefault: form.isDefault,
+        athValue: form.athValue,
+        athDate: form.athDate || undefined
       })
 
       console.log('Portfolio updated successfully:', result)
@@ -1121,7 +1180,9 @@ async function submitForm(): Promise<void> {
       const result = await portfolioStore.createPortfolio({
         name: form.name,
         description: form.description || undefined,
-        isDefault: form.isDefault
+        isDefault: form.isDefault,
+        athValue: form.athValue,
+        athDate: form.athDate || undefined
       })
 
       console.log('Portfolio created successfully:', result)

@@ -53,15 +53,33 @@ export default defineEventHandler(async (event) => {
     }
 
     // Update the portfolio
+    const updateData: {
+      name: string
+      description: string | null
+      isDefault: boolean
+      athValue?: number | null
+      athDate?: Date | null
+    } = {
+      name: body.name,
+      description: body.description || null,
+      isDefault: body.isDefault || false
+    }
+
+    // Handle ATH fields if provided
+    if (body.athValue !== undefined) {
+      updateData.athValue = body.athValue
+    }
+    
+    if (body.athDate !== undefined) {
+      // Convert string date to Date object if provided, otherwise set to null
+      updateData.athDate = body.athDate ? new Date(body.athDate) : null
+    }
+
     const updatedPortfolio = await prisma.portfolios.update({
       where: {
         id: portfolioId
       },
-      data: {
-        name: body.name,
-        description: body.description || null,
-        isDefault: body.isDefault || false
-      }
+      data: updateData
     })
 
     return {
