@@ -36,7 +36,8 @@
     "account": "Account",
     "backToHome": "Go back to home",
     "managementDescription": "Manage your investments with precision and clarity.",
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "refresh": "Refresh"
   },
   "time": {
     "justNow": "Just now",
@@ -101,7 +102,8 @@
     "totalValue": "Total Value",
     "totalGainLoss": "Total Gain/Loss",
     "gainLossPercentage": "Gain/Loss %",
-    "create": "Create"
+    "create": "Create",
+    "currency": "Currency"
   },
   "transaction": {
     "add": "Add Transaction",

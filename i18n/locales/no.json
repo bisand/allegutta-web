@@ -36,7 +36,8 @@
     "account": "Konto",
     "backToHome": "Tilbake til hjem",
     "managementDescription": "Administrer investeringene dine med presisjon og klarhet.",
-    "privacyPolicy": "Personvernerklæring"
+    "privacyPolicy": "Personvernerklæring",
+    "refresh": "Oppdatér"
   },
   "time": {
     "justNow": "Akkurat nå",
@@ -101,7 +102,8 @@
     "totalValue": "Totalverdi",
     "totalGainLoss": "Total gevinst/tap",
     "gainLossPercentage": "Gevinst/tap %",
-    "create": "Opprett"
+    "create": "Opprett",
+    "currency": "Valuta"
   },
   "transaction": {
     "add": "Legg til transaksjon",
