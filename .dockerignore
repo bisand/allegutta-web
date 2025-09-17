@@ -52,7 +52,6 @@ prisma/dev.db
 # Config files not needed in container
 eslint.config.mjs
 tailwind.config.js
-tailwind.config.ts
 tsconfig.json
 vercel.json
 wrangler.toml

@@ -11,23 +11,22 @@
           <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
             {{ $t('homepage.subtitle') }}
           </p>
-          
+
           <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <NuxtLink
-              to="/portfolio"
-              class="flex items-center px-8 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
+            <NuxtLink to="/portfolio"
+              class="flex items-center px-8 py-3 text-lg font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-all duration-400 ease-out shadow-lg hover:shadow-xl transform hover:scale-105">
               {{ $t('homepage.viewPortfolio') }}
               <ChartBarIcon class="ml-2 w-5 h-5" />
             </NuxtLink>
           </div>
         </div>
       </div>
-      
+
       <!-- Decorative elements -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute -top-40 -right-32 w-80 h-80 bg-primary-200 dark:bg-primary-800 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
-        <div class="absolute -bottom-40 -left-32 w-80 h-80 bg-blue-200 dark:bg-blue-800 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
+        <div
+          class="absolute -bottom-40 -left-32 w-80 h-80 bg-blue-200 dark:bg-blue-800 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
       </div>
     </section>
 
@@ -45,7 +44,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <!-- Feature 1 -->
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg dark:hover:glow transition-all duration-300">
             <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center mb-6">
               <ChartBarIcon class="w-6 h-6 text-primary-500" />
             </div>
@@ -58,7 +57,7 @@
           </div>
 
           <!-- Feature 2 -->
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg dark:hover:glow transition-all duration-300">
             <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-6">
               <BanknotesIcon class="w-6 h-6 text-green-600" />
             </div>
@@ -71,7 +70,7 @@
           </div>
 
           <!-- Feature 3 -->
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg dark:hover:glow transition-all duration-300">
             <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-6">
               <ShieldCheckIcon class="w-6 h-6 text-purple-600" />
             </div>
@@ -84,7 +83,7 @@
           </div>
 
           <!-- Feature 4 -->
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg dark:hover:glow transition-all duration-300">
             <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-6">
               <DevicePhoneMobileIcon class="w-6 h-6 text-blue-600" />
             </div>
@@ -97,7 +96,7 @@
           </div>
 
           <!-- Feature 5 -->
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg dark:hover:glow transition-all duration-300">
             <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center mb-6">
               <MoonIcon class="w-6 h-6 text-yellow-600" />
             </div>
@@ -110,7 +109,7 @@
           </div>
 
           <!-- Feature 6 -->
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg transition-shadow">
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 hover:shadow-lg dark:hover:glow transition-all duration-300">
             <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center mb-6">
               <PresentationChartLineIcon class="w-6 h-6 text-red-600" />
             </div>
@@ -134,36 +133,27 @@
         <p class="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
           {{ $t('homepage.ctaSubtitle') }}
         </p>
-        
-        <button 
-          v-if="!loggedIn && isRegistrationEnabled"
-          type="button"
-          class="flex items-center mx-auto px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-          @click="() => register()"
-        >
+
+        <button v-if="!loggedIn && isRegistrationEnabled" type="button"
+          class="flex items-center mx-auto px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-all duration-300 ease-out shadow-lg hover:shadow-xl transform hover:scale-105"
+          @click="() => register()">
           {{ $t('homepage.createPortfolio') }}
           <ArrowRightIcon class="ml-2 w-5 h-5" />
         </button>
-        
+
         <div v-if="!loggedIn && !isRegistrationEnabled" class="text-center">
           <p class="text-primary-100 mb-4">
             {{ $t('homepage.registrationDisabled') }}
           </p>
-          <NuxtLink 
-            :to="`/api/auth/login?org_code=${config.public.kindeOrgCode}`"
-            external
-            class="inline-flex items-center px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
+          <NuxtLink :to="`/api/auth/login?org_code=${config.public.kindeOrgCode}`" external
+            class="inline-flex items-center px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-all duration-300 ease-out shadow-lg hover:shadow-xl transform hover:scale-105">
             {{ $t('common.login') }}
             <ArrowRightIcon class="ml-2 w-5 h-5" />
           </NuxtLink>
         </div>
-        
-        <NuxtLink 
-          v-else
-          to="/portfolio"
-          class="flex items-center mx-auto px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-        >
+
+        <NuxtLink v-else to="/portfolio"
+          class="flex items-center mx-auto px-8 py-3 text-lg font-medium text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-all duration-300 ease-out shadow-lg hover:shadow-xl transform hover:scale-105">
           {{ $t('homepage.goToPortfolio') }}
           <ChartBarIcon class="ml-2 w-5 h-5" />
         </NuxtLink>
@@ -199,12 +189,15 @@ useHead({
   0% {
     transform: translate(0px, 0px) scale(1);
   }
+
   33% {
     transform: translate(30px, -50px) scale(1.1);
   }
+
   66% {
     transform: translate(-20px, 20px) scale(0.9);
   }
+
   100% {
     transform: translate(0px, 0px) scale(1);
   }

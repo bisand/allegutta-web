@@ -20,6 +20,11 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt'
   ],
 
+  tailwindcss: {
+    exposeConfig: true,
+    viewer: true,
+  },
+
   // Vite PWA configuration
   pwa: {
     registerType: 'autoUpdate',

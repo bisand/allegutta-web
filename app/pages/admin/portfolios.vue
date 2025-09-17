@@ -23,22 +23,18 @@
         <!-- Admin Navigation -->
         <nav class="mb-6">
           <div class="flex space-x-8">
-            <NuxtLink 
-              to="/admin/portfolios" 
-              class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 border-b-2 border-blue-600 dark:border-blue-400 pb-2"
-            >
+            <NuxtLink to="/admin/portfolios"
+              class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 border-b-2 border-blue-600 dark:border-blue-400 pb-2">
               Portfolio Management
             </NuxtLink>
-            <NuxtLink 
-              to="/admin/holdings" 
-              class="text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 pb-2"
-            >
+            <NuxtLink to="/admin/holdings"
+              class="text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 pb-2">
               Holdings GAV Management
             </NuxtLink>
           </div>
         </nav>
-        
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {{ $t('portfolio.management') }}
@@ -48,7 +44,8 @@
             </p>
           </div>
           <div class="flex gap-2">
-            <button type="button" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600"
+            <button type="button"
+              class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600"
               title="Refresh portfolio data" @click="refreshPortfolios">
               <ArrowPathIcon class="w-4 h-4 mr-1" />
               <span class="hidden sm:inline">{{ $t('common.refresh') }}</span>
@@ -89,7 +86,8 @@
                   </td>
                   <!-- <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ portfolio.description || 'No description' }}</td> -->
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ portfolio.currency || 'NOK' }}</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{
+                      portfolio.currency || 'NOK' }}</span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span v-if="portfolio.isDefault" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Default</span>
@@ -98,14 +96,36 @@
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ formatDate(portfolio.createdAt) }}</td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div class="flex items-center gap-1 flex-wrap justify-end">
-                      <NuxtLink :to="`/portfolio/${portfolio.id}`" class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700" title="View portfolio details">
+                      <NuxtLink :to="`/portfolio/${portfolio.id}`"
+                        class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700"
+                        title="View portfolio details">
                         <EyeIcon class="w-4 h-4" />
                       </NuxtLink>
-                      <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700" title="Edit portfolio settings" @click="editPortfolio(portfolio)"><PencilIcon class="w-4 h-4" /></button>
-                      <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700" title="Manage portfolio positions" @click="managePositions(portfolio)"><ChartPieIcon class="w-4 h-4" /></button>
-                      <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700" title="Manage portfolio transactions" @click="manageTransactions(portfolio)"><DocumentTextIcon class="w-4 h-4" /></button>
-                      <button type="button" :disabled="recalculatingPortfolios.has(portfolio.id)" class="inline-flex items-center justify-center w-8 h-8 text-orange-700 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md transition-colors dark:text-orange-300 dark:hover:text-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed" title="Recalculate portfolio holdings" @click="recalculateHoldings(portfolio)"><ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': recalculatingPortfolios.has(portfolio.id) }" /></button>
-                      <button v-if="!portfolio.isDefault" type="button" class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700" title="Delete portfolio" @click="deletePortfolio(portfolio)"><TrashIcon class="w-4 h-4" /></button>
+                      <button type="button"
+                        class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700"
+                        title="Edit portfolio settings" @click="editPortfolio(portfolio)">
+                        <PencilIcon class="w-4 h-4" />
+                      </button>
+                      <button type="button"
+                        class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700"
+                        title="Manage portfolio positions" @click="managePositions(portfolio)">
+                        <ChartPieIcon class="w-4 h-4" />
+                      </button>
+                      <button type="button"
+                        class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700"
+                        title="Manage portfolio transactions" @click="manageTransactions(portfolio)">
+                        <DocumentTextIcon class="w-4 h-4" />
+                      </button>
+                      <button type="button" :disabled="recalculatingPortfolios.has(portfolio.id)"
+                        class="inline-flex items-center justify-center w-8 h-8 text-orange-700 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md transition-colors dark:text-orange-300 dark:hover:text-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Recalculate portfolio holdings" @click="recalculateHoldings(portfolio)">
+                        <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': recalculatingPortfolios.has(portfolio.id) }" />
+                      </button>
+                      <button v-if="!portfolio.isDefault" type="button"
+                        class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700"
+                        title="Delete portfolio" @click="deletePortfolio(portfolio)">
+                        <TrashIcon class="w-4 h-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -131,7 +151,8 @@
                     </div>
                   </div>
                   <div class="mt-3 flex flex-wrap gap-2 text-xs">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ portfolio.currency || 'NOK' }}</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ portfolio.currency || 'NOK'
+                      }}</span>
                     <span v-if="portfolio.isDefault" class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-green-100 text-green-800">Default</span>
                     <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-800">Active</span>
                   </div>
@@ -139,12 +160,36 @@
                 </div>
 
                 <div class="ml-auto flex items-start gap-2 flex-wrap justify-end">
-                  <NuxtLink :to="`/portfolio/${portfolio.id}`" class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700" title="View portfolio details"><EyeIcon class="w-4 h-4"/></NuxtLink>
-                  <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700" title="Edit portfolio settings" @click="editPortfolio(portfolio)"><PencilIcon class="w-4 h-4"/></button>
-                  <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700" title="Manage portfolio positions" @click="managePositions(portfolio)"><ChartPieIcon class="w-4 h-4"/></button>
-                  <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700" title="Manage portfolio transactions" @click="manageTransactions(portfolio)"><DocumentTextIcon class="w-4 h-4"/></button>
-                  <button type="button" :disabled="recalculatingPortfolios.has(portfolio.id)" class="inline-flex items-center justify-center w-8 h-8 text-orange-700 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md transition-colors dark:text-orange-300 dark:hover:text-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed" title="Recalculate portfolio holdings" @click="recalculateHoldings(portfolio)"><ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': recalculatingPortfolios.has(portfolio.id) }"/></button>
-                  <button v-if="!portfolio.isDefault" type="button" class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700" title="Delete portfolio" @click="deletePortfolio(portfolio)"><TrashIcon class="w-4 h-4"/></button>
+                  <NuxtLink :to="`/portfolio/${portfolio.id}`"
+                    class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700"
+                    title="View portfolio details">
+                    <EyeIcon class="w-4 h-4" />
+                  </NuxtLink>
+                  <button type="button"
+                    class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700"
+                    title="Edit portfolio settings" @click="editPortfolio(portfolio)">
+                    <PencilIcon class="w-4 h-4" />
+                  </button>
+                  <button type="button"
+                    class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700"
+                    title="Manage portfolio positions" @click="managePositions(portfolio)">
+                    <ChartPieIcon class="w-4 h-4" />
+                  </button>
+                  <button type="button"
+                    class="inline-flex items-center justify-center w-8 h-8 text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-700"
+                    title="Manage portfolio transactions" @click="manageTransactions(portfolio)">
+                    <DocumentTextIcon class="w-4 h-4" />
+                  </button>
+                  <button type="button" :disabled="recalculatingPortfolios.has(portfolio.id)"
+                    class="inline-flex items-center justify-center w-8 h-8 text-orange-700 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md transition-colors dark:text-orange-300 dark:hover:text-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:border-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Recalculate portfolio holdings" @click="recalculateHoldings(portfolio)">
+                    <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': recalculatingPortfolios.has(portfolio.id) }" />
+                  </button>
+                  <button v-if="!portfolio.isDefault" type="button"
+                    class="inline-flex items-center justify-center w-8 h-8 text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors dark:text-red-300 dark:hover:text-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:border-red-700"
+                    title="Delete portfolio" @click="deletePortfolio(portfolio)">
+                    <TrashIcon class="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -220,7 +265,7 @@
                       <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
                         All-Time High (ATH) Settings
                       </h4>
-                      
+
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label for="athValue" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -235,12 +280,7 @@
                         </div>
 
                         <div>
-                          <UIDateTimePicker 
-                            v-model="form.athDate"
-                            type="datetime-local"
-                            label="ATH Date & Time"
-                            help-text="Date and time when the ATH was reached"
-                          />
+                          <UIDateTimePicker v-model="form.athDate" type="datetime-local" label="ATH Date & Time" help-text="Date and time when the ATH was reached" />
                         </div>
                       </div>
                     </div>
@@ -493,8 +533,8 @@
       @success="handlePositionUpdate" />
 
     <!-- Edit Market Data Modal -->
-    <PortfolioEditMarketDataModal :show="showMarketDataModal" :holding="selectedPosition" :portfolio-id="selectedPortfolio?.id || ''" style="z-index: 70;" @close="closeMarketDataModal"
-      @success="handleMarketDataUpdate" />
+    <PortfolioEditMarketDataModal :show="showMarketDataModal" :holding="selectedPosition" :portfolio-id="selectedPortfolio?.id || ''" style="z-index: 70;"
+      @close="closeMarketDataModal" @success="handleMarketDataUpdate" />
 
     <!-- Import Transactions Modal -->
     <Teleport to="body">
@@ -503,15 +543,8 @@
     </Teleport>
 
     <!-- Add/Edit Transaction Modal -->
-    <PortfolioAddTransactionModal 
-      :show="showAddTransactionForm" 
-      :transaction="editingTransaction"
-      :portfolio-id="selectedPortfolio?.id || ''" 
-      :portfolio-currency="selectedPortfolio?.currency"
-      style="z-index: 70;" 
-      @close="closeAddTransactionModal"
-      @success="handleTransactionSuccess" 
-    />
+    <PortfolioAddTransactionModal :show="showAddTransactionForm" :transaction="editingTransaction" :portfolio-id="selectedPortfolio?.id || ''"
+      :portfolio-currency="selectedPortfolio?.currency" style="z-index: 70;" @close="closeAddTransactionModal" @success="handleTransactionSuccess" />
 
   </div>
 </template>
@@ -549,7 +582,7 @@ interface TransactionData {
   quantity: number
   price: number
   fees: number
-  currency?: string
+  currency: string
   date: string
   notes?: string
   createdAt: string
@@ -713,22 +746,22 @@ async function recalculateHoldings(portfolio: Portfolio): Promise<void> {
   try {
     // Add portfolio to recalculating set to show loading state
     recalculatingPortfolios.value.add(portfolio.id)
-    
+
     console.log(`Starting recalculation for portfolio: ${portfolio.name} (${portfolio.id})`)
-    
+
     const response = await $fetch(`/api/portfolios/${portfolio.id}/recalculate-holdings`, {
       method: 'POST',
       headers: import.meta.server ? useRequestHeaders(['cookie']) : {}
     })
-    
+
     console.log('Recalculation completed:', response)
-    
+
     // Show success message
-    alert(`Holdings recalculated successfully for "${portfolio.name}"!\n\nProcessed ${response.symbolsProcessed} securities\nCash balance: ${formatCurrency(response.cashBalance, { currency: portfolio.currency || 'NOK' })}`)
-    
+    alert(`Holdings recalculated successfully for "${portfolio.name}"!\n\nProcessed ${response.symbolsProcessed} securities\nCash balance: ${formatCurrency(response.cashBalance || 0, { currency: portfolio.currency || 'NOK' })}`)
+
     // Refresh the portfolio data in the store
     await portfolioStore.fetchPortfolios()
-    
+
   } catch (error) {
     console.error('Failed to recalculate holdings:', error)
     alert(`Failed to recalculate holdings for "${portfolio.name}". Please try again.`)

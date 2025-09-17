@@ -5,37 +5,34 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom CSS variables for theming */
-:root {
-  --primary-color: #0ea5e9;
-  --secondary-color: #64748b;
-  --success-color: #10b981;
-  --danger-color: #ef4444;
-  --warning-color: #f59e0b;
-}
-
-/* Dark mode variables */
-[data-theme="dark"] {
-  --primary-color: #38bdf8;
-  --secondary-color: #94a3b8;
-}
+/* Note: Removed custom CSS variables that were conflicting with Tailwind's primary colors */
 
 /* Custom animations for the hero section */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes blob {
   0% {
     transform: translate(0px, 0px) scale(1);
   }
+
   33% {
     transform: translate(30px, -50px) scale(1.1);
   }
+
   66% {
     transform: translate(-20px, 20px) scale(0.9);
   }
+
   100% {
     transform: translate(0px, 0px) scale(1);
   }
@@ -43,8 +40,13 @@
 
 /* Smooth appearance for auth components */
 @keyframes smoothAppear {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .animate-blob {
@@ -102,12 +104,14 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   /* Set body background colors for iOS PWA status bar compatibility */
-  background-color: #f9fafb; /* gray-50 for light mode */
+  background-color: #f9fafb;
+  /* gray-50 for light mode */
 }
 
 /* Dark mode body background */
 .dark body {
-  background-color: #111827; /* gray-900 for dark mode */
+  background-color: #111827;
+  /* gray-900 for dark mode */
 }
 
 /* Custom scrollbar for webkit browsers */
@@ -152,6 +156,7 @@ body {
 /* Form Input Normalization */
 /* Ensure consistent styling across all form input types */
 @layer components {
+
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -170,20 +175,22 @@ body {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    
+
     /* Consistent font properties */
     font-family: inherit;
     font-size: inherit;
-    font-weight: normal; /* Prevent bold text in date inputs */
+    font-weight: normal;
+    /* Prevent bold text in date inputs */
     line-height: 1.5;
-    
+
     /* Consistent dimensions */
-    min-height: 2.5rem; /* 40px */
-    
+    min-height: 2.5rem;
+    /* 40px */
+
     /* Ensure proper box model */
     box-sizing: border-box;
   }
-  
+
   /* Special handling for select elements */
   select {
     /* Use CSS-only dropdown arrow instead of SVG to avoid PostCSS issues */
@@ -192,29 +199,34 @@ body {
     position: relative;
     padding-right: 2.5rem;
   }
-  
+
   /* CSS-only dropdown arrow using pseudo-element approach */
   select {
     background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
-                      linear-gradient(135deg, #6b7280 50%, transparent 50%);
+      linear-gradient(135deg, #6b7280 50%, transparent 50%);
     background-position: calc(100% - 20px) calc(1em + 2px),
-                         calc(100% - 15px) calc(1em + 2px);
+      calc(100% - 15px) calc(1em + 2px);
     background-size: 5px 5px, 5px 5px;
     background-repeat: no-repeat;
   }
-  
+
   /* Dark mode select arrow */
   .dark select {
     /* Remove background-color override to allow Tailwind classes to work */
     background-image: linear-gradient(45deg, transparent 50%, #9ca3af 50%),
-                      linear-gradient(135deg, #9ca3af 50%, transparent 50%);
+      linear-gradient(135deg, #9ca3af 50%, transparent 50%);
   }
-  
+
   /* Date/time input specific fixes */
   input[type="date"]::-webkit-calendar-picker-indicator,
   input[type="datetime-local"]::-webkit-calendar-picker-indicator,
   input[type="time"]::-webkit-calendar-picker-indicator {
     margin: 0;
     padding: 0;
+  }
+
+  /* Custom glow effect for dark mode hover states */
+  .dark .glow {
+    box-shadow: 0px 0px 10px rgba(99, 102, 241, 0.6) !important;
   }
 }

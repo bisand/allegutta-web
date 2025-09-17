@@ -261,7 +261,7 @@ async function submitForm(): Promise<void> {
         isin: form.isin.trim() || null,
         currency: form.currency
       }
-    })
+    }) as { holding: Holding }
 
     emit('success', response.holding)
     closeModal()
