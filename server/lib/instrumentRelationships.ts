@@ -98,7 +98,7 @@ export async function detectSmartRelationships(portfolioId: string): Promise<{
     symbolData.get(tx.symbol)!.push(tx)
   })
 
-  const allSymbols = Array.from(symbolData.keys()).filter(s => !s.startsWith('CASH_'))
+  const allSymbols = Array.from(symbolData.keys()).filter(s => s !== 'CASH')
   const relationships: RelationshipScore[] = []
 
   // Compare every symbol pair

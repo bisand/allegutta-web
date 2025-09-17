@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     
     for (const symbolRecord of symbols) {
       const symbol = symbolRecord.symbol
-      if (symbol.startsWith('CASH_')) continue
+      if (symbol === 'CASH') continue
       
       const related = await findRelatedInstruments(portfolioId, symbol)
       if (related.length > 1) {

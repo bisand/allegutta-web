@@ -221,7 +221,7 @@ export default defineEventHandler(async (event) => {
         // For cash transactions without a security symbol, use CASH with portfolio currency
         if (!symbol || symbol.trim() === '') {
           if (['DEPOSIT', 'WITHDRAWAL', 'REFUND', 'DIVIDEND', 'DIVIDEND_REINVEST', 'TRANSFER_IN', 'INTEREST_CHARGE'].includes(transactionType)) {
-            symbol = `CASH_${portfolioCurrency}`
+            symbol = 'CASH'
           } else {
             // Skip other transactions without securities
             skippedCount++
@@ -231,13 +231,13 @@ export default defineEventHandler(async (event) => {
 
         // Special handling: Dividends should always use portfolio currency for cash symbol
         if (['DIVIDEND', 'DIVIDEND_REINVEST'].includes(transactionType)) {
-          symbol = `CASH_${portfolioCurrency}`
+          symbol = 'CASH'
           // Keep original transaction type - don't change it to 'DEPOSIT'
         }
 
-        // Special handling: Interest and transfer transactions should use CASH_NOK
+        // Special handling: Interest and transfer transactions should use CASH
         if (['INTEREST_CHARGE', 'TRANSFER_IN'].includes(transactionType)) {
-          symbol = 'CASH_NOK'
+          symbol = 'CASH'
         }
 
         // Keep exchange transactions as their original types - don't convert to BUY/SELL
@@ -246,7 +246,7 @@ export default defineEventHandler(async (event) => {
         // Check if transaction already exists
         // For cash transactions, we need to check the actual values we'll store
         let checkQuantity, checkPrice
-        if (symbol.startsWith('CASH_')) {
+        if (symbol === 'CASH') {
           checkQuantity = Math.abs(parseNorwegianNumber(csvRow.Beløp) || 0)
           checkPrice = 1.0
           if (['WITHDRAWAL'].includes(transactionType)) {
@@ -293,7 +293,7 @@ export default defineEventHandler(async (event) => {
         let finalQuantity = Math.abs(quantity || 0)
         let finalPrice = price || 1.0
 
-        if (symbol.startsWith('CASH_')) {
+        if (symbol === 'CASH') {
           // For cash transactions, use the Beløp (amount) column
           finalQuantity = Math.abs(amount || 0)
           finalPrice = 1.0
@@ -358,7 +358,7 @@ export default defineEventHandler(async (event) => {
 
     // Create transactions one by one and maintain saldo validation during import
     const portfolioCurrency = portfolio.currency || 'NOK'
-    const cashSymbol = `CASH_${portfolioCurrency}`
+    const cashSymbol = 'CASH'
 
     console.log(`📈 About to process ${transactions.length} transactions for holdings updates`)
 
@@ -438,9 +438,7 @@ export default defineEventHandler(async (event) => {
         where: {
           portfolioId: portfolioId,
           NOT: {
-            symbol: {
-              startsWith: 'CASH_'
-            }
+            symbol: 'CASH'
           }
         },
         select: {

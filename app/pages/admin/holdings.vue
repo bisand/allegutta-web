@@ -207,7 +207,7 @@ const selectedHolding = ref<Holding | null>(null)
 
 // Filter out cash holdings
 const securitiesHoldings = computed(() => 
-  holdings.value.filter(h => !h.symbol.startsWith('CASH_'))
+  holdings.value.filter(h => h.symbol !== 'CASH')
 )
 
 onMounted(async () => {

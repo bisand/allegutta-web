@@ -100,7 +100,8 @@
     "transactions": "Transactions",
     "totalValue": "Total Value",
     "totalGainLoss": "Total Gain/Loss",
-    "gainLossPercentage": "Gain/Loss %"
+    "gainLossPercentage": "Gain/Loss %",
+    "create": "Create"
   },
   "transaction": {
     "add": "Add Transaction",

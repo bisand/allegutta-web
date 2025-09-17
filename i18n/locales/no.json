@@ -100,7 +100,8 @@
     "transactions": "Transaksjoner",
     "totalValue": "Totalverdi",
     "totalGainLoss": "Total gevinst/tap",
-    "gainLossPercentage": "Gevinst/tap %"
+    "gainLossPercentage": "Gevinst/tap %",
+    "create": "Opprett"
   },
   "transaction": {
     "add": "Legg til transaksjon",

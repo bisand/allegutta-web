@@ -47,7 +47,7 @@
               {{ displaySymbol(holding.symbol) }}
             </div>
             <div v-if="isCashHolding(holding.symbol)" class="text-xs text-gray-500 dark:text-gray-400">
-              {{ getCurrency(holding.symbol) }}
+              {{ getCurrency(holding) }}
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
@@ -77,7 +77,7 @@
             {{ isCashHolding(holding.symbol) ? '-' : '$' + formatCurrency(holding.currentPrice || holding.avgPrice) }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-            {{ formatCurrency(marketValue(holding)) }}{{ isCashHolding(holding.symbol) ? ' ' + getCurrency(holding.symbol) : '' }}
+            {{ formatCurrency(marketValue(holding)) }}{{ isCashHolding(holding.symbol) ? ' ' + getCurrency(holding) : '' }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap" :class="gainLossColor(holding)">
             {{ isCashHolding(holding.symbol) ? '-' : '$' + formatCurrency(Math.abs(gainLoss(holding))) }}
@@ -98,6 +98,7 @@ interface Holding {
   isin?: string | null
   quantity: number
   avgPrice: number
+  currency?: string
   currentPrice?: number
   useManualAvgPrice?: boolean
   manualAvgPrice?: number | null
@@ -113,7 +114,7 @@ defineProps({
 })
 
 function isCashHolding(symbol: string): boolean {
-  return symbol.startsWith('CASH_')
+  return symbol === 'CASH'
 }
 
 function displaySymbol(symbol: string): string {
@@ -123,9 +124,9 @@ function displaySymbol(symbol: string): string {
   return symbol
 }
 
-function getCurrency(symbol: string): string {
-  if (isCashHolding(symbol)) {
-    return symbol.replace('CASH_', '')
+function getCurrency(holding: Holding): string {
+  if (isCashHolding(holding.symbol)) {
+    return holding.currency || 'NOK'
   }
   return ''
 }

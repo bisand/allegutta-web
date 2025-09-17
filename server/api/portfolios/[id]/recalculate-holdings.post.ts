@@ -24,9 +24,7 @@ export default defineEventHandler(async (event) => {
       where: {
         portfolioId: portfolioId,
         NOT: {
-          symbol: {
-            startsWith: 'CASH_'
-          }
+          symbol: 'CASH'
         }
       },
       select: {

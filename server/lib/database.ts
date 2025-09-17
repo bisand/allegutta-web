@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { migrateCashNamingConvention } from './cashMigration'
 
 /**
  * Simple Database Schema Verifier
@@ -56,6 +57,15 @@ export async function initializeDatabase() {
     }
     
     console.log('✅ Database schema verification complete')
+    
+    // Run data migrations after schema verification
+    try {
+      await migrateCashNamingConvention(_prisma)
+    } catch (migrationError) {
+      console.error('⚠️  Data migration warning:', migrationError)
+      // Don't fail startup for migration issues - just log them
+    }
+    
     return _prisma
     
   } catch (error) {

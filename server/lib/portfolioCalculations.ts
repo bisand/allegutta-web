@@ -85,7 +85,7 @@ export async function updateCashBalance(portfolioId: string): Promise<void> {
 // Calculate and update holdings for a specific security (not cash)
 export async function updateSecurityHoldings(portfolioId: string, symbol: string): Promise<void> {
   // Skip cash symbols - they're handled by updateCashBalance
-  if (symbol.startsWith('CASH_')) {
+  if (symbol === 'CASH') {
     return
   }
 
@@ -847,9 +847,7 @@ export async function recalculateAllHoldings(portfolioId: string): Promise<void>
     where: {
       portfolioId: portfolioId,
       NOT: {
-        symbol: {
-          startsWith: 'CASH_'
-        }
+        symbol: 'CASH'
       }
     },
     select: {

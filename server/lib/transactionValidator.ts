@@ -56,13 +56,13 @@ export function validateTransaction(transaction: {
 
   // Transaction type specific validation
   if (transaction.type === 'REFUND') {
-    if (transaction.symbol && !transaction.symbol.startsWith('CASH_')) {
+    if (transaction.symbol && transaction.symbol !== 'CASH') {
       suggestions.push('REFUND transactions typically should not affect stock holdings - consider if this should be a cash transaction')
     }
   }
 
   if (['BUY', 'SELL'].includes(transaction.type)) {
-    if (!transaction.symbol || transaction.symbol.startsWith('CASH_')) {
+    if (!transaction.symbol || transaction.symbol === 'CASH') {
       errors.push(`${transaction.type} transaction requires a valid stock symbol`)
     }
   }

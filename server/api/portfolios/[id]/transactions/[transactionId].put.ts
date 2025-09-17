@@ -68,13 +68,13 @@ export default defineEventHandler(async (event) => {
 
     // Recalculate holdings for the old symbol (if changed) - securities only
     if (body.symbol && existingTransaction.symbol !== body.symbol.toUpperCase()) {
-      if (!existingTransaction.symbol.startsWith('CASH_')) {
+      if (existingTransaction.symbol !== 'CASH') {
         await updateSecurityHoldings(portfolioId, existingTransaction.symbol)
       }
     }
 
     // Recalculate holdings for the current symbol - securities only
-    if (!transaction.symbol.startsWith('CASH_')) {
+    if (transaction.symbol !== 'CASH') {
       await updateSecurityHoldings(portfolioId, transaction.symbol)
     }
 

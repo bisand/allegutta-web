@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
     })
 
     // Recalculate holdings for the affected symbol
-    if (!transaction.symbol.startsWith('CASH_')) {
+    if (transaction.symbol !== 'CASH') {
       await updateSecurityHoldings(portfolioId, transaction.symbol)
     }
 

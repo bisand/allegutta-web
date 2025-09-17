@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
     // Try to get ISIN from existing market data records (not needed for cash transactions)
     let isin: string | null = body.isin || null
-    const isSymbolCash = body.symbol.toUpperCase().startsWith('CASH_')
+    const isSymbolCash = body.symbol.toUpperCase() === 'CASH'
     
     if (!isin && !isSymbolCash) {
       const marketData = await prisma.market_data.findFirst({
@@ -113,7 +113,7 @@ export default defineEventHandler(async (event) => {
     })
 
     // Update holdings for the transaction symbol (securities only)
-    if (!body.symbol.toUpperCase().startsWith('CASH_')) {
+    if (body.symbol.toUpperCase() !== 'CASH') {
       await updateSecurityHoldings(portfolioId, body.symbol.toUpperCase())
     }
     
