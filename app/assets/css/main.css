@@ -205,7 +205,7 @@ body {
   
   /* Dark mode select arrow */
   .dark select {
-    background-color: rgb(31, 41, 55); /* gray-800 */
+    /* Remove background-color override to allow Tailwind classes to work */
     background-image: linear-gradient(45deg, transparent 50%, #9ca3af 50%),
                       linear-gradient(135deg, #9ca3af 50%, transparent 50%);
   }
