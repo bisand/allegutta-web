@@ -66,7 +66,7 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Currency</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -90,7 +90,7 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ formatDate(portfolio.createdAt) }}</td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex items-center gap-1 flex-wrap">
+                    <div class="flex items-center gap-1 flex-wrap justify-end">
                       <NuxtLink :to="`/portfolio/${portfolio.id}`" class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700" title="View portfolio details">
                         <EyeIcon class="w-4 h-4" />
                       </NuxtLink>
@@ -131,7 +131,7 @@
                   <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ formatDate(portfolio.createdAt) }}</div>
                 </div>
 
-                <div class="ml-3 flex items-start gap-2 flex-wrap">
+                <div class="ml-auto flex items-start gap-2 flex-wrap justify-end">
                   <NuxtLink :to="`/portfolio/${portfolio.id}`" class="inline-flex items-center justify-center w-8 h-8 text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-md transition-colors dark:text-primary-300 dark:hover:text-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:border-primary-700" title="View portfolio details"><EyeIcon class="w-4 h-4"/></NuxtLink>
                   <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors dark:text-indigo-300 dark:hover:text-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:border-indigo-700" title="Edit portfolio settings" @click="editPortfolio(portfolio)"><PencilIcon class="w-4 h-4"/></button>
                   <button type="button" class="inline-flex items-center justify-center w-8 h-8 text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors dark:text-green-300 dark:hover:text-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:border-green-700" title="Manage portfolio positions" @click="managePositions(portfolio)"><ChartPieIcon class="w-4 h-4"/></button>
@@ -293,14 +293,14 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Symbol</label>
                   <input v-model="transactionForm.symbol" type="text" required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white uppercase"
                     placeholder="AAPL">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ISIN (Optional)</label>
                   <input v-model="transactionForm.isin" type="text" maxlength="12"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="US0378331005" style="text-transform: uppercase;">
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white uppercase"
+                    placeholder="US0378331005">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
@@ -330,21 +330,21 @@
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
-                  <input v-model.number="transactionForm.quantity" type="number" step="0.0001" min="0.0001"
+                  <input v-model.number="transactionForm.quantity" type="number" step="1" min="1"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="10">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
                   }})</label>
-                  <input v-model.number="transactionForm.price" type="number" step="0.01" min="0.01"
+                  <input v-model.number="transactionForm.price" type="number" step="0.0001" min="0.0001"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="150.00">
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fees ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
                   }})</label>
-                  <input v-model.number="transactionForm.fees" type="number" step="0.01" min="0"
+                  <input v-model.number="transactionForm.fees" type="number" step="0.0001" min="0"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="9.99">
                 </div>
