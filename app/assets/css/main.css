@@ -151,7 +151,7 @@ body {
 
 /* Form Input Normalization */
 /* Ensure consistent styling across all form input types */
-@layer base {
+@layer components {
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -186,17 +186,28 @@ body {
   
   /* Special handling for select elements */
   select {
-    /* Add dropdown arrow background */
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.5rem center;
-    background-repeat: no-repeat;
-    background-size: 1.5em 1.5em;
+    /* Use CSS-only dropdown arrow instead of SVG to avoid PostCSS issues */
+    background-color: white;
+    background-image: none;
+    position: relative;
     padding-right: 2.5rem;
+  }
+  
+  /* CSS-only dropdown arrow using pseudo-element approach */
+  select {
+    background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
+                      linear-gradient(135deg, #6b7280 50%, transparent 50%);
+    background-position: calc(100% - 20px) calc(1em + 2px),
+                         calc(100% - 15px) calc(1em + 2px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
   }
   
   /* Dark mode select arrow */
   .dark select {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%9ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-color: rgb(31, 41, 55); /* gray-800 */
+    background-image: linear-gradient(45deg, transparent 50%, #9ca3af 50%),
+                      linear-gradient(135deg, #9ca3af 50%, transparent 50%);
   }
   
   /* Date/time input specific fixes */

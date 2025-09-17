@@ -1,67 +1,56 @@
-# Simple Alpine-only Dockerfile (now that @nuxt/content is removed)
-# Minimal dependencies - no native compilation needed!
+# Ultra-minimal Dockerfile optimized for size while keeping essential functionality
 
 # Build stage
 FROM node:22-alpine AS builder
 
-# Set working directory (no additional packages needed for build!)
 WORKDIR /app
 
 # Install pnpm
 RUN npm install -g pnpm
 
-# Copy package files first
+# Copy package files first for better caching
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies (much simpler now!)
+# Install dependencies
 RUN pnpm install --frozen-lockfile
 
 # Copy Prisma schema and generate client
-COPY prisma ./
+COPY prisma ./prisma
 RUN npx prisma generate
 
-# Copy application code
+# Copy application code (filtered by .dockerignore)
 COPY . .
 
-# Build the application (no more better-sqlite3 issues!)
-RUN pnpm run build
+# Force build step to run by adding timestamp and cache-busting
+ARG BUILD_DATE
+ARG BUILD_VERSION
+ENV BUILD_DATE=${BUILD_DATE:-"manual-build"}
+ENV BUILD_VERSION=${BUILD_VERSION:-"dev"}
 
-# Production stage - minimal Alpine
+# Build the application (timestamp ensures this always runs)
+RUN echo "Building application version $BUILD_VERSION at $BUILD_DATE" && \
+    pnpm run build
+
+# Production stage - minimal alpine with only essential runtime tools
 FROM node:22-alpine AS production
 
-# Install only runtime dependencies
-RUN apk add --no-cache \
-    sqlite \
-    curl \
-    dumb-init
+# Install only absolute minimal runtime dependencies
+RUN apk add --no-cache dumb-init
 
-# Install pnpm and minimal node dependencies for Prisma CLI
-RUN npm install -g pnpm
-
-# Set working directory
 WORKDIR /app
 
-# Create non-root user
+# Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nuxtjs -u 1001
 
-# Copy built application and runtime dependencies
+# Copy only essential runtime files
 COPY --from=builder /app/.output ./.output
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/package.json ./package.json
-
-# Copy database schema and initialization scripts
-COPY prisma/schema.sql ./schema.sql
-COPY scripts/init-db.sh ./scripts/init-db.sh
-COPY scripts/backup.sh ./scripts/backup.sh
-COPY scripts/deploy-production.sh ./scripts/deploy-production.sh
+COPY --from=builder /app/prisma/schema.sql ./schema.sql
 COPY scripts/start-production.sh ./start-production.sh
-RUN chmod +x ./scripts/*.sh ./start-production.sh
 
-# For a Nuxt app, the .output contains everything needed at runtime
-# Prisma client is embedded in the server bundle
-
-# Create data directory with proper permissions
-RUN mkdir -p /app/data && chown -R nuxtjs:nodejs /app
+# Make scripts executable and create data directory
+RUN chmod +x ./start-production.sh && \
+    mkdir -p /app/data && \
+    chown -R nuxtjs:nodejs /app
 
 # Switch to non-root user
 USER nuxtjs
@@ -69,12 +58,8 @@ USER nuxtjs
 # Expose port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
-
-# Use dumb-init to handle signals properly
+# Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application with proper database initialization
+# Start the application with initialization support
 CMD ["./start-production.sh"]

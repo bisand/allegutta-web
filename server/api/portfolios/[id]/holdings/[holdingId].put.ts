@@ -14,8 +14,7 @@ export default defineEventHandler(async (event) => {
     symbol: z.string().min(1).max(10).trim(),
     isin: z.string().length(12).optional().nullable().transform(val => val?.toUpperCase() || null),
     instrumentName: z.string().optional().nullable(),
-    currency: z.string().length(3).default('NOK'),
-    notes: z.string().optional().nullable()
+    currency: z.string().length(3).default('NOK')
   })
 
   try {

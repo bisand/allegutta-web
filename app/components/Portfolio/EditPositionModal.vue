@@ -109,19 +109,6 @@
                     <p v-if="errors.currency" class="text-red-500 text-xs mt-1">{{ errors.currency }}</p>
                   </div>
 
-                  <div>
-                    <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Notes
-                    </label>
-                    <textarea
-                      id="notes"
-                      v-model="form.notes"
-                      rows="3"
-                      class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      placeholder="Optional notes about this position..."
-                    />
-                  </div>
-
                   <!-- Warning about changes -->
                   <div v-if="hasChanges" class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-3">
                     <div class="flex">
@@ -196,8 +183,7 @@ const { formatNumber, formatCurrency } = useCurrency()
 const form = reactive({
   symbol: '',
   isin: '',
-  currency: 'NOK',
-  notes: ''
+  currency: 'NOK'
 })
 
 const errors = reactive({
@@ -214,7 +200,6 @@ watch(() => props.holding, (holding) => {
     form.symbol = holding.symbol
     form.isin = holding.isin || ''
     form.currency = holding.currency
-    form.notes = ''
   }
 }, { immediate: true })
 
@@ -274,8 +259,7 @@ async function submitForm(): Promise<void> {
       body: {
         symbol: form.symbol.trim().toUpperCase(),
         isin: form.isin.trim() || null,
-        currency: form.currency,
-        notes: form.notes.trim() || null
+        currency: form.currency
       }
     })
 
@@ -310,7 +294,6 @@ function closeModal(): void {
       form.symbol = props.holding.symbol
       form.isin = props.holding.isin || ''
       form.currency = props.holding.currency
-      form.notes = ''
     }
     
     // Reset errors

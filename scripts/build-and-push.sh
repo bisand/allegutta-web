@@ -90,7 +90,13 @@ echo -e "${GREEN}✅ Updated VERSION file to $NEW_VERSION${NC}"
 
 # Build Docker image
 echo -e "${BLUE}🔨 Building Docker image using $DOCKERFILE...${NC}"
-docker build -t "$IMAGE_NAME:$NEW_VERSION" -t "$IMAGE_NAME:latest" -f $DOCKERFILE .
+BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+docker build \
+    --build-arg BUILD_DATE="$BUILD_DATE" \
+    --build-arg BUILD_VERSION="$NEW_VERSION" \
+    -t "$IMAGE_NAME:$NEW_VERSION" \
+    -t "$IMAGE_NAME:latest" \
+    -f $DOCKERFILE .
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Docker image built successfully${NC}"

@@ -1,0 +1,67 @@
+# Development files
+.env
+.env.*
+!.env.example
+
+# Build artifacts and caches
+.nuxt
+.output
+dist
+node_modules
+.pnpm-store
+
+# Development dependencies
+.devcontainer
+.vscode
+.idea
+
+# Version control
+.git
+.gitignore
+.github
+
+# Documentation and project files
+*.md
+LICENSE
+docs/
+CLEANUP_SUMMARY.md
+DATABASE_STRATEGY.md
+DOCKER_AUTO_MIGRATION.md
+PRODUCTION_DEPLOYMENT.md
+
+# Test files and backups
+test-*.js
+backups/
+*.backup
+*.bak
+
+# Logs and temporary files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Database files (will be created in container)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+dev.db
+prisma/dev.db
+
+# Config files not needed in container
+eslint.config.mjs
+tailwind.config.js
+tailwind.config.ts
+tsconfig.json
+vercel.json
+wrangler.toml
+VERSION
+
+# Package manager files (already copied separately)
+package-lock.json
+yarn.lock
+
+# Deployment configs
+docker-compose*.yml
+Dockerfile*

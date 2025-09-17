@@ -292,7 +292,7 @@
                   Import Transactions
                 </button>
                 <button type="button" class="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-                  @click="() => { console.log('Add Transaction clicked, selectedPortfolio:', selectedPortfolio); showAddTransactionForm = true; }">
+                  @click="openAddTransactionModal">
                   <PlusIcon class="w-4 h-4 mr-2" />
                   Add Transaction
                 </button>
@@ -314,116 +314,6 @@
                   </div>
                 </div>
               </div>
-            </div>
-
-            <!-- Add Transaction Form -->
-            <div v-if="showAddTransactionForm" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
-              <div class="flex items-center justify-between mb-4">
-                <h4 class="text-sm font-medium text-gray-900 dark:text-white">
-                  {{ editingTransaction ? 'Edit Transaction' : 'Add New Transaction' }}
-                </h4>
-                <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="cancelAddTransaction">
-                  ✕
-                </button>
-              </div>
-              <form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" @submit.prevent="submitTransaction">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Symbol</label>
-                  <input v-model="transactionForm.symbol" type="text" required
-                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white uppercase"
-                    placeholder="AAPL">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ISIN (Optional)</label>
-                  <input v-model="transactionForm.isin" type="text" maxlength="12"
-                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white uppercase"
-                    placeholder="US0378331005">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
-                  <select v-model="transactionForm.type" required
-                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="BUY">Buy</option>
-                    <option value="SELL">Sell</option>
-                    <option value="DIVIDEND">Dividend</option>
-                    <option value="DIVIDEND_REINVEST">Dividend Reinvest</option>
-                    <option value="DEPOSIT">Deposit</option>
-                    <option value="WITHDRAWAL">Withdrawal</option>
-                    <option value="REFUND">Refund</option>
-                    <option value="SPLIT">Stock Split</option>
-                    <option value="MERGER">Merger</option>
-                    <option value="LIQUIDATION">Liquidation</option>
-                    <option value="REDEMPTION">Redemption</option>
-                    <option value="EXCHANGE_IN">Exchange In</option>
-                    <option value="EXCHANGE_OUT">Exchange Out</option>
-                    <option value="SPIN_OFF_IN">Spin-off In</option>
-                    <option value="DECIMAL_LIQUIDATION">Decimal Liquidation</option>
-                    <option value="DECIMAL_WITHDRAWAL">Decimal Withdrawal</option>
-                    <option value="RIGHTS_ALLOCATION">Rights Allocation</option>
-                    <option value="RIGHTS_ISSUE">Rights Issue</option>
-                    <option value="TRANSFER_IN">Transfer In</option>
-                    <option value="INTEREST_CHARGE">Interest Charge</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
-                  <input v-model.number="transactionForm.quantity" type="number" step="1" min="1"
-                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="10">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
-                  }})</label>
-                  <input v-model.number="transactionForm.price" type="number" step="0.0001" min="0.0001"
-                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="150.00">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fees ({{ transactionForm.currency || selectedPortfolio?.currency || 'NOK'
-                  }})</label>
-                  <input v-model.number="transactionForm.fees" type="number" step="0.0001" min="0"
-                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="9.99">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
-                  <select v-model="transactionForm.currency"
-                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="NOK">NOK - Norwegian Krone</option>
-                    <option value="USD">USD - US Dollar</option>
-                    <option value="EUR">EUR - Euro</option>
-                    <option value="GBP">GBP - British Pound</option>
-                    <option value="SEK">SEK - Swedish Krona</option>
-                    <option value="DKK">DKK - Danish Krone</option>
-                  </select>
-                </div>
-                <div>
-                  <UIDateTimePicker 
-                    v-model="transactionForm.date"
-                    type="date"
-                    label="Date"
-                    required
-                  />
-                </div>
-                <div class="md:col-span-2 lg:col-span-3">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes (Optional)</label>
-                  <input v-model="transactionForm.notes" type="text"
-                    class="w-full px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Transaction notes">
-                </div>
-                <div class="md:col-span-2 lg:col-span-3 flex justify-end space-x-3">
-                  <button type="button"
-                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-700"
-                    @click="cancelAddTransaction">
-                    Cancel
-                  </button>
-                  <button type="submit" :disabled="submittingTransaction"
-                    class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50"
-                    @click="handleSubmitClick">
-                    {{ submittingTransaction ? (editingTransaction ? 'Updating...' : 'Adding...') : (editingTransaction ? 'Update Transaction' : 'Add Transaction') }}
-                  </button>
-                </div>
-              </form>
             </div>
 
             <!-- Transactions List -->
@@ -612,6 +502,17 @@
         style="z-index: 60;" @success="handleImportSuccess" />
     </Teleport>
 
+    <!-- Add/Edit Transaction Modal -->
+    <PortfolioAddTransactionModal 
+      :show="showAddTransactionForm" 
+      :transaction="editingTransaction"
+      :portfolio-id="selectedPortfolio?.id || ''" 
+      :portfolio-currency="selectedPortfolio?.currency"
+      style="z-index: 70;" 
+      @close="closeAddTransactionModal"
+      @success="handleTransactionSuccess" 
+    />
+
   </div>
 </template>
 
@@ -682,7 +583,6 @@ const submitting = ref(false)
 const showTransactionModal = ref(false)
 const selectedPortfolio = ref<Portfolio | null>(null)
 const showAddTransactionForm = ref(false)
-const submittingTransaction = ref(false)
 const portfolioTransactions = ref<TransactionData[]>([])
 const portfolioHoldings = ref<HoldingData[]>([])
 const editingTransaction = ref<TransactionData | null>(null)
@@ -736,19 +636,6 @@ const form = reactive({
   athDate: '' as string
 })
 
-// Transaction form data
-const transactionForm = reactive({
-  symbol: '',
-  isin: '',
-  type: 'BUY',
-  quantity: 0,
-  price: 0,
-  fees: 0,
-  currency: 'NOK',
-  date: new Date().toISOString().split('T')[0],
-  notes: ''
-})
-
 // Reset form
 function resetForm(): void {
   form.name = ''
@@ -757,20 +644,6 @@ function resetForm(): void {
   form.isDefault = false
   form.athValue = null
   form.athDate = ''
-}
-
-// Reset transaction form
-function resetTransactionForm(): void {
-  console.log('resetTransactionForm called, selectedPortfolio:', selectedPortfolio.value)
-  transactionForm.symbol = ''
-  transactionForm.isin = ''
-  transactionForm.type = 'BUY'
-  transactionForm.quantity = 0
-  transactionForm.price = 0
-  transactionForm.fees = 0
-  transactionForm.currency = selectedPortfolio.value?.currency || 'NOK'
-  transactionForm.date = new Date().toISOString().split('T')[0]
-  transactionForm.notes = ''
 }
 
 // Close modal
@@ -795,15 +668,27 @@ function closeTransactionModal(): void {
   showAddTransactionForm.value = false
   editingTransaction.value = null
   showImportTransactions.value = false
-  resetTransactionForm()
   portfolioTransactions.value = []
   portfolioHoldings.value = []
 }
 
-function cancelAddTransaction(): void {
+// New modal-based transaction functions
+function openAddTransactionModal(): void {
+  editingTransaction.value = null
+  showAddTransactionForm.value = true
+}
+
+function closeAddTransactionModal(): void {
   showAddTransactionForm.value = false
   editingTransaction.value = null
-  resetTransactionForm()
+}
+
+function handleTransactionSuccess(): void {
+  // Reload portfolio data after successful transaction add/edit
+  if (selectedPortfolio.value) {
+    loadPortfolioData(selectedPortfolio.value.id)
+  }
+  closeAddTransactionModal()
 }
 
 // Handle import success
@@ -931,119 +816,9 @@ async function loadPortfolioData(portfolioId: string): Promise<void> {
   }
 }
 
-// Submit new transaction
-async function submitTransaction(): Promise<void> {
-  console.log('=== submitTransaction called ===')
-  console.log('selectedPortfolio:', selectedPortfolio.value)
-  console.log('transactionForm:', transactionForm)
-  
-  if (!selectedPortfolio.value) {
-    console.error('No selected portfolio')
-    alert('No portfolio selected')
-    return
-  }
-
-  // Basic form validation
-  if (!transactionForm.symbol || !transactionForm.symbol.trim()) {
-    console.error('Invalid symbol:', transactionForm.symbol)
-    alert('Please enter a valid symbol')
-    return
-  }
-
-  if (transactionForm.quantity <= 0) {
-    console.error('Invalid quantity:', transactionForm.quantity)
-    alert('Please enter a valid quantity greater than 0')
-    return
-  }
-
-  if (transactionForm.price <= 0) {
-    console.error('Invalid price:', transactionForm.price)
-    alert('Please enter a valid price greater than 0')
-    return
-  }
-
-  try {
-    submittingTransaction.value = true
-    console.log('Starting transaction submission...')
-
-    // Get request headers for both SSR and client-side authentication
-    const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-
-    const transactionData = {
-      symbol: transactionForm.symbol.toUpperCase(),
-      isin: transactionForm.isin || undefined,
-      type: transactionForm.type,
-      quantity: transactionForm.quantity,
-      price: transactionForm.price,
-      fees: transactionForm.fees || 0,
-      date: transactionForm.date,
-      notes: transactionForm.notes || undefined
-    }
-
-    console.log('Transaction data to submit:', transactionData)
-
-    if (editingTransaction.value) {
-      // Update existing transaction
-      console.log('Updating transaction with ID:', editingTransaction.value.id)
-      await $fetch(`/api/portfolios/${selectedPortfolio.value.id}/transactions/${editingTransaction.value.id}`, {
-        method: 'PUT' as const,
-        headers: headers as HeadersInit,
-        body: transactionData
-      })
-    } else {
-      // Create new transaction
-      console.log('Creating new transaction for portfolio:', selectedPortfolio.value.id)
-      await $fetch(`/api/portfolios/${selectedPortfolio.value.id}/transactions`, {
-        method: 'POST' as const,
-        headers: headers as HeadersInit,
-        body: transactionData
-      })
-    }
-
-    console.log('Transaction submitted successfully')
-
-    // Reload portfolio data
-    await loadPortfolioData(selectedPortfolio.value.id)
-
-    // Reset form
-    cancelAddTransaction()
-  } catch (error) {
-    console.error(`Failed to ${editingTransaction.value ? 'update' : 'create'} transaction:`, error)
-    alert(`Failed to ${editingTransaction.value ? 'update' : 'create'} transaction. Please try again.`)
-  } finally {
-    submittingTransaction.value = false
-  }
-}
-
-// Debug function to handle submit button click
-function handleSubmitClick(event: Event): void {
-  console.log('Submit button clicked!', event)
-  console.log('selectedPortfolio at button click:', selectedPortfolio.value)
-  console.log('showTransactionModal:', showTransactionModal.value)
-  console.log('showAddTransactionForm:', showAddTransactionForm.value)
-  console.log('Form data:', {
-    symbol: transactionForm.symbol,
-    quantity: transactionForm.quantity,
-    price: transactionForm.price,
-    submittingTransaction: submittingTransaction.value
-  })
-  
-  // Don't prevent default since we want the form submission to happen
-}
-
 // Edit transaction
 function editTransaction(transaction: TransactionData): void {
   editingTransaction.value = transaction
-  transactionForm.symbol = transaction.symbol
-  transactionForm.isin = transaction.isin || ''
-  transactionForm.type = transaction.type
-  transactionForm.quantity = transaction.quantity
-  transactionForm.price = transaction.price
-  transactionForm.fees = transaction.fees
-  // Format date for HTML date input (YYYY-MM-DD)
-  transactionForm.date = transaction.date ? transaction.date.split('T')[0] : ''
-  transactionForm.notes = transaction.notes || ''
-  transactionForm.currency = transaction.currency || selectedPortfolio.value?.currency || 'NOK'
   showAddTransactionForm.value = true
 }
 
